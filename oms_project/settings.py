@@ -82,9 +82,13 @@ TEMPLATES = [
 # WSGI
 WSGI_APPLICATION = 'oms_project.wsgi.application'
 
+
+
 # Database
 DATABASES = {'default': {}}
-DATABASES['default'] = dj_database_url.config(conn_max_age=600, ssl_require=True)
+DATABASES['default'] = dj_database_url.config(default=os.environ['postgres://u26ushtqu5r9o9:p5c85a2056cf054356f0fea16a694d6cd460c859af2c03c12a01dbcdf2a5561d4@c5qmk1l8miin9d.cluster-czz5s0kz4scl.eu-west-1.rds.amazonaws.com:5432/d561c53e530cpt'])
+
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
