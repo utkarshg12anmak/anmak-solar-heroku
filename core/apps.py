@@ -21,7 +21,6 @@ def create_default_superuser(sender, **kwargs):
 class CoreConfig(AppConfig):
     name = 'core'
     label = 'core_app'
-    name = 'core'
 
     def ready(self):
         post_migrate.connect(create_default_superuser, sender=self)
