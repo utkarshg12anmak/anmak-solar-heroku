@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'visit_details',
     'reminders',
     'quotes',
+    'core.apps.CoreConfig',
 ]
 
 if DEBUG:
