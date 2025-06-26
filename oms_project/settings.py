@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'reminders',
     'quotes',
     'core.apps.CoreConfig',
+    'initial_setup.apps.InitialSetupConfig',
 ]
 
 if DEBUG:
