@@ -1,0 +1,131 @@
+{# templates/items/price_rule_form.html #}
+{% extends "base.html" %}
+{% block content %}
+<style>
+  /* Card container */
+  .form-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    padding: 2rem;
+    max-width: 600px;
+    margin: 2rem auto;
+  }
+
+  /* Header */
+  .form-card-header {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* Form rows */
+  .form-row {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+  }
+  .form-row label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: #333;
+  }
+  .form-row input,
+  .form-row select {
+    padding: 0.6rem 0.8rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .form-row input:focus,
+  .form-row select:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.2);
+  }
+
+  /* Footer buttons */
+  .form-card-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+  .btn-save {
+    background-color: #2563eb;
+    color: #fff;
+    padding: 0.6rem 1.5rem;
+    border: none;
+    border-radius: 9999px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+  }
+  .btn-save:hover { background-color: #1e40af; transform: translateY(-1px); }
+  .btn-save:active{ background-color: #1a31a0; transform: translateY(0); }
+
+  .btn-cancel {
+    background-color: #e0e0e0;
+    color: #555;
+    padding: 0.6rem 1.5rem;
+    border: none;
+    border-radius: 9999px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+  }
+  .btn-cancel:hover { background-color: #d1d1d1; transform: translateY(-1px); }
+  .btn-cancel:active{ background-color: #c0c0c0; transform: translateY(0); }
+</style>
+
+<div class="form-card">
+  <div class="form-card-header">
+    {% if form.instance.pk %}
+      Edit Price Rule
+    {% else %}
+      Create Price Rule
+    {% endif %}
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="form-row">
+      <label for="{{ form.price_book.id_for_label }}">Price Book</label>
+      {{ form.price_book }}
+      {{ form.price_book.errors }}
+    </div>
+
+    <div class="form-row">
+      <label for="{{ form.item.id_for_label }}">Item</label>
+      {{ form.item }}
+      {{ form.item.errors }}
+    </div>
+
+    <div class="form-row">
+      <label for="{{ form.base_price.id_for_label }}">Base Price</label>
+      {{ form.base_price }}
+      {{ form.base_price.errors }}
+    </div>
+
+    <div class="form-row">
+      <label for="{{ form.unit_type.id_for_label }}">Unit Type</label>
+      {{ form.unit_type }}
+      {{ form.unit_type.errors }}
+    </div>
+
+    <div class="form-card-footer">
+      <button type="button" class="btn-cancel" onclick="history.back()">Cancel</button>
+      <button type="submit" class="btn-save">Save</button>
+    </div>
+  </form>
+</div>
+
+
+{% endblock %}

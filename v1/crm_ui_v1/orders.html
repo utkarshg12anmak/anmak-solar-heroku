@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Anmak Solar CRM - Orders</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    /* ===== Global & Body ===== */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:'Inter',sans-serif;
+      display:flex; height:100vh; overflow:hidden;
+      background:url('landing_page.png') no-repeat center center fixed;
+      background-size:cover;
+    }
+    /* ===== Sidebar ===== */
+    .sidebar { width:240px; display:flex; flex-direction:column; padding:24px 16px; background:#003347; color:#fff; }
+    .sidebar .logo{text-align:center; margin-bottom:16px;}
+    .sidebar .logo img{width:200px;}
+    .sidebar nav ul{list-style:none;}
+    .sidebar nav ul li{margin:8px 0;}
+    .sidebar nav ul li a{display:block;text-decoration:none;color:#fff;font-weight:500;padding:10px 12px;border-radius:6px;transition:background .2s;}
+    .sidebar nav ul li a:hover{background:rgba(255,255,255,0.1);}  
+    .sidebar nav ul li a.active{background:rgba(255,255,255,0.2);border-left:4px solid #fff;padding-left:16px;}
+    .sidebar .bottom-group{margin-top:auto;}
+    .sidebar .profile{display:flex;align-items:center;gap:12px;}
+    .sidebar .profile img.avatar{width:40px;height:40px;border-radius:50%;border:2px solid #fff;object-fit:cover;}
+    .sidebar .profile .info{display:flex;flex-direction:column;}
+    .sidebar .profile .name{font-weight:600;font-size:.95rem;}
+    .sidebar .profile .designation{font-size:.8rem;color:rgba(255,255,255,0.75);}
+    .sidebar hr{border:none;border-top:1px solid rgba(255,255,255,0.3);margin:16px 0;}
+    .sidebar .logout button{width:100%;padding:10px;background:#e53e3e;color:#fff;border:none;border-radius:6px;cursor:pointer;transition:background .2s;}
+    .sidebar .logout button:hover{background:#c53030;}
+
+    /* ===== Main ===== */
+    .main{flex:1;background:#f7f9fc;padding:32px;overflow-y:auto;}
+    .main-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+    .main-header h1{font-size:1.75rem;color:#1a202c;}
+    .btn-create{padding:8px 16px;background:#3182ce;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:500;transition:background .2s;}
+    .btn-create:hover{background:#2b6cb0;}
+    .table-wrapper{overflow-x:auto;}
+    table{width:100%;border-collapse:collapse;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.1);table-layout:auto;}
+    th, td{padding:12px 8px;text-align:left;border-bottom:1px solid #e2e8f0;font-size:.9rem;color:#2d3748;white-space:nowrap;}
+    th{background:#edf2f7;font-weight:600;}
+    .edit-icon{width:16px;height:16px;cursor:pointer;fill:#4a5568;transition:fill .2s;vertical-align:middle;}
+    .edit-icon:hover{fill:#2d3748;}
+    .btn-view{padding:4px 8px;margin-left:8px;background:#38a169;color:#fff;border:none;border-radius:4px;cursor:pointer;transition:background .2s;font-size:.85rem;}
+    .btn-view:hover{background:#2f855a;}
+
+    /* ===== Modal ===== */
+    .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.3);display:none;justify-content:center;align-items:center;padding:16px;}
+    .modal{background:#fff;padding:24px;border-radius:8px;width:400px;max-height:90vh;overflow-y:auto;box-shadow:0 4px 8px rgba(0,0,0,0.2);}
+    .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+    .modal-header h2{font-size:1.25rem;color:#1a202c;}
+    .modal-close{background:none;border:none;font-size:1.25rem;cursor:pointer;color:#4a5568;}
+    .modal form{display:flex;flex-direction:column;}
+    .modal form label{margin-top:12px;margin-bottom:4px;font-size:.85rem;color:#2d3748;}
+    .modal form input, .modal form select{padding:8px;border:1px solid #cbd5e0;border-radius:4px;font-size:.9rem;}
+    .form-actions{margin-top:16px;text-align:right;}
+    .form-actions button{padding:10px 16px;background:#3182ce;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:500;transition:background .2s;}
+    .form-actions button:hover{background:#2b6cb0;}
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="logo"><img src="logo_white.svg" alt="Anmak Solar Logo"/></div>
+    <nav><ul>
+      <li><a href="index.html">Dashboard</a></li>
+      <li><a href="users.html">Users</a></li>
+      <li><a href="customers.html">Customers</a></li>
+      <li><a href="#" class="active">Orders</a></li>
+      <li><a href="settings.html">Settings</a></li>
+    </ul></nav>
+    <div class="bottom-group">
+      <div class="profile"><img src="profile-user.png" class="avatar" alt="User Avatar"/><div class="info"><span class="name">Utkarsh</span><span class="designation">Sales Manager</span></div></div>
+      <hr/>
+      <div class="logout"><button onclick="fetch('http://localhost:8080/api/auth/logout',{method:'POST',credentials:'include'}).then(()=>window.location.href='login.html');">Log Out</button></div>
+    </div>
+  </aside>
+  
+  <main class="main">
+    <div class="main-header">
+      <h1>Orders</h1>
+      <button class="btn-create" id="create-order-btn">Create Order</button>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th><th>Order Status</th><th>Registration Status</th><th>Installation Status</th><th>Order Type</th>
+            <th>System Type</th><th>System Size</th><th>Salesman</th><th>Order Amount</th><th>Financing</th>
+            <th>Site Inspector</th><th>Created At</th><th>Updated At</th><th>Created By</th><th>Updated By</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="order-table-body">
+          <tr data-id="1">
+            <td>1</td><td>Pending</td><td>Registered</td><td>Not Installed</td><td>New</td>
+            <td>Rooftop</td><td>5 kW</td><td>Utkarsh</td><td>150000</td><td>Yes</td>
+            <td>Aakash</td><td>2025-05-05</td><td>2025-05-20</td><td>Rahul</td><td>Utkarsh</td>
+            <td>
+              <svg class="edit-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 17.25..."/></svg>
+              <button class="btn-view" onclick="window.location.href='order-view.html?id=1'">View</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+  
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <div class="modal-header"><h2 id="modal-title">Create Order</h2><button id="modal-close" class="modal-close">×</button></div>
+      <form id="order-form">
+        <input type="hidden" id="order-id" name="id">
+        <label for="order-status">Order Status</label><input type="text" id="order-status" name="order_status" required />
+        <label for="registration-status">Registration Status</label><input type="text" id="registration-status" name="registration_status" required />
+        <label for="installation-status">Installation Status</label><input type="text" id="installation-status" name="installation_status" required />
+        <label for="order-type">Order Type</label><input type="text" id="order-type" name="order_type" required />
+        <label for="system-type">System Type</label><input type="text" id="system-type" name="system_type" required />
+        <label for="system-size">System Size</label><input type="text" id="system-size" name="system_size" required />
+        <label for="salesman">Salesman</label><input type="text" id="salesman" name="salesman" required />
+        <label for="order-amount">Order Amount</label><input type="number" id="order-amount" name="order_amount" required />
+        <label for="financing">Financing</label><select id="financing" name="financing" required><option value="Yes">Yes</option><option value="No">No</option></select>
+        <label for="site-inspector">Site Inspector</label><input type="text" id="site-inspector" name="site_inspector" required />
+        <div class="form-actions"><button type="submit" id="form-submit-btn">Save</button></div>
+      </form>
+    </div>
+  </div>
+  
+  <script>
+    const overlay = document.getElementById('modal-overlay');
+    const titleEl = document.getElementById('modal-title');
+    const form = document.getElementById('order-form');
+    const submitBtn = document.getElementById('form-submit-btn');
+    function openModal(mode,data={}){
+      titleEl.textContent = mode==='edit'?'Edit Order':'Create Order';
+      submitBtn.textContent = mode==='edit'?'Update':'Save';
+      form.reset(); document.getElementById('order-id').value = data.id||'';
+      ['order-status','registration-status','installation-status','order-type','system-type','system-size','salesman','order-amount','financing','site-inspector']
+        .forEach(f=>{let el=document.getElementById(f); if(el&&data[f]) el.value=data[f];});
+      overlay.style.display='flex';
+    }
+    document.getElementById('create-order-btn').addEventListener('click',()=>openModal('create'));
+    document.getElementById('modal-close').addEventListener('click',()=>overlay.style.display='none');
+    overlay.addEventListener('click',e=>{if(e.target===overlay) overlay.style.display='none';});
+    document.querySelectorAll('.edit-icon').forEach(icon=>icon.addEventListener('click',e=>{
+      let row=e.target.closest('tr'),c=row.children;
+      let data={id:row.getAttribute('data-id'),
+        'order-status':c[1].textContent,'registration-status':c[2].textContent,'installation-status':c[3].textContent,
+        'order-type':c[4].textContent,'system-type':c[5].textContent,'system-size':c[6].textContent,
+        salesman:c[7].textContent,'order-amount':c[8].textContent,financing:c[9].textContent,'site-inspector':c[10].textContent
+      };
+      openModal('edit',data);
+    }));
+    form.addEventListener('submit',e=>{e.preventDefault();let pd=Object.fromEntries(new FormData(form).entries());console.log(pd.id? 'edit':'create',pd);overlay.style.display='none';});
+  </script>
+</body>
+</html>

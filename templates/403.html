@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Access Denied{% endblock %}
+
+{% block content %}
+  <style>
+    /* Center card horizontally & push it toward the top */
+    .content-wrapper.error-wrapper {
+      display: flex !important;
+      justify-content: center;
+      align-items: flex-start;           /* align to top instead of center */
+      padding: 4rem 0;                    /* vertical padding above and below */
+      min-height: calc(100vh - 64px);     /* ensure it fills below your header */
+    }
+    /* Style the card itself */
+    .forbidden-card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 2rem;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    /* Add space between the heading and the paragraph */
+    .forbidden-card h2 {
+      margin-bottom: 1rem;
+    }
+  </style>
+
+  <div class="content-wrapper error-wrapper">
+    <div class="forbidden-card">
+      <h2>Access Denied</h2>
+      <p>You don’t have permission to view this page. Please contact your administrator.</p>
+    </div>
+  </div>
+{% endblock %}

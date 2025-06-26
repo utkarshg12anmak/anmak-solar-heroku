@@ -1,0 +1,11 @@
+{% extends "admin/change_list.html" %}
+
+{% block object-tools %}
+  {{ block.super }}
+  <li>
+    <a class="addlink"
+       href="{% url 'admin:leads_lead_add' %}?via=sales">
+      Add Direct Lead
+    </a>
+  </li>
+{% endblock %}

@@ -1,0 +1,520 @@
+{# templates/leads/_lead_kanban.html #}
+
+{% load lead_extras %}
+
+<div class="kanban-container">
+  <div class="kanban-board">
+    {% for stage in lead_stage_list %}
+    {# Add “arrow-next” class to all columns except the last one #}
+    <div class="kanban-column">
+      <div class="kanban-column-header {% if not forloop.last %}arrow-next{% endif %}">
+        {{ stage.name }}
+
+        {# 2) Pull in the precomputed summary for this stage.id #}
+          {% with summary=stage_summaries|dict_get:stage.id %}
+            <div class="column-metrics">
+              <span class="metric-item">
+                <strong>{{ summary.count }}</strong> lead{{ summary.count|pluralize }}
+              </span>
+              <span class="metric-item">
+                <strong>{{ summary.kw_sum }}</strong> kW
+              </span>
+              <span class="metric-item">
+                <strong>₹{{ summary.amt_sum }}</strong>
+              </span>
+            </div>
+          {% endwith %}
+
+      </div>
+
+      
+
+      <div class="kanban-cards">
+        {% for lead in leads %}
+        {% if lead.stage and lead.stage.id == stage.id %}
+        <div class="kanban-card">
+          <div class="kanban-card-header">
+            <span class="kanban-card-id">
+
+             <div class="kanban-card-name">
+              {{ lead.customer.first_name }}{% if lead.customer.last_name %} {{ lead.customer.last_name }}{% endif %}&nbsp;&bull;&nbsp;{{ lead.system_size }} kW
+            </div>
+
+          </span>
+          <a href="{% url 'leads:edit' lead.pk %}" class="kanban-card-edit">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#4B5563" aria-hidden="true">
+              <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/>
+            </svg>
+          </a>
+        </div>
+        <div class="kanban-card-body">
+          {# --- Line 1: Name • System Size --- #}
+
+          {# --- Line 2: Phone Number --- #}
+          <div class="kanban-card-phone">
+            <div class="phone-id-container">
+              <span class="phone-highlight">{{ lead.customer.primary_phone }}</span>
+              <span class="lead-id">(#{{ lead.pk }})</span>
+            </div>
+
+            <span class="lead-quality-pill
+            {% if lead.lead_quality == 'hot' %}
+            quality-hot
+            {% elif lead.lead_quality == 'medium' %}
+            quality-medium
+            {% else %}
+            quality-cold
+            {% endif %}">
+            {{ lead.lead_quality }}
+          </span>
+
+
+        </div>
+
+        {# --- Line 3: City • System Type • Grid Type --- #}
+        <div class="kanban-card-meta">
+          {{ lead.customer.city }}&nbsp;&bull;&nbsp;
+          {{ lead.system_type|capfirst }}&nbsp;&bull;&nbsp;
+          {{ lead.get_grid_type_display|upper }}
+        </div>
+
+        {# --- Line 4: Amount (if present) --- #}
+        {% if lead.total_amount %}
+        <div class="kanban-card-amount">
+          ₹{{ lead.total_amount }}
+        </div>
+        {% endif %}
+
+        {# --- Line 5: Created Datetime [ Age ] --- #}
+        <div class="kanban-card-footer">
+          {{ lead.created_str }} [ {{ lead.age_display }} ]
+        </div>
+
+        {# ─ Line 0: Lead Manager Avatar (initials) ─ #}
+
+        <div class="kanban-card-manager-container">
+
+          {# ─── Customer Source Pill ─── #}
+          <div class="kanban-source-pill"
+          style="background-color: {{ lead.customer.source.color }};">
+          {{ lead.customer.source.name }}
+        </div>
+
+        {% if lead.lead_manager %}
+        <div class="kanban-card-manager">
+
+          <div class="kanban-avatar"
+          style="background-color: {{ lead.lead_manager.get_full_name|avatar_color }};">
+          {{ lead.lead_manager.get_full_name|initials }}
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endfor %}
+</div>
+</div>
+{% endfor %}
+</div>
+</div>
+
+<style>
+/* -------------- Kanban Board Base --------------- */
+.kanban-container {
+  width: 100%;
+  overflow-x: auto;         /* allow horizontal scroll if many columns */
+  padding-bottom: 1rem;     /* space below for scrollbar */
+}
+
+.kanban-board {
+  display: flex;
+  gap: 1rem;                /* space between columns */
+  padding: 0.5rem;          /* small padding around board */
+}
+
+/* --------------- Column Styling ----------------- */
+.kanban-column {
+  background-color: #f7f7f8; /* very light grey lane */
+  border-radius: 8px;
+  min-width: 260px;          /* fixed min width per column */
+  display: flex;
+  flex-direction: column;
+  max-height: 75vh;          /* allow vertical scroll if too many cards */
+  overflow-y: auto;
+  box-shadow: inset 0 0 0 1px #e2e2e2;
+}
+
+/* Sticky header so column name stays visible on scroll */
+/* ----- Updated Column Header (make it “relative” and add right padding) ----- */
+.kanban-column-header {
+  position: sticky;         /* keep original sticky behavior */
+  top: 0;
+  background-color: #e0e0e2;
+  padding: 0.75rem 1rem;    /* original top/bottom = 0.75rem, left/right = 1rem */
+  padding-right: 2rem;      /* <-- add extra right padding so text never overlaps arrow */
+  font-weight: 600;
+  font-size: 1rem;
+  color: #1f2937;
+  border-bottom: 1px solid #ccc;
+  z-index: 10;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  /* Make this “positioned” so ::after’s absolute positioning is relative to this header */
+  position: relative;       /* <-- change from “static” to “relative” (sticky is also fine, but explicitly here) */
+}
+
+/* ---------------- Add the “forward arrow” ---------------- */
+
+.kanban-column-header.arrow-next {
+  /* position: sticky already applied above, and we can still use
+     absolute positioning inside a sticky element for ::after. */
+   }
+
+
+
+/* ----- Updated Arrow Pseudo-Element ----- */
+.kanban-column-header.arrow-next::after {
+  content: '\25B6';           /* ► */
+  position: absolute;
+  right: 0.65rem;             /* <-- sits inside the new 2rem right padding */
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.1rem;
+  color: #1f2937;             /* dark-gray/black shade */
+  pointer-events: none;
+}
+
+
+
+/* --------------- Cards Container ----------------- */
+.kanban-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem 0.5rem;
+}
+
+/* --------------- Card Styling ----------------- */
+.kanban-card {
+  background-color: #ffffff;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  cursor: grab;              /* indicates draggable if added later */
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.kanban-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+}
+
+/* Card header (ID + edit icon) */
+.kanban-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.kanban-card-id {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;  /* gray‐700 */
+}
+
+.kanban-card-edit {
+  text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  transition: transform 0.1s ease;
+}
+
+.kanban-card-edit:hover {
+  transform: scale(1.1);
+}
+
+/* Card body (name, phone, amount) */
+.kanban-card-body {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.kanban-card-name {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #111827;  /* near-black text */
+  margin-bottom: 0.25rem;  
+}
+
+.kanban-card-phone {
+  font-size: 0.88rem;
+  color: #6b7280;  /* gray-500 */
+  margin-bottom: 0.25rem;
+  display: flex;
+  justify-content: space-between; /* left item goes left, right item goes right */
+  align-items: center;            /* vertical center on the same text baseline */
+}
+
+.phone-id-container {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ── Line 3: City • System Type • Grid Type ─────────────── */
+.kanban-card-meta {
+  font-size: 0.85rem;
+  color: #4b5563;             /* gray-700 */
+  margin-bottom: 0.25rem;
+}
+
+.kanban-card-amount {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #059669;  /* green-600 */
+  margin-bottom: 0.25rem;
+}
+
+/* --------- Scrollbar Refinements (optional) --------- */
+/* Chrome/Safari */
+.kanban-column::-webkit-scrollbar {
+  width: 6px;
+}
+.kanban-column::-webkit-scrollbar-thumb {
+  background-color: rgba(107, 114, 128, 0.4);
+  border-radius: 3px;
+}
+.kanban-container::-webkit-scrollbar {
+  height: 6px;
+}
+.kanban-container::-webkit-scrollbar-thumb {
+  background-color: rgba(107, 114, 128, 0.4);
+  border-radius: 3px;
+}
+
+/* Firefox */
+.kanban-column {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(107, 114, 128, 0.4) transparent;
+}
+.kanban-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(107, 114, 128, 0.4) transparent;
+}
+
+/* ── Line 5: Created Datetime [ Age ] ───────────────────── */
+.kanban-card-footer {
+  font-size: 0.75rem;
+  color: #9ca3af;             /* gray-400 */
+  margin-top: auto;           /* push footer to bottom if you want cards to grow evenly */
+}
+
+/* Make the card body a flex‐column container */
+.kanban-card-body {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem;
+  gap: 0.25rem;
+}
+
+/* Existing rules for other lines (name, phone, etc.) remain the same... */
+
+/* Updated: Manager container goes to bottom right */
+.kanban-card-manager {
+  margin-top: auto;      /* push this block to the bottom of the flex container */
+  align-self: flex-end;  /* align it to the right edge */
+}
+
+/* Avatar circle stays the same */
+.kanban-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: white;
+  font-size: 0.6rem;
+  font-weight: 450;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  /* Background color is still set inline via style="" */
+}
+
+/* (Optional) if you want a tiny bit of spacing below the avatar: */
+.kanban-card-manager {
+  /* already has margin-top:auto and align-self:flex-end */
+  margin-bottom: -0.25rem; /* pulls it just slightly closer to the card’s bottom edge */
+}
+
+/* ──────────────────────────────────────────────────────────────────── */
+/* Make the card body flex‐column so footer + bottom row sit at bottom */
+/* ──────────────────────────────────────────────────────────────────── */
+/* Ensure the card body is a column flex so footer + bottom row sit at bottom */
+.kanban-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem;
+}
+
+/* ───── Bottom‐row container (pill on left, avatar on right) ───── */
+.kanban-card-manager-container {
+  display: flex;
+  align-items: center;        /* vertical‐center the pill text and avatar together */
+  justify-content: space-between; /* push pill left, avatar right */
+  margin-top: auto;           /* stick to the bottom of the card */
+  width: 100%;                /* so space‐between spans the full width of the card */
+  box-sizing: border-box;     /* include padding within that 100% if needed */
+  padding-left: 0rem;      /* match the card body’s left padding */
+  padding-right: 0rem;     /* match the card body’s right padding */
+}
+
+/* ─── Customer Source Pill Styles (now 24px tall) ─── */
+/* ───────── Customer Source Pill (24 px tall, no vertical padding) ───────── */
+.kanban-source-pill {
+  display: flex;
+  align-items: center;        /* vertical‐center the text inside the 24 px box */
+  height: 24px;                /* exactly match avatar height */
+  padding: 0 8px;              /* NO top/bottom padding, only 8px left/right */
+  background-color: #CCCCCC;   /* fallback grey; overridden by inline style */
+  color: white;                /* always show the name in white */
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 12px;         /* half of 24 px, for perfectly rounded ends */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 8px;           /* small gap between pill and avatar */
+}
+
+/* ─── Avatar Circle Styles (unchanged except 24×24) ─── */
+.kanban-card-manager {
+  /* nothing needed here; flex with space-between handles alignment */
+}
+
+.kanban-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: white;
+  font-size: 0.6rem;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  /* background-color set inline (e.g. style="background-color: #3182ce") */
+}
+/* ──────────────────────────────────────────────────────────────────── */
+
+/* ── Make only the phone number text a bright “highlighty” blue ── */
+.phone-highlight {
+  color: #3B82F6;    /* Tailwind’s blue-500; adjust to taste */
+  font-weight: 500;  /* slightly bolder if you like */
+}
+
+/* (Optional) keep the lead‐ID “(#38)” in neutral grey so it doesn’t compete */
+.lead-id {
+  color: #6B7280;    /* Tailwind’s gray-500 */
+  font-size: 0.88rem;/* match the existing phone font size if needed */
+  margin-left: 4px;  /* tiny gap between phone and ID */
+}
+
+/* ─── Style for the quality pill (shared base) ─── */
+.lead-quality-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;                  /* pill height; adjust if your font-size differs */
+  padding: 0 6px;                /* no extra vertical padding—text is centered by line-height */
+  border: 1px dotted;            /* dotted outline */
+  border-radius: 10px;           /* half of 20px → fully rounded ends */
+  font-size: 0.65rem;            /* small, to match phone text */
+  font-weight: 500;
+  background-color: transparent; /* transparent fill */
+  text-transform: lowercase;     /* “Hot” → “hot” or leave as you like */
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ─── “Hot” pill: red outline + red text ─── */
+.quality-hot {
+  color: #E53E3E;       /* red‐600 */
+  border-color: #E53E3E;
+}
+
+/* ─── “Medium” pill: amber outline + amber text ─── */
+.quality-medium {
+  color: #D69E2E;       /* yellow‐600 */
+  border-color: #D69E2E;
+}
+
+/* ─── “Cold” pill: blue outline + blue text ─── */
+.quality-cold {
+  color: #3182CE;       /* blue‐600 */
+  border-color: #3182CE;
+}
+
+/* ─── Optional: style the (#ID) to be neutral gray ─── */
+.lead-id {
+  color: #6B7280;       /* gray‐500 */
+  margin-left: 4px;     /* small gap after phone */
+  font-size: 0.88rem;   /* match your existing phone text size */
+}
+
+/* ─── Optional: style the phone number text itself ─── */
+.phone-highlight {
+  color: #3B82F6;       /* bright blue for phone */
+  font-weight: 500;
+}
+
+/* ───────────────────────────────────────────── */
+/* Kanban column header now has two rows: title + metrics */
+
+/* Make the header a column‐flex container */
+.kanban-column-header {
+  position: sticky;
+  top: 0;
+  background-color: #e0e0e2;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #ccc;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  z-index: 10;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;           /* small gap between title and metrics */
+}
+
+/* Stage title (larger, bold) */
+.kanban-column-header .column-title {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #1f2937;
+}
+
+/* Metrics row (smaller, gray, inline‐flex items) */
+.kanban-column-header .column-metrics {
+  display: flex;
+  gap: 1rem;              /* space between “X leads” and “Y kW” and “₹Z” */
+  font-size: 0.75rem;     /* slightly smaller than stage title */
+  color: rgba(75, 85, 99, 0.6);  /* gray-700 @ 60% opacity */
+}
+
+/* Make the number itself darker for quick scanning */
+.kanban-column-header .column-metrics .metric-item strong {
+color: rgba(17, 24, 39, 0.69);         /* near-black for the actual number */
+}
+/* ───────────────────────────────────────────── */
+</style>

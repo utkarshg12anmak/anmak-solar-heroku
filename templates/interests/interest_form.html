@@ -1,0 +1,694 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{% if object %}Edit Interest{% else %}New Interest{% endif %}{% endblock %}
+
+{% block content %}
+
+<style>
+  :root {
+    --new-btn: #38a169;
+    --primary-color: #1e40af;
+    --new-btn-hover: #2f855a;
+    --edit-btn: #d69e2e;
+    --edit-btn-hover: #b8861e;
+    --cancel-btn: #a0aec0;
+    --cancel-btn-hover: #718096;
+    --card-bg: #ffffff;
+    --card-shadow: rgba(0, 0, 0, 0.05);
+    --text-primary: #1a202c;
+    --status-color: #ed8936;
+    --status-color-hover: #dd6b20;
+  }
+  .page-header { margin-bottom: 1.5rem; }
+  .page-header h1 { color: var(--text-primary); font-size: 1.75rem; }
+
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color) !important;;
+  }
+
+  .btn-ghost:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* define purple button */
+  .btn-purple {
+    background: #805ad5;
+    color: #fff;
+    border: none;
+  }
+
+/* hover only when enabled */
+.btn-purple:hover:not(:disabled) {
+  background: #6b46c1;
+  transform: translateY(-1px);
+}
+
+/* disabled state for all buttons */
+.btn:disabled {
+  background: #e2e8f0 !important;   /* light grey */
+  color: #718096 !important;        /* darker grey text */
+  cursor: not-allowed;
+  transform: none;
+  opacity: 1;
+}
+
+/* STATUS */
+.status-choices .choices {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.status-choices .choice-input {
+  position: absolute;
+  opacity: 0;
+  width: 0; height: 0;
+}
+.status-choices .choice-box {
+  padding: 0.5rem 1rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 0.375rem;
+  background: #fff;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  user-select: none;
+  text-align: center;
+}
+.status-choices .choice-box:hover {
+  background: #f7fafc;
+}
+.status-choices input:checked + .choice-box {
+  background: var(--status-color);
+  border-color: var(--status-color);
+  color: #fff;
+}
+
+
+.btn-purple {
+  background: #805ad5;
+  color: #fff;
+}
+.btn-purple:hover:not(:disabled) {
+  background: #6b46c1;
+}
+
+#create-customer-btn {
+  margin-left: 0;    /* zero out any browser defaults */
+}
+.right-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+.right-actions {
+  display: flex;
+  gap: 0.5rem;  /* make Cancel/Save sit closer */
+}
+
+.btn-ghost:hover:not([disabled]) {
+  background: var(--card-bg);
+}
+
+.form-group > div {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.dials-btn {
+  width: 1.5rem; height: 1.5rem;
+  font-size: 1.25rem;
+  line-height: 1;
+  text-align: center;
+  background: #edf2f7;
+  border: 1px solid #cbd5e0;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+.dials-btn:hover {
+  background: #e2e8f0;
+}
+
+.content-wrapper { overflow-x: hidden; padding: 1rem; }
+.card {
+  background: var(--card-bg);
+  box-shadow: 0 2px 4px var(--card-shadow);
+  border-radius: 0.5rem;
+  padding: 2rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.btn-create {
+  background: rebeccapurple;
+  color: #fff;
+  border: none;
+  transition: background 0.2s, opacity 0.2s;
+}
+.btn-create:hover:not(:disabled) {
+  background: indigo;
+}
+.btn-create:disabled {
+  background: #ccc;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 1rem 0;
+}
+
+.form-group { margin-bottom: 1rem; }
+label { display: block; font-weight: 600; margin-bottom: 0.25rem; color: var(--text-primary); }
+input, select, textarea { width: 100%; padding: 0.5rem; border: 1px solid #cbd5e0; border-radius: 0.375rem; box-sizing: border-box;}
+
+.input-group {
+  display: flex;
+}
+
+.input-group-text {
+  background: #edf2f7;
+  border: 1px solid #cbd5e0;
+  border-right: none;
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.375rem 0 0 0.375rem;
+}
+
+.input-group input { border-left: none; border-radius: 0 0.375rem 0.375rem 0; }
+
+/* Mode of contact choice boxes */
+.mode-choices .choices { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.choice-input { position: absolute; opacity: 0; width: 0; height: 0; }
+.choice-box {
+  padding: 0.5rem 1rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 0.375rem;
+  background: var(--card-bg);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s, border-color 0.2s;
+  text-align: center;
+}
+.choice-box:hover { background: #edf2f7; }
+.choice-input:checked + .choice-box {
+  background: var(--new-btn);
+  border-color: var(--new-btn);
+  color: #fff;
+}
+
+/* SOURCE */
+.source-choices .choices { display: flex; gap: .5rem; flex-wrap: wrap; }
+.source-choices .choice-input { /* ... */ }
+.source-choices .choice-box { /* ... */ }
+.source-choices input:checked + .choice-box {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #fff;
+}
+
+/* Toggle switch */
+.toggle-switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #ccc; border-radius: 24px; transition: background 0.3s; }
+.slider:before {
+  content: "";
+  position: absolute;
+  height: 18px; width: 18px;
+  left: 3px; bottom: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+.toggle-switch input:checked + .slider { background: #48BB78; }
+.toggle-switch input:checked + .slider:before { transform: translateX(26px); }
+
+/* Disabled status field */
+#id_status:disabled { background-color: #f0f0f0; color: #666; cursor: not-allowed; }
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;    /* push first button to left */
+  align-items: center;               /* vertically center everything */
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;                 /* optional breathing room */
+  border-top: 1px solid #e2e8f0;     /* subtle separator */
+}
+
+/* put this alongside your .mode-choices rules */
+.source-choices .choices {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+.source-choices .choice-input {
+  position: absolute;
+  opacity: 0;
+  width: 0; height: 0;
+}
+.source-choices .choice-box {
+  padding: .5rem 1rem;
+  border: 1px solid #cbd5e0;
+  border-radius: .375rem;
+  background: #fff;
+  cursor: pointer;
+  transition: background .2s, border-color .2s;
+  user-select: none;
+}
+.source-choices .choice-box:hover {
+  background: #edf2f7;
+}
+/* when checked, use blue */
+.source-choices input:checked + .choice-box {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #fff;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: #fff;
+  text-decoration: none;
+  display: inline-block;
+}
+.btn-new { background: var(--new-btn); }
+.btn-new:hover { background: var(--new-btn-hover); }
+.btn-cancel { background: var(--cancel-btn); }
+.btn-cancel:hover { background: var(--cancel-btn-hover); }
+</style>
+
+<div class="content-wrapper">
+  <div class="page-header">
+    <h1>{% if object %}Edit Interest{% else %}New Interest{% endif %}</h1>
+  </div>
+
+  <div class="card">
+    <form method="post" id="interest-form">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label for="id_phone_number">Phone Number</label>
+        <div class="input-group">
+          <span class="input-group-text">+91</span>
+          {{ form.phone_number }}
+        </div>
+      </div>
+
+      <div class="form-group mode-choices">
+        <label class="group-label">Mode of Contact</label>
+        <div class="choices">
+         {% for value,label in form.mode.field.choices %}
+         {%if value %}
+         <input
+         type="radio"
+         name="{{ form.mode.name }}"
+         id="mode_{{ forloop.counter }}"
+         value="{{ value }}"
+         {% if form.mode.value|stringformat:"s" == value|stringformat:"s" %}checked{% endif %}
+         class="choice-input"
+         />
+         <label for="mode_{{ forloop.counter }}" class="choice-box">
+          {{ label }}
+        </label>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="form-group source-choices">
+      <label class="group-label" for="id_source">Interest Source</label>
+      <div class="choices">
+        {% for value, label in form.source.field.choices %}
+        {% if value %}
+        <input
+        class="choice-input"
+        type="radio"
+        name="{{ form.source.name }}"
+        id="source_{{ forloop.counter }}"
+        value="{{ value }}"
+        {% if form.source.value|stringformat:"s" == value|stringformat:"s" %}checked{% endif %}
+        />
+        <label for="source_{{ forloop.counter }}" class="choice-box">
+          {{ label }}
+        </label>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    {% if object %}
+    <div class="form-group">
+      <label>Dials</label>
+      <div>
+        <button
+        type="button"
+        class="dials-btn"
+        data-pk="{{ object.pk }}"
+        data-delta="-1"
+        >−</button>
+        <span id="dials-count-{{ object.pk }}">
+          {{ object.dials|default:0 }}
+        </span>
+        <button
+        type="button"
+        class="dials-btn"
+        data-pk="{{ object.pk }}"
+        data-delta="1"
+        >＋</button>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="form-group">
+      <label for="conn_toggle">Connected?</label>
+      <label class="toggle-switch">
+        <input
+        type="checkbox"
+        id="conn_toggle"
+        name="is_connected"
+        value="True"
+        {% if form.is_connected.value %}checked{% endif %}
+        />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    
+
+    <div class="form-group status-choices">
+      <label class="group-label required-star">Interest Status</label>
+      <div class="choices">
+        {% for value,label in form.status.field.choices %}
+        {% if value %}
+        <input
+        class="choice-input"
+        type="radio"
+        name="{{ form.status.name }}"
+        id="status_{{ forloop.counter }}"
+        value="{{ value }}"
+        {% if form.status.value|stringformat:"s" == value|stringformat:"s" %}checked{% endif %}
+        />
+        <label for="status_{{ forloop.counter }}" class="choice-box">
+          {{ label }}
+        </label>
+        {% endif %}
+        {% endfor %}
+      </div>
+      {% if form.status.errors %}
+      <p class="error-message">{{ form.status.errors.0 }}</p>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      <label for="id_remarks">Remarks</label>
+      {{ form.remarks }}
+    </div>
+
+  
+<div class="form-actions">
+  {% if not object.lead %}
+  {% if not object.lead %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const btn        = document.getElementById('create-customer-btn');
+  if (!btn) return;  // nothing to do if it’s hidden
+  const form       = document.getElementById('interest-form');
+  const baseUrl    = btn.dataset.baseUrl;
+  const interestPk = btn.dataset.interestPk;
+
+  function getCSRF() {
+    return document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+  }
+
+  btn.addEventListener('click', async e => {
+    e.preventDefault();
+    if (btn.disabled) return;
+
+    // 1) save the latest edits
+    const resp = await fetch(form.action, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCSRF() },
+      body: new FormData(form),
+    });
+    if (!resp.ok) {
+      alert('Please fix any errors before creating the customer.');
+      return;
+    }
+
+    // 2) grab fresh phone & source values
+    const phone  = encodeURIComponent(document.getElementById('id_phone_number').value);
+    const source = encodeURIComponent(document.querySelector('input[name="source"]:checked')?.value || '');
+
+    // 3) build the URL and open it
+    const url = `${ baseUrl }?from_interest=${ interestPk }&phone=${ phone }&source=${ source }`;
+    window.open(url, '_blank');
+    window.location.href = "{% url 'interests:list' %}";
+  });
+});
+</script>
+{% endif %}
+    {# only show this whole block when there’s no linked lead #}
+    {% if object.pk %}
+      <button
+        type="button"
+        id="create-customer-btn"
+        class="btn btn-create"
+        data-base-url="{% url 'customers:customer_leads_add' %}"
+        data-interest-pk="{{ object.pk }}"
+        {% if not form.is_connected.value or form.status.value != "Interested" %}disabled{% endif %}
+      >
+        Save & Create Customer
+      </button>
+    {% endif %}
+
+    <div class="right-actions">
+      <a href="{% url 'interests:list' %}" class="btn btn-cancel">Cancel</a>
+      <button type="submit" class="btn btn-new">
+        {% if object.pk %}Save Changes{% else %}Create Interest{% endif %}
+      </button>
+    </div>
+  {% else %}
+    <div class="right-actions">
+      <a href="{% url 'interests:list' %}" class="btn btn-cancel">Back to list</a>
+    </div>
+  {% endif %}
+</div>
+
+</form>
+</div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    const createBtn = document.getElementById('create-customer-btn');
+    const form      = document.getElementById('interest-form');
+
+  // helper to pull CSRF token from your template’s <input name="csrfmiddlewaretoken">
+    function getCSRF() {
+      return document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    }
+
+    createBtn.addEventListener('click', async function(e){
+      e.preventDefault();
+    // if still disabled, bail
+      if (createBtn.disabled) return;
+
+    // 1) Serialize the form
+      const data = new FormData(form);
+
+    // 2) POST it via fetch to save your Interest
+      const resp = await fetch(form.action, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCSRF() },
+        body: data
+      });
+
+      if (!resp.ok) {
+        alert('Could not save Interest first. Please fix any errors and try again.');
+        return;
+      }
+
+    // 3) on success, open the customer-create URL in a new tab
+      const url = createBtn.dataset.customerUrl;
+      window.open(url, "_blank");
+
+      window.location.href = "{% url 'interests:list' %}";
+    });
+  });
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const connToggle    = document.getElementById('conn_toggle');
+    const statusRadios  = document.querySelectorAll('input[name="status"]');
+    const createBtn     = document.getElementById('create-customer-btn');
+
+    function updateState() {
+      const connected = connToggle.checked;
+
+      // disable/grey‐out all status boxes when not connected
+      statusRadios.forEach(radio => {
+        radio.disabled = !connected;
+        radio.nextElementSibling.style.opacity = connected ? '1' : '0.5';
+        radio.nextElementSibling.style.cursor  = connected ? 'pointer' : 'not-allowed';
+      });
+
+      // find the checked status label text
+      const selRadio = Array.from(statusRadios).find(r=>r.checked);
+      const selLabel = selRadio
+      ? selRadio.nextElementSibling.textContent.trim()
+      : null;
+
+      // only enable “Create Customer” if connected AND status === "Interested"
+      createBtn.disabled = !(connected && selLabel === 'Interested');
+    }
+
+    // listen for changes
+    connToggle.addEventListener('change', updateState);
+    statusRadios.forEach(radio => radio.addEventListener('change', updateState));
+
+    // run on initial load
+    updateState();
+  });
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // grab CSRF from the Django form
+    function getCsrfToken() {
+      return document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    }
+
+    // attach to all +/– buttons
+    document.querySelectorAll('.dials-btn').forEach(btn => {
+      btn.addEventListener('click', async e => {
+        e.preventDefault();
+        const pk    = btn.dataset.pk;
+        const delta = Number(btn.dataset.delta);
+        if (!pk) return;
+
+        try {
+          const res = await fetch(
+            "{% url 'interests:adjust_dials' 0 %}".replace('/0/','/'+pk+'/'),
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken(),
+              },
+              body: JSON.stringify({ delta }),
+            }
+            );
+          if (!res.ok) throw new Error('Network response was not OK');
+          const data = await res.json();
+          document.getElementById(`dials-count-${pk}`).textContent = data.dials;
+        } catch(err) {
+          console.error(err);
+          alert('Failed to update dials');
+        }
+      });
+    });
+  });
+
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    const phone = document.getElementById('id_phone_number');
+    if (!phone) return;
+    phone.addEventListener('input', function(){
+      this.value = this.value.replace(/\D/g, '');
+    });
+  });
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const createBtn = document.getElementById('create-customer-btn');
+  const form      = document.getElementById('interest-form');
+
+  function getCSRF() {
+    return document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+  }
+
+  createBtn.addEventListener('click', async e => {
+    e.preventDefault();
+    if (createBtn.disabled) return;
+
+    // 1) First save the interest
+    const resp = await fetch(form.action, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCSRF() },
+      body: new FormData(form)
+    });
+
+    if (!resp.ok) {
+      alert('Could not save Interest first. Please fix any errors and try again.');
+      return;
+    }
+
+    // 2) Build the *fresh* URL from the latest inputs
+    const base    = createBtn.dataset.baseUrl;
+    const interestId = {{ object.pk }};
+    const phone   = encodeURIComponent(form.phone_number.value.trim());
+    const source  = encodeURIComponent(form.source.value);
+    const url     = `${base}?from_interest=${interestId}&phone=${phone}&source=${source}`;
+
+    // 3) Open new tab, then finally redirect back
+    window.open(url, '_blank');
+    window.location.href = "{% url 'interests:list' %}";
+  });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const btn       = document.getElementById('create-customer-btn');
+  const form      = document.getElementById('interest-form');
+  const baseUrl   = btn.dataset.baseUrl;
+  const interestPk= btn.dataset.interestPk;
+
+  function getCSRF() {
+    return document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+  }
+
+  btn.addEventListener('click', async e => {
+    e.preventDefault();
+    if (btn.disabled) return;
+
+    // 1) Save the interest with the latest draft edits
+    const resp = await fetch(form.action, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCSRF() },
+      body: new FormData(form),
+    });
+    if (!resp.ok) {
+      alert('Please fix any errors before creating the customer.');
+      return;
+    }
+
+    // 2) Pull the *current* phone & source values
+    const phoneEl  = document.getElementById('id_phone_number');
+    const phone    = encodeURIComponent(phoneEl.value.trim());
+    const sourceEl = document.querySelector('input[name="source"]:checked');
+    const source   = encodeURIComponent(sourceEl ? sourceEl.value : '');
+
+    // 3) Build a fresh URL
+    const url = `${baseUrl}?from_interest=${interestPk}&phone=${phone}&source=${source}`;
+
+    // 4) Open customer-create in a new tab, then reload this listing
+    window.open(url, '_blank');
+    window.location.href = "{% url 'interests:list' %}";
+  });
+});
+</script>
+{% endblock %}

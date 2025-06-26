@@ -1,0 +1,16 @@
+{# templates/items/price_rule_confirm_delete.html #}
+{% extends "base.html" %}
+{% block content %}
+  <div class="container mt-4">
+    <h2>Delete Price Rule?</h2>
+    <p>Are you sure you want to delete the rule for 
+      <strong>{{ object.item.product_name }}</strong> in 
+      <strong>{{ object.price_book.name }}</strong>?
+    </p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Yes, Delete</button>
+      <a href="{% url 'items:price_rules_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+  </div>
+{% endblock %}

@@ -1,0 +1,1580 @@
+{% extends "base.html" %}
+{% load tz %}
+
+{% block content %}
+
+<style>
+      /* === Page Header === */
+      .page-header {
+        display: flex;
+        align-items: baseline;
+        margin-bottom: 1rem;
+      }
+      .page-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-right: 1rem;
+      }
+      .total-count {
+        font-size: 0.9rem;
+        color: #555;
+      }
+
+      /* === “Add/Edit Brands” button (blue) === */
+      #openBrandModal {
+        margin-left: auto;
+        background-color: #2563eb;
+        color: #fff;
+        padding: 0.5rem 1.25rem;
+        border: none;
+        border-radius: 9999px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: background-color 0.2s ease;
+      }
+      #openBrandModal:hover {
+        background-color: #1e40af;
+      }
+      #openBrandModal svg {
+        margin-right: 0.5rem;
+        vertical-align: middle;
+      }
+
+      /* === “Add/Edit UOMs” button (green) === */
+      #openUOMModal {
+        background-color: #10b981;
+        color: #fff;
+        padding: 0.5rem 1.25rem;
+        border: none;
+        border-radius: 9999px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin-left: 1rem;
+        transition: background-color 0.2s ease;
+      }
+      #openUOMModal:hover {
+        background-color: #047857;
+      }
+      #openUOMModal svg {
+        margin-right: 0.5rem;
+        vertical-align: middle;
+      }
+
+      /* === “Add/Edit L1 Categories” button (purple) === */
+      #openL1Modal {
+        background-color: #8b5cf6;
+        color: #fff;
+        padding: 0.5rem 1.25rem;
+        border: none;
+        border-radius: 9999px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin-left: 1rem;
+        transition: background-color 0.2s ease;
+      }
+      #openL1Modal:hover {
+        background-color: #7c3aed;
+      }
+      #openL1Modal svg {
+        margin-right: 0.5rem;
+        vertical-align: middle;
+      }
+
+      /* === “Add/Edit L2 Categories” button (orange) === */
+      #openL2Modal {
+        background-color: #f97316;  /* Tailwind orange-500 */
+        color: #fff;
+        padding: 0.5rem 1.25rem;
+        border: none;
+        border-radius: 9999px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin-left: 1rem;
+        transition: background-color 0.2s ease;
+      }
+      #openL2Modal:hover {
+        background-color: #ea580c;  /* Tailwind orange-600 */
+      }
+      #openL2Modal svg {
+        margin-right: 0.5rem;
+        vertical-align: middle;
+      }
+
+      /* === Table Card (unchanged) === */
+      .table-card {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        padding: 1rem;
+        overflow-x: auto;
+        margin-bottom: 2rem;
+      }
+      .items-table {
+        width: 100%;
+        table-layout: auto;
+        border-collapse: collapse;
+      }
+      .items-table th,
+      .items-table td {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+        color: #333;
+        border-bottom: 1px solid #e5e7eb;
+        text-align: left;
+        vertical-align: middle;
+        white-space: nowrap;
+      }
+      .items-table th {
+        background-color: transparent;
+        font-weight: 600;
+      }
+      .items-table tr:hover td {
+        background-color: #f3f4f6;
+      }
+      .items-table tr:first-child th:first-child {
+        border-top-left-radius: 8px;
+      }
+      .items-table tr:first-child th:last-child {
+        border-top-right-radius: 8px;
+      }
+      .items-table tr:last-child td:first-child {
+        border-bottom-left-radius: 8px;
+      }
+      .items-table tr:last-child td:last-child {
+        border-bottom-right-radius: 8px;
+      }
+      .small-cell {
+        white-space: nowrap;
+        font-size: 0.85rem;
+        color: #555;
+      }
+      .action-btn {
+        margin-right: 0.5rem;
+        font-size: 0.85rem;
+        color: #1d4ed8;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+      .action-btn:hover {
+        text-decoration: underline;
+      }
+
+      /* === Overlay for all four modals (hidden by default) === */
+      #brandModal,
+      #uomModal,
+      #l1Modal,
+      #l2Modal,
+      #editItemModal,
+      #addItemModal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+
+      /* === Modal Content (shared) === */
+      .modal-content {
+        background-color: #fff;
+        margin: 5vh auto;
+        padding: 1.5rem 2rem;
+        border-radius: 12px;
+        width: 420px;
+        max-width: 90%;
+        max-height: 85vh;
+        overflow-y: auto;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.08);
+        animation: fadeIn 0.3s ease-out;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      /* === Modal Header (shared) === */
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #e0e0e0;
+        padding-bottom: 1rem;
+        margin-bottom: 1.5rem;
+      }
+      .modal-header h2 {
+        font-size: 1.4rem;
+        color: #333;
+        margin: 0;
+        font-weight: 600;
+      }
+      .close-btn {
+        font-size: 1.6rem;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        color: #888;
+        transition: color 0.2s ease-in-out, transform 0.2s ease-in-out;
+      }
+      .close-btn:hover {
+        color: #333;
+        transform: rotate(90deg);
+      }
+
+      /* === Form Groups (Brand / UOM / L1 / L2) === */
+      .brand-form-group,
+      .uom-form-group,
+      .l1-form-group,
+      .l2-form-group {
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .brand-form-group label,
+      .uom-form-group label,
+      .l1-form-group label,
+      .l2-form-group label {
+        display: inline-block;
+        min-width: 90px;
+        text-align: right;
+        flex-shrink: 0;
+        font-size: 0.95rem;
+        margin-bottom: 0;
+        color: #555;
+        font-weight: 500;
+      }
+      .brand-form-group input[type="text"],
+      .uom-form-group input[type="text"],
+      .l1-form-group input[type="text"],
+      .l2-form-group input[type="text"],
+      .l2-form-group select {
+        flex-grow: 1;
+        width: auto;
+        padding: 0.6rem 0.8rem;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 1rem;
+        color: #333;
+        transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+      }
+      .brand-form-group input[type="text"]:focus,
+      .uom-form-group input[type="text"]:focus,
+      .l1-form-group input[type="text"]:focus,
+      .l2-form-group input[type="text"]:focus,
+      .l2-form-group select:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+      }
+
+      /* === Modal Footer (shared) === */
+      .modal-footer {
+        margin-top: 2rem;
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+      }
+      .modal-footer .btn {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.95rem;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, transform 0.1s ease-in-out;
+        min-width: 80px;
+      }
+      .btn-save {
+        background-color: #4f46e5;
+        color: #fff;
+        font-weight: 600;
+      }
+      .btn-save:hover {
+        background-color: #4338ca;
+        transform: translateY(-1px);
+      }
+      .btn-save:active {
+        background-color: #3730a3;
+        transform: translateY(0);
+      }
+      .btn-cancel {
+        background-color: #e0e0e0;
+        color: #555;
+        font-weight: 500;
+      }
+      .btn-cancel:hover {
+        background-color: #d1d1d1;
+        color: #333;
+        transform: translateY(-1px);
+      }
+      .btn-cancel:active {
+        background-color: #c0c0c0;
+        transform: translateY(0);
+      }
+
+      #l2Modal .modal-content {
+        width: 600px;      /* increase from 420px to 600px */
+        max-width: 95%;    /* ensure it’s still responsive on small screens */
+      }
+
+      .btn-edit {
+        background-color: #fbbf24;  /* Tailwind yellow-400 */
+        color: #fff;
+        padding: 0.35rem 0.75rem;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        transition: background-color 0.2s ease;
+      }
+      .btn-edit:hover {
+        background-color: #f59e0b; /* darker yellow-500 on hover */
+      }
+      .btn-edit svg {
+        margin-right: 0.4rem;
+        vertical-align: middle;
+      }
+
+      /* ------------------------------- */
+      /* OPTIONAL: Increase width only for Edit‐Item modal (if needed) */
+      /* ------------------------------- */
+      #editItemModal .modal-content {
+        width: 600px;      /* for example, wider than 420px */
+        max-width: 95%;
+      }
+
+      /* ------------------------------------------------ */
+    /* Grey‐out any <input disabled> inside a modal    */
+    /* (so SKU looks visually “disabled”)             */
+    /* ------------------------------------------------ */
+    .modal-content input[disabled] {
+      background-color: #f3f4f6;   /* very light gray background */
+      color: #6b7280;              /* gray text */
+      cursor: not-allowed;         /* show “not allowed” cursor */
+    }
+
+    /* ------------------------------------------------ */
+    /* Ensure l2-form-group lines up label + field     */
+    /* (same flex styling we use for brand/uom/etc.)   */
+    /* ------------------------------------------------ */
+    .l2-form-group {
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .l2-form-group label {
+      display: inline-block;
+      min-width: 90px;
+      text-align: right;
+      flex-shrink: 0;
+      font-size: 0.95rem;
+      color: #555;
+      font-weight: 500;
+    }
+    .l2-form-group input[type="text"],
+    .l2-form-group select {
+      flex-grow: 1;
+      width: auto;
+      padding: 0.6rem 0.8rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      color: #333;
+      transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .l2-form-group input[type="text"]:focus,
+    .l2-form-group select:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    /* ----------------------------------------------------------- */
+    /* Grey‐out any readonly <input> inside a modal (including L1) */
+    /* ----------------------------------------------------------- */
+    .modal-content input[readonly] {
+      background-color: #f3f4f6;   /* very light gray background */
+      color: #6b7280;              /* gray text */
+      cursor: not-allowed;         /* show “not allowed” cursor */
+    }
+
+    /* ------------------------------ */
+    /* “+ Item” button – new color    */
+    /* ------------------------------ */
+    .btn-add {
+      background-color: #06b6d4;   /* cyan‐500 */
+      color: #fff;
+      padding: 0.5rem 1.25rem;
+      border: none;
+      border-radius: 9999px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-left: 1rem;           /* space after L2 button */
+      transition: background-color 0.2s ease;
+    }
+    .btn-add:hover {
+      background-color: #0891b2;   /* darker cyan‐600 */
+    }
+    .btn-add svg {
+      margin-right: 0.4rem;
+      vertical-align: middle;
+    }
+
+    /* -------------------------------------------------------- */
+    /* Grey‐out any <input disabled> or <input readonly> in modal */
+    /* -------------------------------------------------------- */
+    .modal-content input[disabled],
+    .modal-content input[readonly] {
+      background-color: #f3f4f6;   /* very light gray */
+      color: #6b7280;              /* gray text */
+      cursor: not-allowed;
+    }
+
+    /* --------------------------------- */
+    /* l2-form-group styling (shared)    */
+    /* --------------------------------- */
+    .l2-form-group {
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .l2-form-group label {
+      display: inline-block;
+      min-width: 90px;
+      text-align: right;
+      flex-shrink: 0;
+      font-size: 0.95rem;
+      color: #555;
+      font-weight: 500;
+    }
+    .l2-form-group input[type="text"],
+    .l2-form-group select {
+      flex-grow: 1;
+      width: auto;
+      padding: 0.6rem 0.8rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      color: #333;
+      transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .l2-form-group input[type="text"]:focus,
+    .l2-form-group select:focus {
+      outline: none;
+      border-color: #6366f1; /* indigo focus */
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    /* ============================== */
+    /* UPC Section Styles (shared)   */
+    /* ============================== */
+    .upc-section {
+      margin-top: 1.5rem;
+    }
+    .upc-section label {
+      display: block;
+      font-size: 0.95rem;
+      color: #555;
+      margin-bottom: 0.5rem;
+    }
+    #upc-list .upc-form-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+    #upc-list .upc-form-group input[type="text"] {
+      flex-grow: 1;
+      width: auto;
+      padding: 0.6rem 0.8rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      color: #333;
+      transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    #upc-list .upc-form-group input[type="text"]:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+    /* “×” remove‐button next to each input */
+    .btn-remove-upc,
+    .btn-remove-new-upc {
+      background: transparent;
+      border: none;
+      font-size: 1.2rem;
+      color: #bb2649; /* a subtle “danger” red */
+      cursor: pointer;
+      line-height: 1;
+      padding: 0 0.4rem;
+    }
+    .btn-remove-upc:hover,
+    .btn-remove-new-upc:hover {
+      color: #9b123f;
+    }
+    /* The “+ Add another UPC” button */
+    #addMoreUPC {
+      background-color: #e5e7eb; /* gray-200 */
+      color: #333;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 0.4rem 1rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      margin-top: 0.5rem;
+    }
+    #addMoreUPC:hover {
+      background-color: #d1d5db; /* gray-300 on hover */
+    }
+
+</style>
+
+<!-- ===== Page Header ===== -->
+<div class="page-header">
+  <h1 class="page-title">Items</h1>
+  <p class="total-count">
+    {% if total_count == 1 %}(1 Record Found){% else %}({{ total_count }} Records Found){% endif %}
+  </p>
+
+
+  {% if can_edit %}
+
+  <!-- Brand, UOM, L1, and L2 buttons -->
+  <button id="openBrandModal" class="btn-primary">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="#fff" aria-hidden="true" focusable="false">
+      <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/>
+    </svg>
+    Brands
+  </button>
+  <button id="openUOMModal">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="#fff" aria-hidden="true" focusable="false">
+      <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/>
+    </svg>
+    UOMs
+  </button>
+  <button id="openL1Modal">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="#fff" aria-hidden="true" focusable="false">
+      <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/>
+    </svg>
+    L1 Categories
+  </button>
+  <button id="openL2Modal">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="#fff" aria-hidden="true" focusable="false">
+      <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/>
+    </svg>
+    L2 Categories
+  </button>
+    {% endif %}
+
+  <!-- + Item button (NEW) -->
+  {% if can_edit %}
+  <button id="openAddItemModal" class="btn-add">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+    width="16" height="16" fill="#fff" aria-hidden="true" focusable="false">
+    <path d="M12 5a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H6a1 1 0 1 1 0-2h5V6a1 1 0 0 1 1-1z"/>
+  </svg>
+  Item
+</button>
+{% endif %}
+</div>
+
+  <form method="get" style="display:flex; gap:.5rem; margin-bottom:1rem;">
+  <input
+    type="text"
+    name="q"
+    value="{{ search_query }}"
+    placeholder="Search SKU, name, brand, L1 or L2…"
+    style="flex:1;max-width:300px;padding:.5rem .75rem;border:1px solid #ccc;border-radius:.375rem;"
+  />
+  <button type="submit" style="background:#3182ce;color:#fff;border:none;padding:.5rem 1rem;border-radius:.375rem;">Search</button>
+  <a href="{% url 'items:list' %}" style="background:#e53e3e;color:#fff;padding:.5rem 1rem;border-radius:.375rem;text-decoration:none;">Reset</a>
+</form>
+
+<!-- ===== Items Table ===== -->
+<div class="table-card">
+
+
+
+  <table class="items-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>SKU</th>
+        <th>Product Name</th>
+        <th>Brand</th>
+        <th>L1 Category</th>
+        <th>L2 Category</th>
+        <th>UOM</th>
+        <th>Created At</th>
+        <th>Created By</th>
+        <th>Updated At</th>
+        <th>Updated By</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ item.sku }}</td>
+        <td>{{ item.product_name }}</td>
+        <td>{{ item.brand.name }}</td>
+        <td>{{ item.l1_category.name }}</td>
+        <td>{{ item.l2_category.name }}</td>
+        <td>{{ item.uom.unit_name }}</td>
+        <td class="small-cell">
+          {% timezone "Asia/Kolkata" %}{{ item.created_at|date:"Y-m-d H:i" }}{% endtimezone %}
+        </td>
+        <td class="small-cell">
+          {% if item.created_by %}
+          {{ item.created_by.get_full_name|default:item.created_by.username }}
+          {% else %}
+          &mdash;
+          {% endif %}
+        </td>
+        <td class="small-cell">
+          {% timezone "Asia/Kolkata" %}{{ item.updated_at|date:"Y-m-d H:i" }}{% endtimezone %}
+        </td>
+        <td class="small-cell">
+          {% if item.updated_by %}
+          {{ item.updated_by.get_full_name|default:item.updated_by.username }}
+          {% else %}
+          &mdash;
+          {% endif %}
+        </td>
+        <td>
+          <!-- ========== EDIT BUTTON ========== -->
+          {% if can_edit %}
+
+          <button
+          class="btn-edit"
+          data-item-id="{{ item.id }}"
+          data-item-sku="{{ item.sku }}"
+          data-item-name="{{ item.product_name|escape }}"
+          data-item-brand="{{ item.brand.id }}"
+          data-item-l1="{{ item.l1_category.id }}"
+          data-item-l2="{{ item.l2_category.id }}"
+          data-item-uom="{{ item.uom.id }}"
+          data-item-created-at="{{ item.created_at|date:'Y-m-d H:i' }}"
+          data-item-created-by="{% if item.created_by %}{{ item.created_by.username }}{% else %}—{% endif %}"
+          data-item-updated-at="{{ item.updated_at|date:'Y-m-d H:i' }}"
+          data-item-updated-by="{% if item.updated_by %}{{ item.updated_by.username }}{% else %}—{% endif %}"
+          data-item-upcs="{% for u in item.upcs.all %}{{ u.id }}:{{ u.code }}{% if not forloop.last %},{% endif %}{% endfor %}"
+          >
+          <!-- White pencil icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="#fff" aria-hidden="true" focusable="false">
+            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/>
+          </svg>
+          Edit
+        </button>
+
+          {% endif %}
+
+      </td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="12" style="text-align: center; padding: 1rem; color: #666;">
+        No items found.
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<!-- ===== Brand Management Modal (unchanged) ===== -->
+<div id="brandModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Manage Brands</h2>
+      <button class="close-btn" id="closeBrandModal">&times;</button>
+    </div>
+    <form method="post" action="{% url 'items:manage_brands' %}">
+      {% csrf_token %}
+      <div class="modal-body">
+        {% for brand in brands %}
+        <div class="brand-form-group">
+          <label for="brand_{{ brand.id }}">Brand #{{ forloop.counter }}</label>
+          <input
+          type="text"
+          id="brand_{{ brand.id }}"
+          name="brand_{{ brand.id }}"
+          value="{{ brand.name }}"
+          placeholder="Enter brand name"
+          required
+          />
+        </div>
+        {% endfor %}
+        <div class="brand-form-group">
+          <label for="new_brand">Add New Brand</label>
+          <input
+          type="text"
+          id="new_brand"
+          name="new_brand"
+          placeholder="Type new brand name here"
+          />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-cancel" id="cancelBrandModal">Cancel</button>
+        <button type="submit" class="btn btn-save">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== UOM Management Modal (unchanged) ===== -->
+<div id="uomModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Manage UOMs</h2>
+      <button class="close-btn" id="closeUOMModal">&times;</button>
+    </div>
+    <form method="post" action="{% url 'items:manage_uoms' %}">
+      {% csrf_token %}
+      <div class="modal-body">
+        {% for uom in uoms %}
+        <div class="uom-form-group">
+          <label for="uom_{{ uom.id }}">UOM #{{ forloop.counter }}</label>
+          <input
+          type="text"
+          id="uom_{{ uom.id }}"
+          name="uom_{{ uom.id }}"
+          value="{{ uom.unit_name }}"
+          placeholder="Enter UOM name"
+          required
+          />
+        </div>
+        {% endfor %}
+        <div class="uom-form-group">
+          <label for="new_uom">Add New UOM</label>
+          <input
+          type="text"
+          id="new_uom"
+          name="new_uom"
+          placeholder="Type new UOM name here"
+          />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-cancel" id="cancelUOMModal">Cancel</button>
+        <button type="submit" class="btn btn-save">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== L1 Category Management Modal (unchanged) ===== -->
+<div id="l1Modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Manage L1 Categories</h2>
+      <button class="close-btn" id="closeL1Modal">&times;</button>
+    </div>
+    <form method="post" action="{% url 'items:manage_l1_categories' %}">
+      {% csrf_token %}
+      <div class="modal-body">
+        {% for cat in l1_categories %}
+        <div class="l1-form-group">
+          <label for="category_{{ cat.id }}">Category #{{ forloop.counter }}</label>
+          <input
+          type="text"
+          id="category_{{ cat.id }}"
+          name="category_{{ cat.id }}"
+          value="{{ cat.name }}"
+          placeholder="Enter L1 category name"
+          required
+          />
+        </div>
+        {% endfor %}
+        <div class="l1-form-group">
+          <label for="new_category">Add New Category</label>
+          <input
+          type="text"
+          id="new_category"
+          name="new_category"
+          placeholder="Type new L1 category name here"
+          />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-cancel" id="cancelL1Modal">Cancel</button>
+        <button type="submit" class="btn btn-save">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== L2 Category Management Modal ===== -->
+<div id="l2Modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Manage L2 Categories</h2>
+      <button class="close-btn" id="closeL2Modal">&times;</button>
+    </div>
+    <form method="post" action="{% url 'items:manage_l2_categories' %}">
+      {% csrf_token %}
+      <div class="modal-body">
+        {# 1) Existing L2 categories: each row has an L1‐parent select + name input #}
+        {% for cat in l2_categories %}
+        <div class="l2-form-group">
+          <!-- Parent L1 dropdown -->
+          <label for="l2_{{ cat.id }}_parent">Parent L1 #{{ forloop.counter }}</label>
+          <select
+          id="l2_{{ cat.id }}_parent"
+          name="l2_{{ cat.id }}_parent"
+          required
+          >
+          {% for parent in l1_categories %}
+          <option
+          value="{{ parent.id }}"
+          {% if parent.id == cat.parent_id %}selected{% endif %}
+          >
+          {{ parent.name }}
+        </option>
+        {% endfor %}
+      </select>
+
+      <!-- L2 name input -->
+      <input
+      type="text"
+      id="l2_{{ cat.id }}_name"
+      name="l2_{{ cat.id }}_name"
+      value="{{ cat.name }}"
+      placeholder="L2 category name"
+      required
+      />
+    </div>
+    {% endfor %}
+
+    {# 2) Blank row to add a new L2 #}
+    <div class="l2-form-group">
+      <label for="new_l2_parent">Parent L1</label>
+      <select
+      id="new_l2_parent"
+      name="new_l2_parent"
+      >
+      <option value="" disabled selected>Select parent L1</option>
+      {% for parent in l1_categories %}
+      <option value="{{ parent.id }}">{{ parent.name }}</option>
+      {% endfor %}
+    </select>
+
+    <input
+    type="text"
+    id="new_l2_name"
+    name="new_l2_name"
+    placeholder="New L2 name"
+    />
+  </div>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-cancel" id="cancelL2Modal">Cancel</button>
+  <button type="submit" class="btn btn-save">Save</button>
+</div>
+</form>
+</div>
+</div>
+
+<!-- ======= Edit Item Modal (UPDATED) ======= -->
+<!-- ===== Edit Item Modal ===== -->
+<div id="editItemModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Edit Item</h2>
+      <button class="close-btn" id="closeEditItemModal">&times;</button>
+    </div>
+
+    <!-- ====== UPC Error Message (hidden by default) ====== -->
+    <div
+    id="upc-error-message"
+    style="
+    display: none;
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+    padding: 0.5rem 1rem;
+    margin-bottom: 1rem;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    "
+    ></div>
+
+    <form method="post" action="{% url 'items:update_item' 0 %}" id="editItemForm">
+      {% csrf_token %}
+      <div class="modal-body">
+        <!-- SKU (disabled/greyed out) -->
+        <div class="l2-form-group">
+          <label for="edit_sku">SKU</label>
+          <input
+          type="text"
+          id="edit_sku"
+          name="edit_sku"
+          value=""
+          disabled
+          />
+        </div>
+
+        <!-- Product Name (editable) -->
+        <div class="l2-form-group">
+          <label for="edit_name">Product Name</label>
+          <input
+          type="text"
+          id="edit_name"
+          name="edit_name"
+          value=""
+          placeholder="Item product name"
+          required
+          />
+        </div>
+
+        <!-- Brand dropdown -->
+        <div class="l2-form-group">
+          <label for="edit_brand">Brand</label>
+          <select id="edit_brand" name="edit_brand" required>
+            <option value="" disabled>Select brand</option>
+            {% for brand in brands %}
+            <option value="{{ brand.id }}">{{ brand.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- L2 Category dropdown (drives L1) -->
+        <div class="l2-form-group">
+          <label for="edit_l2">L2 Category</label>
+          <select id="edit_l2" name="edit_l2" required>
+            <option value="" disabled>Select L2</option>
+            {% for cat in l2_categories %}
+            <option
+            value="{{ cat.id }}"
+            data-parent-id="{{ cat.parent_id }}"
+            data-parent-name="{{ cat.parent.name }}"
+            >
+            {{ cat.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Hidden L1 ID + Read-Only L1 Name -->
+      <input type="hidden" name="edit_l1" id="edit_l1" />
+      <div class="l2-form-group">
+        <label for="edit_l1_name">L1 Category</label>
+        <input
+        type="text"
+        id="edit_l1_name"
+        name="edit_l1_name"
+        value=""
+        readonly
+        style="background-color: #f3f4f6; color: #6b7280;"
+        />
+      </div>
+
+      <!-- UOM dropdown -->
+      <div class="l2-form-group">
+        <label for="edit_uom">UOM</label>
+        <select id="edit_uom" name="edit_uom" required>
+          <option value="" disabled>Select UOM</option>
+          {% for u in uoms %}
+          <option value="{{ u.id }}">{{ u.unit_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- ====== UPC Section ====== -->
+      <div class="upc-section">
+        <label style="font-weight: 500; margin-bottom: 0.5rem; display: block;">
+          UPC​s
+        </label>
+        <div id="upc-list">
+          <!-- get filled by JS when the modal opens -->
+        </div>
+        <button type="button" id="addMoreUPC" class="btn btn-secondary">
+          + Add another UPC
+        </button>
+      </div>
+
+    </div> <!-- /.modal-body -->
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-cancel" id="cancelEditItemModal">
+        Cancel
+      </button>
+      <button type="submit" class="btn btn-save">Save</button>
+    </div>
+  </form>
+</div> <!-- /.modal-content -->
+</div> <!-- /#editItemModal -->
+<!-- ===== End UPC Section (Edit) ====== -->
+
+</div> <!-- /.modal-body -->
+
+</form>
+</div> <!-- /.modal-content -->
+</div> <!-- /#editItemModal -->
+
+<!-- ======= Add Item Modal (NEW) ======= -->
+<div id="addItemModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Add Item</h2>
+      <button class="close-btn" id="closeAddItemModal">&times;</button>
+    </div>
+
+    <form method="post" action="{% url 'items:create_item' %}" id="addItemForm">
+      {% csrf_token %}
+      <div class="modal-body">
+
+        <!-- Product Name (editable) -->
+        <div class="l2-form-group">
+          <label for="add_name">Product Name</label>
+          <input
+          type="text"
+          id="add_name"
+          name="add_name"
+          value=""
+          placeholder="Enter product name"
+          required
+          />
+        </div>
+
+        <!-- Brand dropdown -->
+        <div class="l2-form-group">
+          <label for="add_brand">Brand</label>
+          <select id="add_brand" name="add_brand" required>
+            <option value="" disabled selected>Select brand</option>
+            {% for brand in brands %}
+            <option value="{{ brand.id }}">{{ brand.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- L2 Category dropdown -->
+        <div class="l2-form-group">
+          <label for="add_l2">L2 Category</label>
+          <select id="add_l2" name="add_l2" required>
+            <option value="" disabled selected>Select L2</option>
+            {% for cat in l2_categories %}
+            <option
+            value="{{ cat.id }}"
+            data-parent-id="{{ cat.parent_id }}"
+            data-parent-name="{{ cat.parent.name }}"
+            >
+            {{ cat.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Hidden L1 ID + Read‐only L1 Name -->
+      <input type="hidden" name="add_l1" id="add_l1" />
+      <div class="l2-form-group">
+        <label for="add_l1_name">L1 Category</label>
+        <input
+        type="text"
+        id="add_l1_name"
+        name="add_l1_name"
+        value=""
+        readonly
+        placeholder="Auto-filled from L2"
+        />
+      </div>
+
+      <!-- UOM dropdown -->
+      <div class="l2-form-group">
+        <label for="add_uom">UOM</label>
+        <select id="add_uom" name="add_uom" required>
+          <option value="" disabled selected>Select UOM</option>
+          {% for u in uoms %}
+          <option value="{{ u.id }}">{{ u.unit_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- … existing “Add Item” fields above … -->
+
+<!-- ====== UPC Section (for Add) ====== -->
+<div class="upc-section">
+  <label style="font-weight: 500; margin-bottom: 0.5rem; display: block;">
+    UPC​s
+  </label>
+  <div id="upc-list">
+    {% comment %} No existing UPCs, so the for-loop is empty {% endcomment %}
+    {% for upc in upcs %}
+    <div class="upc-form-group">
+      <input
+      type="text"
+      name="upc_{{ upc.id }}"
+      value="{{ upc.code }}"
+      placeholder="Enter UPC"
+      />
+      <button type="button" class="btn-remove-upc">×</button>
+    </div>
+    {% endfor %}
+    <div class="upc-form-group">
+      <input
+      type="text"
+      name="new_upc_0"
+      value=""
+      placeholder="Add new UPC"
+      />
+      <button
+      type="button"
+      class="btn-remove-new-upc"
+      style="visibility: hidden;"
+      >×</button>
+    </div>
+  </div>
+  <button type="button" id="addMoreUPC" class="btn btn-secondary">
+    + Add another UPC
+  </button>
+</div>
+<!-- ===== End UPC Section (Add) ====== -->
+
+</div> <!-- /.modal-body -->
+
+<div class="modal-footer">
+  <button type="button" class="btn btn-cancel" id="cancelAddItemModal">Cancel</button>
+  <button type="submit" class="btn btn-save">Save</button>
+</div>
+
+
+
+</form>
+</div> <!-- /.modal-content -->
+</div> <!-- /#addItemModal -->
+
+
+
+<!-- ===== Modal Toggle Script for All Four ===== -->
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Brand modal toggles
+    const brandModal = document.getElementById("brandModal");
+    const openBrandBtn = document.getElementById("openBrandModal");
+    const closeBrandBtn = document.getElementById("closeBrandModal");
+    const cancelBrandBtn = document.getElementById("cancelBrandModal");
+    openBrandBtn.onclick   = () => brandModal.style.display = "block";
+    closeBrandBtn.onclick  = () => brandModal.style.display = "none";
+    cancelBrandBtn.onclick = () => brandModal.style.display = "none";
+
+    // UOM modal toggles
+    const uomModal = document.getElementById("uomModal");
+    const openUOMBtn = document.getElementById("openUOMModal");
+    const closeUOMBtn = document.getElementById("closeUOMModal");
+    const cancelUOMBtn = document.getElementById("cancelUOMModal");
+    openUOMBtn.onclick   = () => uomModal.style.display = "block";
+    closeUOMBtn.onclick  = () => uomModal.style.display = "none";
+    cancelUOMBtn.onclick = () => uomModal.style.display = "none";
+
+    // L1 modal toggles
+    const l1Modal = document.getElementById("l1Modal");
+    const openL1Btn = document.getElementById("openL1Modal");
+    const closeL1Btn = document.getElementById("closeL1Modal");
+    const cancelL1Btn = document.getElementById("cancelL1Modal");
+    openL1Btn.onclick   = () => l1Modal.style.display = "block";
+    closeL1Btn.onclick  = () => l1Modal.style.display = "none";
+    cancelL1Btn.onclick = () => l1Modal.style.display = "none";
+
+    // L2 modal toggles
+    const l2Modal = document.getElementById("l2Modal");
+    const openL2Btn = document.getElementById("openL2Modal");
+    const closeL2Btn = document.getElementById("closeL2Modal");
+    const cancelL2Btn = document.getElementById("cancelL2Modal");
+    openL2Btn.onclick   = () => l2Modal.style.display = "block";
+    closeL2Btn.onclick  = () => l2Modal.style.display = "none";
+    cancelL2Btn.onclick = () => l2Modal.style.display = "none";
+
+    // Clicking outside any modal closes it
+    window.onclick = function(event) {
+      if (event.target === brandModal) brandModal.style.display = "none";
+      if (event.target === uomModal)   uomModal.style.display = "none";
+      if (event.target === l1Modal)    l1Modal.style.display = "none";
+      if (event.target === l2Modal)    l2Modal.style.display = "none";
+    };
+  });
+
+  document.addEventListener("DOMContentLoaded", function() {
+  // … your existing modal toggle code for Brand/UOM/L1/L2 …
+
+  // “Edit Item” modal logic:
+    const editItemModal    = document.getElementById("editItemModal");
+    const openEditButtons  = document.querySelectorAll(".btn-edit");
+    const closeEditBtn     = document.getElementById("closeEditItemModal");
+    const cancelEditBtn    = document.getElementById("cancelEditItemModal");
+    const editForm         = document.getElementById("editItemForm");
+
+    openEditButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+      // 1) Pull data-* from the clicked “Edit” button
+        const itemId       = btn.dataset.itemId;
+        const sku          = btn.dataset.itemSku;
+        const name         = btn.dataset.itemName;
+        const brandId      = btn.dataset.itemBrand;
+        const l1Id         = btn.dataset.itemL1;
+        const l1Name       = btn.dataset.itemL1Name || "";
+        const l2Id         = btn.dataset.itemL2;
+        const uomId        = btn.dataset.itemUom;
+      // UPC list is a string like "42:123456789012,57:987654321098"
+        const upcsRaw      = btn.dataset.itemUpcs; 
+
+      // 2) Update form action to /update-item/<itemId>/
+        editForm.action = "{% url 'items:update_item' 0 %}".replace("/0/", "/" + itemId + "/");
+
+      // 3) Populate each field:
+        document.getElementById("edit_sku").value        = sku;
+        document.getElementById("edit_name").value       = name;
+        document.getElementById("edit_brand").value      = brandId;
+        document.getElementById("edit_uom").value        = uomId;
+
+      // 3a) Populate L2 dropdown and derive L1
+        const l2Select = document.getElementById("edit_l2");
+        l2Select.value = l2Id;
+        let selectedOption = l2Select.options[l2Select.selectedIndex];
+        let parentId   = selectedOption.dataset.parentId || l1Id;
+        let parentName = selectedOption.dataset.parentName || l1Name;
+        document.getElementById("edit_l1").value      = parentId;
+        document.getElementById("edit_l1_name").value = parentName;
+
+      // 4) Populate the UPC section
+        buildUpcListInModal(upcsRaw);
+
+      // 5) Show the modal
+        editItemModal.style.display = "block";
+      });
+    });
+
+  // Re‐useable function to rebuild the #upc-list inside Edit modal
+    function buildUpcListInModal(upcsRawString) {
+      const upcListDiv = document.getElementById("upc-list");
+    // 4a) Clear out any existing children (previous edits)
+      while (upcListDiv.firstChild) {
+        upcListDiv.removeChild(upcListDiv.firstChild);
+      }
+
+    // 4b) If upcsRawString is non‐empty, parse it:
+    //     Format is "id1:code1,id2:code2,..."
+      if (upcsRawString && upcsRawString.trim() !== "") {
+      // Split on commas
+        const pairs = upcsRawString.split(",");
+        pairs.forEach(pair => {
+          const [upcId, upcCode] = pair.split(":");
+          if (!upcId || !upcCode) return;
+
+        // Create <div class="upc-form-group">
+          const wrapper = document.createElement("div");
+          wrapper.className = "upc-form-group";
+
+        // The existing UPC input
+          const input = document.createElement("input");
+          input.type = "text";
+        input.name = `upc_${upcId}`;   // e.g. upc_42
+        input.value = upcCode;
+        input.placeholder = "Enter UPC";
+
+        // The small "×" remove button
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.className = "btn-remove-upc";
+        removeBtn.textContent = "×";
+        removeBtn.addEventListener("click", () => {
+          wrapper.remove();
+        });
+
+        wrapper.appendChild(input);
+        wrapper.appendChild(removeBtn);
+        upcListDiv.appendChild(wrapper);
+      });
+      }
+
+    // 4c) Always add exactly one blank “new_upc_0” input at the end:
+      const newWrapper = document.createElement("div");
+      newWrapper.className = "upc-form-group";
+
+      const newInput = document.createElement("input");
+      newInput.type = "text";
+      newInput.name = "new_upc_0";
+      newInput.value = "";
+      newInput.placeholder = "Add new UPC";
+
+      const newRemoveBtn = document.createElement("button");
+      newRemoveBtn.type = "button";
+      newRemoveBtn.className = "btn-remove-new-upc";
+      newRemoveBtn.textContent = "×";
+    // Hide the remove button on the first blank input
+      newRemoveBtn.style.visibility = "hidden";
+      newRemoveBtn.addEventListener("click", () => {
+        newWrapper.remove();
+      });
+
+      newWrapper.appendChild(newInput);
+      newWrapper.appendChild(newRemoveBtn);
+      upcListDiv.appendChild(newWrapper);
+
+    // Finally, reset the newUpcIndex counter so that subsequent “+ Add another UPC” works.
+    // We’ll set newUpcIndex = 1 because we just created new_upc_0:
+      newUpcIndex = 1;
+    }
+
+  // 6) Close/hide the Edit‐Item modal
+    closeEditBtn.onclick  = () => editItemModal.style.display = "none";
+    cancelEditBtn.onclick = () => editItemModal.style.display = "none";
+    window.addEventListener("click", function(event) {
+      if (event.target === editItemModal) {
+        editItemModal.style.display = "none";
+      }
+    });
+
+  // … existing modal‐toggle code for Brand, UOM, L1, L2, etc. …
+
+  // “Add Item” modal logic remains unchanged, but you may want a similar buildUpcListInModal("")
+  // to start the “Add” form with exactly one blank input (upc-list will be empty for new items).
+
+  // -------------------------
+  // “Add Item” modal logic (shows a blank list)
+  // -------------------------
+    const addItemModal   = document.getElementById("addItemModal");
+    const openAddBtn     = document.getElementById("openAddItemModal");
+    const closeAddBtn    = document.getElementById("closeAddItemModal");
+    const cancelAddBtn   = document.getElementById("cancelAddItemModal");
+    const addForm        = document.getElementById("addItemForm");
+
+  // Keep track of how many “new_upc_…” fields we’ve created so far:
+  let newUpcIndex = 1;  // the template already includes new_upc_0
+
+  openAddBtn.onclick = () => {
+    // Clear all fields before showing:
+    document.getElementById("add_name").value      = "";
+    document.getElementById("add_brand").value     = "";
+    document.getElementById("add_l2").value        = "";
+    document.getElementById("add_l1").value        = "";
+    document.getElementById("add_l1_name").value   = "";
+    document.getElementById("add_uom").value       = "";
+
+    // Also clear UPCs: remove all children of #upc-list and re-add one new_upc_0
+    buildAddUpcList();
+
+    addItemModal.style.display = "block";
+  };
+
+  function buildAddUpcList() {
+    const upcListDiv = document.getElementById("upc-list");
+    while (upcListDiv.firstChild) {
+      upcListDiv.removeChild(upcListDiv.firstChild);
+    }
+    // Create one blank “new_upc_0” exactly as in the template:
+    const wrapper = document.createElement("div");
+    wrapper.className = "upc-form-group";
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.name = "new_upc_0";
+    input.value = "";
+    input.placeholder = "Add new UPC";
+
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "btn-remove-new-upc";
+    removeBtn.textContent = "×";
+    removeBtn.style.visibility = "hidden";
+    removeBtn.addEventListener("click", () => wrapper.remove());
+
+    wrapper.appendChild(input);
+    wrapper.appendChild(removeBtn);
+    upcListDiv.appendChild(wrapper);
+
+    newUpcIndex = 1;
+  }
+
+  // Clicking “+ Add another UPC” in either modal (Edit or Add) should append a fresh input:
+  const addMoreBtns = document.querySelectorAll("#addMoreUPC");
+  addMoreBtns.forEach(addBtn => {
+    addBtn.addEventListener("click", () => {
+      const upcListDiv = document.getElementById("upc-list");
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "upc-form-group";
+
+      const input = document.createElement("input");
+      input.type = "text";
+      input.name = `new_upc_${newUpcIndex}`;
+      input.placeholder = "Add new UPC";
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "btn-remove-new-upc";
+      removeBtn.textContent = "×";
+      removeBtn.addEventListener("click", () => wrapper.remove());
+
+      wrapper.appendChild(input);
+      wrapper.appendChild(removeBtn);
+      upcListDiv.appendChild(wrapper);
+
+      newUpcIndex += 1;
+    });
+  });
+
+  // If there are any pre-rendered “.btn-remove-upc” in the DOM (unlikely, since we now rebuild),
+  // make sure they get a click‐handler too:
+  document.querySelectorAll(".btn-remove-upc").forEach(btn => {
+    btn.addEventListener("click", () => {
+      btn.closest(".upc-form-group").remove();
+    });
+  });
+
+  // When user changes L2 in the modal, re-populate L1
+  document.getElementById("edit_l2").addEventListener("change", function() {
+    const selectedOpt = this.options[this.selectedIndex];
+    const parentId   = selectedOpt.dataset.parentId;
+    const parentName = selectedOpt.dataset.parentName;
+
+    document.getElementById("edit_l1").value      = parentId;
+    document.getElementById("edit_l1_name").value = parentName;
+  });
+
+  // 5) Close/hide the modal on × or Cancel
+  closeEditBtn.onclick  = () => editItemModal.style.display = "none";
+  cancelEditBtn.onclick = () => editItemModal.style.display = "none";
+
+  // 6) Hide if click outside modal
+  window.addEventListener("click", function(event) {
+    if (event.target === editItemModal) {
+      editItemModal.style.display = "none";
+    }
+    /* plus logic for brandModal, uomModal, etc. if you still have them */
+  });
+
+    {% if edit_item %}
+    // We rendered this template because the view caught a ValidationError on Edit.
+    // So now: find the “Edit” button whose data-item-id matches {{ edit_item.id }}, and click it.
+    var selector = '.btn-edit[data-item-id="{{ edit_item.id }}"]';
+    var editBtn = document.querySelector(selector);
+    if (editBtn) {
+      editBtn.click();  // this opens the modal and populates its fields via your existing JS
+
+      // After opening, we also want to show the UPC error message inside that modal:
+      var upcErrorDiv = document.getElementById("upc-error-message");
+      if (upcErrorDiv) {
+        upcErrorDiv.textContent = "{{ upc_error|escapejs }}";
+        upcErrorDiv.style.display = "block";
+      }
+    }
+  {% endif %}
+    
+  });
+
+  document.addEventListener("DOMContentLoaded", function() {
+    /* … existing modal toggle code for Brand, UOM, L1, L2, Edit Item … */
+
+    // -------------------------
+    // “Add Item” modal logic
+    // -------------------------
+    const addItemModal   = document.getElementById("addItemModal");
+    const openAddBtn     = document.getElementById("openAddItemModal");
+    const closeAddBtn    = document.getElementById("closeAddItemModal");
+    const cancelAddBtn   = document.getElementById("cancelAddItemModal");
+    const addForm        = document.getElementById("addItemForm");
+
+    // 1) Open "Add Item" modal on “+ Item” click
+    openAddBtn.onclick = () => {
+      // Clear all fields before showing:
+      document.getElementById("add_name").value      = "";
+      document.getElementById("add_brand").value     = "";
+      document.getElementById("add_l2").value        = "";
+      document.getElementById("add_l1").value        = "";
+      document.getElementById("add_l1_name").value   = "";
+      document.getElementById("add_uom").value       = "";
+      // Show the modal:
+      addItemModal.style.display = "block";
+    };
+
+    // 2) When L2 changes, auto-populate L1 hidden & read-only
+    document.getElementById("add_l2").addEventListener("change", function() {
+      const selectedOpt  = this.options[this.selectedIndex];
+      const parentId     = selectedOpt.dataset.parentId;
+      const parentName   = selectedOpt.dataset.parentName;
+      document.getElementById("add_l1").value      = parentId;
+      document.getElementById("add_l1_name").value = parentName;
+    });
+
+    // 3) Close/hide the "Add Item" modal
+    closeAddBtn.onclick  = () => addItemModal.style.display = "none";
+    cancelAddBtn.onclick = () => addItemModal.style.display = "none";
+
+    // 4) Hide if clicking outside modal
+    window.addEventListener("click", function(event) {
+      if (event.target === addItemModal) {
+        addItemModal.style.display = "none";
+      }
+      // (Also check other modals if you still have them in this same handler)
+    });
+  });
+
+  document.addEventListener("DOMContentLoaded", function() {
+    // Keep track of how many “new_upc_…” fields we’ve created so far:
+    let newUpcIndex = 1;  // we already have new_upc_0 in the template
+
+    // 1) Append a blank UPC input when “+ Add another UPC” is clicked:
+    const addMoreBtn = document.getElementById("addMoreUPC");
+    addMoreBtn.addEventListener("click", () => {
+      const upcList = document.getElementById("upc-list");
+
+      // Create a new .upc-form-group div
+      const wrapper = document.createElement("div");
+      wrapper.className = "upc-form-group";
+
+      // Build the new <input> element
+      const input = document.createElement("input");
+      input.type = "text";
+      input.name = `new_upc_${newUpcIndex}`;   // new_upc_1, new_upc_2, etc.
+      input.placeholder = "Add new UPC";
+      input.style.flexGrow = "1";
+
+      // Build the small “×” remove button next to it
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "btn-remove-new-upc";
+      removeBtn.textContent = "×";
+
+      // When clicked, this “×” should remove its entire wrapper
+      removeBtn.addEventListener("click", () => {
+        wrapper.remove();
+      });
+
+      // Put input + removeBtn into wrapper
+      wrapper.appendChild(input);
+      wrapper.appendChild(removeBtn);
+
+      // Append wrapper to #upc-list
+      upcList.appendChild(wrapper);
+
+      newUpcIndex += 1;
+    });
+
+    // 2) Allow removal of any existing UPC field (Edit mode)
+    //    Attach click‐handlers to any .btn-remove-upc already in DOM:
+    document.querySelectorAll(".btn-remove-upc").forEach(btn => {
+      btn.addEventListener("click", () => {
+        btn.closest(".upc-form-group").remove();
+      });
+    });
+  });
+
+</script>
+
+{% endblock %}

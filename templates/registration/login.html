@@ -1,0 +1,23 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>…</head>
+<body>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <label>Username</label>
+    {{ form.username }}
+    <label>Password</label>
+    {{ form.password }}
+    <button type="submit">Log In</button>
+  </form>
+  {% if messages %}
+  <ul class="messages">
+    {% for msg in messages %}
+      <li class="{{ msg.tags }}">{{ msg }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}
+</body>
+</html>

@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+  {% if object %}Edit Lead{% else %}New Lead{% endif %}
+{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --new-btn: #38a169;
+    --cancel-btn: #a0aec0;
+    --primary-color: #1e40af;
+    --card-bg: #fff;
+    --card-shadow: rgba(0,0,0,0.05);
+    --text-primary: #1a202c;
+  }
+
+  .page-header { margin-bottom: 1.5rem; }
+  .page-header h1 {
+    font-size: 1.75rem;
+    color: var(--text-primary);
+  }
+
+  .content-wrapper { padding: 1rem; overflow-x: hidden; }
+  .card {
+    max-width: 600px;
+    margin: auto;
+    background: var(--card-bg);
+    box-shadow: 0 2px 4px var(--card-shadow);
+    border-radius: 0.5rem;
+    padding: 2rem;
+  }
+
+  .form-group { margin-bottom: 1rem; }
+  .form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #cbd5e0;
+    border-radius: 0.375rem;
+    box-sizing: border-box;
+  }
+
+  .input-group { display: flex; }
+  .input-group-text {
+    background: #edf2f7;
+    border: 1px solid #cbd5e0;
+    border-right: none;
+    padding: 0.4rem 0.5rem;
+    border-radius: 0.375rem 0 0 0.375rem;
+  }
+  .input-group input { border-left: none; border-radius: 0 0.375rem 0.375rem 0; }
+
+  .divider {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 1.5rem 0;
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  .btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    cursor: pointer;
+    color: #fff;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn-new { background: var(--new-btn); }
+  .btn-new:hover { background: #2f855a; }
+  .btn-cancel { background: var(--cancel-btn); color: var(--text-primary); }
+  .btn-cancel:hover { background: #718096; }
+</style>
+
+<div class="content-wrapper">
+  <div class="page-header">
+    <h1>{% if object %}Edit Lead{% else %}New Lead{% endif %}</h1>
+  </div>
+
+  <div class="card">
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label for="id_system_size">System Size (kW)</label>
+        <div class="input-group">
+          <span class="input-group-text">kW</span>
+          {{ form.system_size }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="id_system_type">System Type</label>
+        {{ form.system_type }}
+      </div>
+
+      <div class="form-group">
+        <label for="id_lead_quality">Lead Quality</label>
+        {{ form.lead_quality }}
+      </div>
+
+      {# ← Here’s the missing dropdown ↓ #}
+      <div class="form-group">
+        <label for="id_grid_type">Grid Type (optional)</label>
+        {{ form.grid_type }}
+      </div>
+
+      <div class="form-group">
+        <label for="id_total_amount">Total Amount (₹)</label>
+        {{ form.total_amount }}
+      </div>
+
+      <div class="form-group">
+        <label for="id_remarks">Remarks</label>
+        {{ form.remarks }}
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="form-actions">
+        <a href="{% url 'leads:list' %}" class="btn btn-cancel">Cancel</a>
+        <button type="submit" class="btn btn-new">
+          {% if object %}Save Changes{% else %}Create Lead{% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

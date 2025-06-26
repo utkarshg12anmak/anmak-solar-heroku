@@ -1,0 +1,99 @@
+{# templates/reminders/popup_reminder.html #}
+{# or reminders/templates/reminders/popup_reminder.html #}
+
+<div class="modal-overlay">
+  <div class="modal-wrapper">
+    <div class="modal-header">
+      <h2>
+        New Reminder for “{{ app_label }}.{{ model_name }} #{{ object_id }}”
+      </h2>
+      {# Close / Cancel button must be type="button" so it doesn’t submit the form #}
+      <button id="close-reminder-btn" type="button">✕</button>
+    </div>
+
+    <form 
+      method="post" 
+      id="reminder-form"
+      action="{% url 'reminders:add_reminder' app_label model_name object_id %}"
+    >
+      {% csrf_token %}
+
+      {# Show any non-field errors #}
+      {% if form.non_field_errors %}
+      <ul class="errorlist">
+        {% for err in form.non_field_errors %}
+          <li>{{ err }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+
+      <div class="form-group">
+        {{ form.message.label_tag }}
+        {{ form.message }}
+        {{ form.message.errors }}
+      </div>
+
+      <div class="form-group">
+        {{ form.reminder_time.label_tag }}
+        {{ form.reminder_time }}
+        {{ form.reminder_time.errors }}
+      </div>
+
+      <div class="form-group">
+        {{ form.priority.label_tag }}
+        {{ form.priority }}
+        {{ form.priority.errors }}
+      </div>
+
+      <div class="form-group">
+        {{ form.ping_before_override.label_tag }}
+        {{ form.ping_before_override }}
+        {{ form.ping_before_override.errors }}
+        <small>(leave blank to use the default ping-before from settings)</small>
+      </div>
+
+      <div class="modal-actions">
+        <button type="submit">Save Reminder</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{# Minimal inline CSS just to center things; your page-level CSS can override as needed #}
+<style>
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.4); /* slightly darken the backdrop */
+  }
+  .modal-wrapper {
+    background: white;
+    border-radius: 8px;
+    padding: 24px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .modal-header button#close-reminder-btn {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+  }
+  .form-group {
+    margin-bottom: 16px;
+  }
+  .modal-actions {
+    text-align: right;
+    margin-top: 16px;
+  }
+</style>

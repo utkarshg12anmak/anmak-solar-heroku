@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<style>
+  /* ——— Container & Header ——— */
+  .on-duty-container {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+  .on-duty-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    position: sticky;
+    top: 0;
+    background: #f7f9fc;
+    padding: 1rem 0 0.5rem;
+    z-index: 5;
+  }
+  .on-duty-header h1 {
+    font-size: 1.9rem;
+    color: #2d3748;
+    flex: 1 1 auto;
+  }
+
+  /* ——— Search Bar ——— */
+  .on-duty-search {
+    flex: 2 1 300px;
+  }
+  .on-duty-search input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #cbd5e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color .2s;
+  }
+  .on-duty-search input:focus {
+    outline: none;
+    border-color: #3182ce;
+  }
+
+  /* ——— Log Button ——— */
+  .btn-log {
+    background: none;
+    border: 1px solid #718096;
+    color: #4a5568;
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: background .2s, color .2s;
+  }
+  .btn-log:hover {
+    background: #718096;
+    color: #fff;
+  }
+
+  /* ——— Card Grid ——— */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+  .card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  }
+  .avatar-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #cbd5e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: #2d3748;
+    flex-shrink: 0;
+  }
+  .card-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .card-info .name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #2d3748;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+  .card-info .email {
+    font-size: 0.875rem;
+    color: #718096;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+
+  /* ——— Toggle Switch ——— */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+  }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #cbd5e0;
+    border-radius: 34px;
+    transition: background .2s;
+  }
+  .slider::before {
+    position: absolute;
+    content: "";
+    height: 22px; width: 22px;
+    left: 3px; bottom: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform .2s;
+  }
+  input:checked + .slider {
+    background: #38a169;
+  }
+  input:checked + .slider::before {
+    transform: translateX(22px);
+  }
+
+  /* ——— Modal & Logs (unchanged) ——— */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+  }
+  .modal {
+    background: #fff;
+    border-radius: 6px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-header h2 { margin: 0; font-size: 1.25rem; }
+  .close-btn {
+    background: none; border: none;
+    font-size: 1.5rem; cursor: pointer;
+  }
+  .log-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+  .log-table th, .log-table td {
+    padding: 0.5rem; border-bottom: 1px solid #e2e8f0;
+  }
+  .log-table th { font-weight: 600; color: #4a5568; }
+  .pagination {
+    display: flex; justify-content: flex-end;
+    gap: 0.5rem; margin-top: 1rem;
+  }
+  .pagination a {
+    text-decoration: none; padding: 0.4rem 0.8rem;
+    border: 1px solid #cbd5e0; border-radius: 4px;
+    color: #2d3748;
+  }
+  .pagination a:hover { background: #edf2f7; }
+</style>
+
+<div class="on-duty-container">
+
+  <div class="on-duty-header">
+    <h1>On-Duty Management</h1>
+    <div class="on-duty-search">
+      <input id="member-search"
+             type="text"
+             placeholder="Search team members…" />
+    </div>
+    <button id="show-log-btn" class="btn-log">View Change Log</button>
+  </div>
+
+  <div id="cards" class="card-grid">
+    {% for p in profiles %}
+      <div class="card" data-name="{{ p.user.get_full_name|lower }}">
+        <div class="avatar-circle">
+          {{ p.user.get_full_name|slice:":1"|upper }}
+        </div>
+        <div class="card-info">
+          <div class="name">{{ p.user.get_full_name }}</div>
+          <div class="email">{{ p.user.email }}</div>
+        </div>
+        <label class="switch">
+          <form method="post" action="{% url 'profiles:on_duty' %}">
+            {% csrf_token %}
+            <input type="hidden" name="profile_id" value="{{ p.id }}">
+            <input type="hidden"
+                   name="new_status"
+                   value="{% if p.is_on_duty %}off{% else %}on{% endif %}">
+            <input type="checkbox"
+                   onchange="this.form.submit()"
+                   {% if p.is_on_duty %}checked{% endif %}>
+            <span class="slider"></span>
+          </form>
+        </label>
+      </div>
+    {% empty %}
+      <p style="text-align:center; color:#718096; width:100%;">
+        No users available.
+      </p>
+    {% endfor %}
+  </div>
+</div>
+
+{# ——— Change Log Modal ——— #}
+<div id="log-modal-backdrop" class="modal-backdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Change Log</h2>
+      <button id="close-log-btn" class="close-btn">&times;</button>
+    </div>
+    <table class="log-table">
+      <thead>
+        <tr>
+          <th>Who</th>
+          <th>Whom</th>
+          <th>From → To</th>
+          <th>At</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in log_page_obj %}
+          <tr>
+            <td>{{ log.who_changed.get_full_name }}</td>
+            <td>{{ log.target_profile.user.get_full_name }}</td>
+            <td>
+              {{ log.old_value|yesno:"ON,OFF" }}
+               → 
+              {{ log.new_value|yesno:"ON,OFF" }}
+            </td>
+            <td class="log-timestamp"
+                <td class="log-timestamp" data-raw="{{ log.timestamp|date:'c' }}"></td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="4" style="text-align:center; color:#718096;">
+              No changes logged yet.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="pagination">
+      {% if log_page_obj.has_previous %}
+        <a href="?log_page={{ log_page_obj.previous_page_number }}">‹ Prev</a>
+      {% endif %}
+      <a>Page {{ log_page_obj.number }} of {{ log_page_obj.paginator.num_pages }}</a>
+      {% if log_page_obj.has_next %}
+        <a href="?log_page={{ log_page_obj.next_page_number }}">Next ›</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  const showLog = document.getElementById("show-log-btn");
+  const closeLog = document.getElementById("close-log-btn");
+  const backdrop = document.getElementById("log-modal-backdrop");
+
+  // Parse an ISO timestamp, add exactly offsetHours, and render in YYYY‐MM‐DD HH:mm
+  function formatWithOffsetUTC(isoString, offsetHours) {
+    const ms = Date.parse(isoString);
+    const shifted = new Date(ms + offsetHours * 60 * 60 * 1000);
+    const two = n => n.toString().padStart(2, '0');
+    return (
+      shifted.getUTCFullYear() + '-' +
+      two(shifted.getUTCMonth() + 1) + '-' +
+      two(shifted.getUTCDate()) + ' ' +
+      two(shifted.getUTCHours()) + ':' +
+      two(shifted.getUTCMinutes())
+    );
+  }
+
+  // Walk through each timestamp cell, read its raw ISO, and replace its text
+  function adjustTimestamps() {
+    document.querySelectorAll('.log-timestamp').forEach(td => {
+      const raw = td.getAttribute('data-raw');
+      if (raw) {
+        td.textContent = formatWithOffsetUTC(raw, 5.5);
+      }
+    });
+  }
+
+  // Show modal & adjust times on “View Change Log”
+  showLog.addEventListener("click", () => {
+    adjustTimestamps();
+    backdrop.style.display = "flex";
+  });
+  // Close on “×” or backdrop click
+  closeLog.addEventListener("click", () => backdrop.style.display = "none");
+  backdrop.addEventListener("click", e => {
+    if (e.target === backdrop) backdrop.style.display = "none";
+  });
+
+  // If page loaded with a log_page=… query, auto-open & adjust
+  document.addEventListener("DOMContentLoaded", () => {
+    if (new URLSearchParams(window.location.search).has("log_page")) {
+      adjustTimestamps();
+      backdrop.style.display = "flex";
+    }
+  });
+</script>
+{% endblock %}

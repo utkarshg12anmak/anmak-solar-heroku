@@ -1,0 +1,149 @@
+{# templates/visit_details/visit_form.html #}
+
+<style>
+/* ── Normalize the <p> wrappers ── */
+.modal-wrapper form p {
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}
+.modal-wrapper form p label {
+  display: block;
+  margin-bottom: 0.375rem;
+  font-weight: 500;
+  color: #333;
+}
+.modal-wrapper form p input,
+.modal-wrapper form p select,
+.modal-wrapper form p textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 0.375rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.modal-wrapper form p input:focus,
+.modal-wrapper form p select:focus,
+.modal-wrapper form p textarea:focus {
+  border-color: #38a169;
+  box-shadow: 0 0 0 3px rgba(56, 161, 105, 0.2);
+  outline: none;
+}
+
+/* ── Style the bare “Save Visit” button ── */
+.modal-wrapper form button[type="submit"] {
+  display: inline-block;
+  margin-top: 1.5rem;
+  background: #38a169;
+  color: #fff;
+  padding: 0.6rem 1.25rem;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+.modal-wrapper form button[type="submit"]:hover {
+  background: #2f855a;
+  transform: translateY(-1px);
+}
+
+/* ── Keep your existing modal styling ── */
+.modal-overlay { /* … */ }
+.modal-wrapper { /* … */ }
+.modal-header { /* … */ }
+/* (all your other modal CSS stays exactly as you have it) */
+
+/* ── Small‐screen tweak ── */
+@media (max-width: 576px) {
+  .modal-wrapper {
+    padding: 1rem;
+    margin: 0 0.5rem;
+  }
+}
+
+/* ── Mark Inspection Report as PDF only ── */
+label[for="id_inspection_report"]::after {
+  content: " (PDF only)";
+  color: #e53e3e;        /* red-600 */
+  font-size: 0.875rem;   /* slightly smaller text */
+  margin-left: 0.25rem;
+}
+
+/* ── Push the “Save Visit” button to the right ── */
+.modal-wrapper form button[type="submit"] {
+  float: right;
+}
+
+</style>
+
+<div class="modal-overlay">
+  <div class="modal-wrapper">
+    <div class="modal-header">
+      <h2>New Site Visit for Lead #{{ lead_pk }}</h2>
+      <button id="closeVisitModal" class="close-modal">&times;</button>
+    </div>
+    <form id="visitForm" method="post" enctype="multipart/form-data"
+      action="{% url 'visit_details:visit_add' lead_pk %}">
+  {% csrf_token %}
+  {{ form.as_p }}
+  {{ image_form.images.label_tag }} {{ image_form.images }}
+  <button type="submit">Save Visit</button>
+</form>
+  </div>
+</div>
+
+<script>
+  document
+    .getElementById("visitForm")
+    .addEventListener("submit", function(e) {
+      const visitDate = document.getElementById("id_visit_date").value;
+      if (visitDate && new Date(visitDate) > new Date()) {
+        e.preventDefault();
+        alert("Visit date cannot be in the future.");
+      }
+    });
+</script>
+
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const input = document.getElementById("id_inspection_report");
+  if (!input) return;
+
+  input.addEventListener("change", () => {
+    const file = input.files[0];
+    if (file && file.type !== "application/pdf") {
+      alert("🚫 Only PDF files are allowed for the inspection report.");
+      input.value = "";  // clear the bad selection
+    }
+  });
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const inp = document.getElementById("id_images");
+  if (!inp) return;
+
+  inp.addEventListener("change", () => {
+    const files = Array.from(inp.files);
+    if (files.length > 10) {
+      alert("Please select no more than 10 images.");
+      inp.value = "";
+      return;
+    }
+    files.forEach(f => {
+      if (!/^image\//.test(f.type)) {
+        alert(`“${f.name}” is not an image.`);
+        inp.value = "";
+      }
+      if (f.size > 10*1024*1024) {
+        alert(`“${f.name}” is too big (max 10 MB).`);
+        inp.value = "";
+      }
+    });
+  });
+});
+</script>

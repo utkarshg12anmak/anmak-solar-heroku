@@ -1,0 +1,25 @@
+{% extends "admin/change_form.html" %}
+{% block extrahead %}
+  {{ block.super }}
+  <script>
+// When “Calculate MSP” is clicked, sum up base_price × qty
+function calculateMSP() {
+  let total = 0;
+  document.querySelectorAll('.dynamic-quotationitem_set').forEach(row => {
+    const priceStr = row.querySelector('[name$="-price_rule"]').selectedOptions[0]
+      .text.match(/@\s*([\d.]+)/)[1];  // assuming your option text has “@ 16000”
+    const qty = parseFloat(row.querySelector('[name$="-quantity"]').value) || 0;
+    total += parseFloat(priceStr) * qty;
+  });
+  document.querySelector('#id_minimum_price').value = total.toFixed(2);
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = 'Calculate MSP';
+  btn.className = 'button';
+  document.querySelector('.submit-row').prepend(btn);
+  btn.addEventListener('click', calculateMSP);
+});
+  </script>
+{% endblock %}

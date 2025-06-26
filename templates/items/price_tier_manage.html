@@ -1,0 +1,116 @@
+{# templates/items/price_tier_manage.html #}
+{% load tz %}
+
+<form method="post"
+      id="priceTierForm"
+      action="{% url 'items:price_tiers_manage' price_rule.pk %}">
+  {% csrf_token %}
+  {{ form.price_rule }}  {# hidden field, if you like #}
+
+  <div class="modal-content">
+    <!-- header -->
+    <div class="modal-header">
+      <h2>Manage Tiers for: {{ price_rule.item.product_name }}</h2>
+      <button
+        type="button"
+        class="close-btn"
+        onclick="document.getElementById('price-rule-modal').style.display='none';"
+      >&times;</button>
+    </div>
+
+    <!-- body -->
+    <div class="modal-body">
+      <table class="price-rules-table mb-3">
+        <thead>
+          <tr>
+            <th>Min Quantity</th>
+            <th>Price</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for tier in tiers %}
+          <tr>
+            <td>{{ tier.min_quantity }}</td>
+            <td>{{ tier.price }}</td>
+            <td class="text-end">
+              <button
+                type="button"
+                class="btn-pill-delete"
+                data-action="delete_tier"
+                data-tier-id="{{ tier.pk }}"
+                data-delete-url="{% url 'items:tier_delete' tier.pk %}"
+              >
+                Delete
+              </button>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="3" class="text-center text-muted">No tiers yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div class="l2-form-group">
+        {{ form.min_quantity.label_tag }}
+        {{ form.min_quantity }}
+        {{ form.min_quantity.errors }}
+      </div>
+      <div class="l2-form-group">
+        {{ form.price.label_tag }}
+        {{ form.price }}
+        {{ form.price.errors }}
+      </div>
+    </div>
+
+    <!-- footer -->
+    <div class="modal-footer">
+      <button
+        type="button"
+        class="btn btn-cancel"
+        onclick="document.getElementById('price-rule-modal').style.display='none';"
+      >
+        Close
+      </button>
+      <button type="submit" class="btn btn-save">Add Tier</button>
+    </div>
+  </div>
+</form>
+
+<script>// DELETE‐TIER HANDLER
+document.body.addEventListener("click", async e => {
+  // look for any button with data-action="delete_tier"
+  const btn = e.target.closest("button[data-action='delete_tier']");
+  if (!btn) return;
+
+  e.preventDefault();
+  const deleteUrl = btn.dataset.deleteUrl;
+  // grab the CSRF token from the form in the modal
+  const csrf = document.querySelector("#priceTierForm [name=csrfmiddlewaretoken]").value;
+
+  // fire the AJAX delete
+  const resp = await fetch(deleteUrl, {
+    method: "POST",
+    headers: {
+      "X-Requested-With": "XMLHttpRequest",
+      "X-CSRFToken": csrf,
+    },
+  });
+  const json = await resp.json();
+  if (!json.success) {
+    return alert("Failed to delete tier");
+  }
+
+  // on success, re-fetch the manage-tiers fragment
+  const manageUrl = document.getElementById("priceTierForm").action;
+  const html = await fetch(manageUrl, {
+    headers: { "X-Requested-With": "XMLHttpRequest" },
+  }).then(r => r.text());
+
+  // re-render the modal
+  const modal = document.getElementById("price-rule-modal");
+  modal.innerHTML = html;
+  modal.style.display = "flex";
+});</script>

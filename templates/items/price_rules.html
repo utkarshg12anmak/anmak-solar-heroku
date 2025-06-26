@@ -1,0 +1,451 @@
+{% extends "base.html" %}
+{% load tz %}
+
+{% block content %}
+<style>
+  /* === 1) Price-Rules Header & +Add Button === */
+  .price-rules-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  .price-rules-header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+  .title-group {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  #open-create-rule-btn {
+    background-color: #2563eb;
+    color: #fff;
+    padding: 0.5rem 1.25rem;
+    border: none;
+    border-radius: 9999px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+  }
+  #open-create-rule-btn:hover {
+    background-color: #1e40af;
+  }
+
+  /* === 2) Table Card Container === */
+  .table-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    padding: 1rem;
+    overflow-x: auto;
+  }
+
+  /* === 3) Price-Rules Table Styling === */
+  .price-rules-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .price-rules-table th,
+  .price-rules-table td {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    color: #333;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  .price-rules-table th {
+    background-color: #f9fafb;
+    font-weight: 600;
+  }
+  .price-rules-table tr:hover td {
+    background-color: #f3f4f6;
+  }
+  .price-rules-table tr:first-child th:first-child {
+    border-top-left-radius: 8px;
+  }
+  .price-rules-table tr:first-child th:last-child {
+    border-top-right-radius: 8px;
+  }
+  .price-rules-table tr:last-child td:first-child {
+    border-bottom-left-radius: 8px;
+  }
+  .price-rules-table tr:last-child td:last-child {
+    border-bottom-right-radius: 8px;
+  }
+
+  /* === 4) Edit / Delete Pill Buttons === */
+  .btn-pill-edit {
+    background-color: #fbbf24;
+    color: #fff;
+    padding: 0.35rem 0.75rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+  }
+  .btn-pill-edit:hover {
+    background-color: #f59e0b;
+  }
+
+  .btn-pill-delete {
+    background-color: #ef4444;
+    color: #fff;
+    padding: 0.35rem 0.75rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+  }
+  .btn-pill-delete:hover {
+    background-color: #dc2626;
+  }
+
+  /* === 5) Utility for Right-Aligning Actions === */
+  .text-end {
+    text-align: right;
+  }
+
+  /* === Manage Tiers button (purple pill) === */
+  .btn-pill-manage {
+    background-color: #8b5cf6;
+    color: #fff;
+    padding: 0.35rem 0.75rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+  }
+  .btn-pill-manage:hover {
+    background-color: #7c3aed;
+  }
+
+  /* Simple toggle switch */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+  }
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #f44336;
+    transition: .2s;
+    border-radius: 20px;
+  }
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .2s;
+    border-radius: 50%;
+  }
+  input:checked + .slider {
+    background-color: #4caf50;
+  }
+  input:checked + .slider:before {
+    transform: translateX(20px);
+  }
+
+  /* you can extract these into your main CSS */
+  .search-container {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    align-items: center;
+  }
+  .search-input {
+    flex: 1;
+    max-width: 300px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 0.375rem;
+  }
+  .btn-search {
+    background: #3182ce;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+  }
+  .btn-reset {
+    background: #e53e3e;
+    color: #fff;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+  }
+
+  /* price_rules.html modal overlay */
+      #price-rule-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      overflow: auto;
+    }
+
+  #price-rule-modal .modal-content {
+    background: #fff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    max-width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    position: relative;
+  }
+  #price-rule-modal .close-modal {
+    position: absolute;
+    top: 0.5rem; right: 0.5rem;
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+</style>
+
+<div class="container mt-4">
+  <div class="price-rules-header">
+    <div class="title-group">
+      <h1>Price Rules</h1>
+      <p class="total-count">
+        {% if total_count == 1 %}(1 Rule){% else %}({{ total_count }} Rules){% endif %}
+      </p>
+    </div>
+    <a id="open-create-rule-btn" href="{% url 'items:price_rule_create' %}">+ Add New Price Rule</a>
+  </div>
+
+  <form method="get" class="search-container">
+    <input
+      type="text"
+      name="q"
+      value="{{ search_query }}"
+      placeholder="Search SKU, product name or Price Book…"
+      class="search-input"
+    />
+    <button type="submit" class="btn-search">Search</button>
+    <a href="{% url 'items:price_rules_list' %}" class="btn-reset">Reset</a>
+  </form>
+
+  <div class="table-card">
+    <table class="price-rules-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>SKU ID</th>
+          <th>Product Name</th>
+          <th>Price Rule</th>
+          <th>Base Price</th>
+          <th>Unit Type</th>
+          <th>Available ?</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rule in rules %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td class="small-cell">{{ rule.item.sku }}</td>
+          <td>{{ rule.item.product_name }}</td>
+          <td>{{ rule.price_book.name }}</td>
+          <td>{{ rule.base_price }}</td>
+          <td>{{ rule.get_unit_type_display }}</td>
+          <td>
+            <label class="switch">
+              <input
+                type="checkbox"
+                class="availability-toggle"
+                data-id="{{ rule.pk }}"
+                {% if rule.available %}checked{% endif %}
+              >
+              <span class="slider"></span>
+            </label>
+          </td>
+          <td class="text-end">
+            <button
+              class="btn-pill-manage"
+              data-action="add_pricing"
+              data-rule-id="{{ rule.pk }}"
+            >Manage Tiers</button>
+            <a href="{% url 'items:price_rule_edit' rule.pk %}" class="btn-pill-edit">Edit</a>
+            <form method="post"
+                  action="{% url 'items:price_rule_delete' rule.pk %}"
+                  style="display:inline"
+                  onsubmit="return confirm('Delete this rule?');">
+              {% csrf_token %}
+              <button type="submit" class="btn-pill-delete">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div id="price-rule-modal"></div>
+</div>
+
+<script>
+  document.body.addEventListener("click", async e => {
+    const btn = e.target.closest("[data-action]");
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const ruleId = btn.dataset.ruleId;
+    const modal = document.getElementById("price-rule-modal");
+    let url;
+    if (action === "add_pricing") {
+      url = `{% url 'items:price_tiers_manage' 0 %}`.replace("/0/", `/${ruleId}/`);
+    }
+    if (url) {
+      e.preventDefault();
+      const resp = await fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } });
+      const html = await resp.text();
+      modal.innerHTML = html;
+      modal.style.display = "flex";
+    }
+  });
+
+  document.body.addEventListener("submit", async e => {
+    if (e.target.id !== "priceTierForm") return;
+    e.preventDefault();
+    const form = e.target;
+    const manageUrl = form.action;
+    const resp = await fetch(manageUrl, {
+      method: "POST",
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
+      },
+      body: new FormData(form)
+    });
+    if (resp.headers.get("Content-Type").includes("application/json")) {
+      const html = await fetch(manageUrl, { headers: { "X-Requested-With": "XMLHttpRequest" } }).then(r => r.text());
+      document.getElementById("price-rule-modal").innerHTML = html;
+    } else {
+      document.getElementById("price-rule-modal").innerHTML = await resp.text();
+    }
+  });
+
+  window.addEventListener("click", e => {
+    const modal = document.getElementById("price-rule-modal");
+    if (e.target === modal) {
+      modal.style.display = "none";
+      modal.innerHTML = "";
+    }
+  });
+</script>
+
+<script>// DELETE‐TIER HANDLER
+document.body.addEventListener("click", async e => {
+  // look for any button with data-action="delete_tier"
+  const btn = e.target.closest("button[data-action='delete_tier']");
+  if (!btn) return;
+
+  e.preventDefault();
+  const deleteUrl = btn.dataset.deleteUrl;
+  // grab the CSRF token from the form in the modal
+  const csrf = document.querySelector("#priceTierForm [name=csrfmiddlewaretoken]").value;
+
+  // fire the AJAX delete
+  const resp = await fetch(deleteUrl, {
+    method: "POST",
+    headers: {
+      "X-Requested-With": "XMLHttpRequest",
+      "X-CSRFToken": csrf,
+    },
+  });
+  const json = await resp.json();
+  if (!json.success) {
+    return alert("Failed to delete tier");
+  }
+
+  // on success, re-fetch the manage-tiers fragment
+  const manageUrl = document.getElementById("priceTierForm").action;
+  const html = await fetch(manageUrl, {
+    headers: { "X-Requested-With": "XMLHttpRequest" },
+  }).then(r => r.text());
+
+  // re-render the modal
+  const modal = document.getElementById("price-rule-modal");
+  modal.innerHTML = html;
+  modal.style.display = "flex";
+});</script>
+
+<script>
+  (function(){
+    function getCookie(name) {
+      let value = "; " + document.cookie;
+      let parts = value.split("; " + name + "=");
+      if (parts.length === 2) return parts.pop().split(";").shift();
+    }
+    const csrftoken = getCookie("csrftoken");
+
+    document.querySelectorAll(".availability-toggle").forEach(checkbox => {
+      checkbox.addEventListener("change", async function() {
+        const ruleId = this.dataset.id;
+        const isOn   = this.checked;
+        const url    = `{% url 'items:price_rule_toggle_availability' 0 %}`.replace("/0/", `/${ruleId}/`);
+        try {
+          const resp = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": csrftoken,
+              "X-Requested-With": "XMLHttpRequest"
+            },
+            body: JSON.stringify({ available: isOn })
+          });
+          const data = await resp.json();
+          if (!data.success) throw new Error("Server rejected update");
+          // reload page to reflect changes
+          window.location.reload();
+        } catch (err) {
+          console.error("Toggle failed:", err);
+          this.checked = !isOn;
+          alert("Could not update availability. Please try again.");
+        }
+      });
+    });
+  })();
+</script>
+
+{% endblock %}

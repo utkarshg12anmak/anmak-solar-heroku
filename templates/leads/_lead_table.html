@@ -1,0 +1,84 @@
+{# templates/leads/_lead_table.html #}
+
+<div class="card">
+  <table class="leads-table">
+    <thead>
+      <tr>
+        <th>Lead ID</th>
+        <th>Phone</th>
+        <th>Name</th>
+        <th>City</th>
+        <th>System Size (kW)</th>
+        <th>System Type</th>
+        <th>Lead Quality</th>
+        <th>Grid Type</th>
+        <th>Total Amount (₹)</th>
+        <th>Lead Stage</th>
+        <th>Lead Manager</th>
+        <th>Created At</th>
+        <th>Updated At</th>
+        <th>Created By</th>
+        <th>Updated By</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for lead in leads %}
+      <tr>
+        <td>{{ lead.pk }}</td>
+        <td>{{ lead.customer.primary_phone }}</td>
+        <td>
+          {{ lead.customer.first_name }}{% if lead.customer.last_name %} {{ lead.customer.last_name }}{% endif %}
+        </td>
+        <td>{{ lead.customer.city.name }}</td>
+        <td>{{ lead.system_size }} kW</td>
+        <td>{{ lead.get_system_type_display }}</td>
+        <td>{{ lead.get_lead_quality_display }}</td>
+        <td>{{ lead.get_grid_type_display }}</td>
+        <td>
+          {% if lead.total_amount %}₹{{ lead.total_amount }}{% else %}&ndash;{% endif %}
+        </td>
+        <td>{% if lead.stage %}{{ lead.stage.name }}{% else %}&ndash;{% endif %}</td>
+        <td>{% if lead.lead_manager %}{{ lead.lead_manager.get_full_name }}{% else %}&ndash;{% endif %}</td>
+        <td>{{ lead.created_at|date:"Y-m-d H:i" }}</td>
+        <td>{{ lead.updated_at|date:"Y-m-d H:i" }}</td>
+        <td>{{ lead.created_by.get_full_name }}</td>
+        <td>{{ lead.updated_by.get_full_name }}</td>
+        <td>
+          <a href="{% url 'leads:edit' lead.pk %}" class="btn-edit">Edit</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="16" class="text-center text-muted">
+          No leads found.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if is_paginated %}
+  <div class="pagination">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if view_mode %}&view={{ view_mode }}{% endif %}">‹ Prev</a>
+    {% endif %}
+
+    {% for num in page_obj.paginator.page_range %}
+      {% if page_obj.number == num %}
+        <span class="current">{{ num }}</span>
+      {% else %}
+        <a href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if view_mode %}&view={{ view_mode }}{% endif %}">
+          {{ num }}
+        </a>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if view_mode %}&view={{ view_mode }}{% endif %}">
+        Next ›
+      </a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>

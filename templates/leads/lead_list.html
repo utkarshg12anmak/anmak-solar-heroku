@@ -1,0 +1,388 @@
+{# leads/templates/leads/lead_list.html #}
+{% extends "base.html" %}
+{% load static tz %}
+
+
+{% block content %}
+<style>
+
+  .leads-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: auto;               /* auto‐size columns */
+  }
+  .leads-table thead th {
+    background: #003347;
+    color: #fff;
+    padding: 0.75rem 1rem;
+    text-align: left;
+  }
+  .leads-table thead th:first-child  { border-top-left-radius: 0.5rem;  }
+  .leads-table thead th:last-child   { border-top-right-radius: 0.5rem; }
+
+  .leads-table th, .leads-table td {
+    white-space: nowrap;
+    border-bottom: 1px solid #E2E8F0;
+  }
+  .leads-table td {
+    padding: 0.75rem 1rem;
+  }
+
+  .leads-table tbody tr:hover {
+    background: #f7f9fc;
+  }
+
+  /* === 1) Align “Leads” and the count on the same line === */
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;    /* center everything vertically */
+    margin-bottom: 1rem;
+  }
+  .page-header .title-wrap {
+    display: flex;
+    align-items: center;    /* make H1 and count sit on one baseline */
+    gap: 0.75rem;           /* a little breathing room */
+  }
+
+  .page-header h1 {
+    font-size: 1.75rem;
+    margin: 0;
+  }
+  .page-header .record-count {
+    font-size: 1.25rem;
+    color: #6c757d;
+    margin-left: 0.5rem;
+  }
+
+  .page-header .title-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+  .card {
+    background: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    padding: 1rem;
+    overflow-x: auto;
+  }
+
+  .btn-edit {
+    background-color: #D69E2E;    /* amber/orange */
+    color: #fff;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.2s;
+  }
+  .btn-edit:hover {
+    background-color: #B7791F;
+  }
+
+  .table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+  }
+  .table thead th {
+    background: #003347;
+    color: #fff;
+    padding: 0.75rem 1rem;
+    text-align: left;
+  }
+  /* curved corners on the header row */
+  .table thead th:first-child  { border-top-left-radius: 0.5rem;  }
+  .table thead th:last-child   { border-top-right-radius: 0.5rem; }
+
+  .table tbody td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .table tbody tr:hover { background: #f7f9fc; }
+
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  .pagination a, .pagination span {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    text-decoration: none;
+    color: #1a202c;
+  }
+  .pagination a:hover { background: #f7f9fc; }
+  .pagination .current { background: #38a169; color: #fff; }
+
+  /* =========================
+     Search‐bar CSS
+     ========================= */
+    /* === 2) Let the filter dropdowns auto-size and stretch === */
+    .search-container {
+      display: flex;
+      flex-wrap: wrap;        /* if you overflow, they wrap onto next line gracefully */
+      gap: 0.5rem;
+      align-items: center;
+    }
+    /* Shrink search field to roughly 20% of page width */
+    .search-container input[type="text"] {
+      width: 20%;                /* 20% of the container width */
+      min-width: 200px;          /* enforce a reasonable minimum so it never disappears on small screens */
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 0.375rem;
+      font-size: 1rem;
+      color: #333;
+      transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .search-container input[type="text"]:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+      .search-container .filter-input {
+      /* remove any hard-coded width, allow content to dictate size */
+      width: auto;
+      
+      /* let them grow or shrink a bit if your container flexes */
+      flex: 1 1 8rem;         /* base of 8rem, but shrink/grow as needed */
+      min-width: 8rem;        /* avoid getting too small */
+      max-width: 16rem;       /* and not exploding too large */
+    }
+
+    /* Filter button (blue) */
+    .btn-filter {
+      background-color: #3182ce;  /* blue-600 */
+      color: #fff;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 0.375rem;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    .btn-filter:hover {
+      background-color: #2c5282;  /* blue-700 */
+    }
+
+    /* Reset button (red) */
+    .btn-reset {
+      background-color: #e53e3e;  /* red-600 */
+      color: #fff;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 0.375rem;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      text-decoration: none;      /* ensure the anchor looks like a button */
+    }
+    .btn-reset:hover {
+      background-color: #c53030;  /* red-700 */
+    }
+
+    /* === (3) Segmented control wrapper === */
+    .view-toggle {
+      margin-left: auto;         /* push all the way to the right */
+      display: inline-flex;
+      border: 1px solid #ccc;
+      border-radius: 0.375rem;
+      overflow: hidden;
+      background: #f3f4f6;       /* very light gray behind */
+    }
+
+    /* === (4) Individual “segment” links === */
+    .seg-btn {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      text-decoration: none;
+      font-size: 0.9rem;
+      color: #4b5563;            /* default: gray-700 text */
+      background-color: transparent;
+      transition: background-color 0.2s, color 0.2s;
+      white-space: nowrap;
+    }
+
+    /* When one segment is “active,” make it bold + colored */
+    .seg-btn.active {
+      background-color: #2563eb; /* blue background */
+      color: #fff;               /* white text */
+      font-weight: 600;
+    }
+
+    /* Add a subtle border between the two segments */
+    .seg-btn + .seg-btn {
+      border-left: 1px solid #ccc;
+    }
+
+    /* On hover, lighten/darken as appropriate */
+    .seg-btn:hover {
+      background-color: #e5e7eb; /* slightly darker gray hover */
+    }
+    .seg-btn.active:hover {
+      background-color: #1e40af; /* slightly darker blue on hover */
+    }
+
+    /* put this right after your .search-container rules */
+    /* hide the native dropdown arrow */
+    .filter-input {
+      -webkit-appearance: none;
+         -moz-appearance: none;
+              appearance: none;
+
+      /* match height/padding of your other inputs */
+      display: inline-block;
+      vertical-align: middle;
+      height: 2.5rem;
+      line-height: 1.5rem;
+      
+      /* left padding stays the same */
+      padding: 0 1.5rem 0 0.75rem;
+      /* move the caret 1rem from the right edge */
+      background-position: right 1rem center;
+
+      margin: 0;
+
+      /* borders & rounding */
+      border: 1px solid #ccc;
+      border-radius: 0.375rem;
+      background-color: #fff;
+
+      /* our little down-caret SVG, right-aligned */
+      background-image:
+        url("data:image/svg+xml;charset=UTF-8,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0l5 6 5-6' fill='%23666'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      
+      background-size: 10px 6px;
+
+      /* nice focus state */
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .filter-input:focus {
+      outline: none;
+      border-color: #3182ce;
+      box-shadow: 0 0 0 3px rgba(49,130,206,0.2);
+    }
+
+    /* IE11: hide its own arrow */
+    .filter-input::-ms-expand {
+      display: none;
+    }
+
+  </style>
+
+    <div class="page-header">
+    <div class="title-wrap">
+      <h1>Leads</h1>
+      <span class="record-count">
+        ({{ page_obj.paginator.count }} records &bull; ₹{{ total_amount_sum }})
+      </span>
+    </div>
+    <div class="view-toggle">
+      <a href="?view=list{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+         class="seg-btn {% if view_mode == 'list' %}active{% endif %}">
+        List
+      </a>
+      <a href="?view=grid{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+         class="seg-btn {% if view_mode == 'grid' %}active{% endif %}">
+        Grid
+      </a>
+    </div>
+  </div>
+
+  {# ==== Search Form ==== #}
+  <form method="get" class="search-container">
+    <input
+    type="text"
+    name="q"
+    placeholder="Search by Lead ID, phone, or customer name…"
+    value="{{ request.GET.q|default:'' }}"
+    aria-label="Search leads"
+    >
+
+      <select name="city" class="filter-input">
+    <option value="">All cities</option>
+    {% for c in cities %}
+      <option value="{{ c.id }}"
+        {% if selected_city == c.id|stringformat:"s" %}selected{% endif %}>
+        {{ c.name }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <select name="system_type" class="filter-input">
+    <option value="">All system types</option>
+    {% for val,label in system_types %}
+      <option value="{{ val }}"
+        {% if selected_system == val %}selected{% endif %}>
+        {{ label }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <select name="grid_type" class="filter-input">
+    <option value="">All grid types</option>
+    {% for val,label in grid_types %}
+      <option value="{{ val }}"
+        {% if selected_grid == val %}selected{% endif %}>
+        {{ label }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <select name="lead_quality" class="filter-input">
+    <option value="">All qualities</option>
+    {% for val,label in lead_qualities %}
+      <option value="{{ val }}"
+        {% if selected_quality == val %}selected{% endif %}>
+        {{ label }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <select name="lead_manager" class="filter-input">
+    <option value="">All managers</option>
+    {% for u in lead_managers %}
+      <option value="{{ u.id }}"
+        {% if selected_manager == u.id|stringformat:"s" %}selected{% endif %}>
+        {{ u.get_full_name }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <select name="department" class="filter-input">
+    <option value="">All departments</option>
+    {% for d in departments %}
+      <option value="{{ d.id }}"
+        {% if selected_department == d.id|stringformat:"s" %}selected{% endif %}>
+        {{ d.name }}
+      </option>
+    {% endfor %}
+  </select>
+
+
+
+    <button type="submit" class="btn-filter">Filter</button>
+
+    {# “Reset” is just a link to the same view without any query string #}
+    <a href="{% url 'leads:list' %}" class="btn-reset">Reset</a>
+
+</form>
+
+
+  <!-- ===== Include Table or Kanban based on view_mode ===== -->
+  {% if view_mode == "grid" %}
+    {% include "leads/_lead_kanban.html" %}
+  {% else %}
+    {% include "leads/_lead_table.html" %}
+  {% endif %}
+{% endblock %}

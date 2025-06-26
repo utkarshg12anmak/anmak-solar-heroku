@@ -1,0 +1,839 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Create Customer + Lead{% endblock %}
+
+{% block content %}
+<style>
+  /* Global styles and reset */
+  body {
+    font-family: 'Inter', sans-serif; /* A modern, clean font */
+    background-color: #f8f9fa; /* Lighter background */
+    color: #343a40; /* Darker, more readable text */
+    line-height: 1.6;
+  }
+
+  /* 25% width for system size group */
+  .system-size-group {
+    width: 10%;
+    max-width: 250px; /* or whatever min you like */
+  }
+
+  .page-title small.text-muted {
+    font-weight: 400;
+    font-size: 0.85em;
+    margin-left: 0.5rem;
+    color: #adb5bd; /* bootstrap‐style muted grey */
+  }
+
+  /* make the container position relative so we can absolutely position the button */
+  .validate-group {
+    position: relative;
+    display: flex;           /* keep the +91, input and button inline */
+    align-items: center;
+  }
+
+  /* shrink the input so it doesn’t get hidden by the button */
+
+  /* hover state */
+  .validate-btn:hover {
+    background: #2563eb;
+  }  
+
+  /* move unit label to the right */
+  .unit-group {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .unit-group input {
+    flex: 1 1 auto;
+    border: none;
+    padding: 0.75rem;
+  }
+  .unit-right {
+    background: #eee;
+    border-left: 1px solid #ddd;
+    padding: 0 0.75rem;
+    font-size: 0.95em;
+  }
+
+  /* remove Total Amount spacing if any lingered */
+  .form-group.total-amount { display: none; }
+
+
+  /* Distinct pill colors */
+
+  /* System Type (blue) */
+  .system-type-choices .choice-input:checked + .choice-box {
+    background: #3b82f6;
+    border-color: #3b82f6;
+    color: #fff;
+  }
+
+  /* Lead Quality (green) */
+  .lead-quality-choices .choice-input:checked + .choice-box {
+    background: #10b981;
+    border-color: #10b981;
+    color: #fff;
+  }
+
+  /* Grid Type (orange) */
+  .grid-type-choices .choice-input:checked + .choice-box {
+    background: #ed8936;
+    border-color: #ed8936;
+    color: #fff;
+  }
+
+  /* reuse your existing .choice-input + .choice-box logic */
+
+  /* Container for pill choices */
+  .pill-choices .choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-top: .5rem;
+  }
+  .pill-choices .choice-box {
+    padding: .5rem 1rem;
+    border: 1px solid #cbd5e0;
+    border-radius: .375rem;
+    background: #fff;
+    cursor: pointer;
+    transition: background .2s, border-color .2s;
+  }
+  .pill-choices .choice-input:checked + .choice-box {
+    background: #3b82f6;      /* your primary blue */
+    border-color: #3b82f6;
+    color: #fff;
+  }
+
+
+  .validate-group input {
+    flex: 1;
+    margin-right: 0.5rem;
+    padding-right: 4.5rem;
+  }
+
+
+  .validate-btn {
+    position: absolute;
+    top: 50%;
+    right: 0.8rem;
+    transform: translateY(-50%);
+    padding: 0.6rem 0.6rem;
+    background: #3b82f6;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .validate-btn:hover:not(:disabled) {
+    background: #2563eb;
+  }
+
+  /* help‐text styling */
+  .help-text {
+    display: block;
+    font-size: .85rem;
+    color: #666;
+    margin-top: .25rem;
+  }
+
+  /* shrink remarks textarea to ~2 lines */
+  textarea {
+    min-height: 3.5em;   /* roughly two lines of text */
+    max-height: 6em;     /* prevents it from growing too large */
+    overflow-y: auto;
+  }
+
+  /* ensure form‐group spacing is consistent */
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+
+
+  /* content-wrapper for the main form container */
+  .content-wrapper {
+    max-width: 900px;
+    margin: 20px auto 40px;
+    margin-top: 0;
+    padding: 0px 40px 40px 40px;
+    background: #ffffff;
+    border-radius: 12px; /* Slightly more rounded corners */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06), 0 16px 32px rgba(0,0,0,0.03); /* Softer, deeper shadow */
+  }
+
+  .page-title {
+    background: #003347;  /* dark slate */
+    color: #fff;
+    padding: 1rem 1.5rem;
+    border-radius: 8px 8px 0 0;
+    margin: 0 -40px 20px; /* extend full width of content-wrapper */
+    font-size: 2.2rem;
+    font-weight: 600;
+  }
+
+  .inline-fields.name-group {
+    display: flex;
+    gap: 1rem;
+  }
+  .inline-fields.name-group .form-group:nth-child(1) {
+    flex: 0 0 5%;
+  }
+  .inline-fields.name-group .form-group:nth-child(2),
+  .inline-fields.name-group .form-group:nth-child(3) {
+    flex: 0 0 38.8%;
+  }
+
+  h1 {
+    font-size: 2.2em;
+    margin-bottom: 30px;
+    color: #212529; /* Slightly darker heading color */
+    border-bottom: 1px solid #e9ecef; /* Lighter border */
+    padding-bottom: 15px;
+    font-weight: 600; /* Medium-bold for headings */
+  }
+
+  fieldset {
+    border: none;
+    margin-bottom: 2rem;
+    padding-top: 15px; /* Add some padding above fieldsets */
+  }
+
+  legend {
+    font-size: 1.6em; /* Slightly larger legend */
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #495057;
+    border-bottom: 1px solid #dee2e6; /* Lighter border */
+    padding-bottom: 8px;
+    width: 100%; /* Ensure legend takes full width */
+  }
+
+  form p {
+    margin-bottom: 20px; /* Increased margin for paragraphs */
+    display: flex;
+    flex-direction: column;
+  }
+
+  form label {
+    font-size: 0.9em; /* Slightly smaller label text */
+    font-weight: 500;
+    color: #6c757d; /* Softer label color */
+    margin-bottom: 8px;
+  }
+
+  .inline-fields {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .inline-fields .form-group {
+    flex: 1;
+    min-width: 0px;
+  }
+
+  .form-group label {
+    margin-bottom: 4px;   /* tighten the gap under all labels */
+  }
+
+  form .inline-fields {
+    display: flex;
+    gap: 1.25rem; /* Increased gap for inline fields */
+    flex-wrap: wrap;
+  }
+
+  form p.form-group {
+    margin-top: 0;
+    margin-bottom: 1rem;  /* keep some breathing room below */
+  }
+
+  form .inline-fields .form-group {
+    flex: 1;
+    min-width: 150px; /* Slightly larger min-width for better spacing */
+  }
+
+  /* General input, select, textarea styling */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  select,
+  textarea {
+    border: 1px solid #ced4da; /* Softer border color */
+    border-radius: 8px; /* More rounded inputs */
+    padding: 12px 15px; /* Consistent padding */
+    font-size: 1em;
+    width: 100%;
+    box-sizing: border-box; /* Include padding and border in element's total width and height */
+    transition: border-color 0.2s, box-shadow 0.2s; /* Smooth transition for focus */
+    color: #495057;
+  }
+
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="tel"]:focus,
+  select:focus,
+  textarea:focus {
+    border-color: #80bdff; /* Bootstrap-like blue on focus */
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); /* Subtle focus shadow */
+  }
+
+  /* input-group for +91 prefix */
+  .input-group {
+    display: flex;
+    position: relative;
+    margin-top: 0; 
+    width: 100%;
+    align-items: center;
+    gap: 0rem;
+  }
+
+  .input-group input {
+    flex: 1;
+    /* leave room on right for the button */
+    padding-right: 5rem; 
+  }
+
+  .input-group-text {
+    background: #e9ecef; /* Lighter background for prefix */
+    border: 1px solid #ced4da;
+    padding: 8 1rem; /* Slightly more padding */
+    display: flex;
+    align-items: center;
+    border-right: none;
+    border-radius: 8px 0 0 8px; /* Match input border-radius */
+    color: #495057;
+    font-weight: 500;
+    flex: none;
+  }
+
+  .input-group input {
+    border: 1px solid #ced4da;
+    border-left: none;
+    border-radius: 0 8px 8px 0; /* Match input border-radius */
+    padding: 12px 15px;
+    flex: 1;
+  }
+
+  .input-group input:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  }
+
+  /* choice-box pills */
+  .choices {
+    display: flex;
+    gap: 0.75rem; /* Slightly increased gap between pills */
+    flex-wrap: wrap;
+    margin-top: 5px; /* Small top margin for alignment */
+  }
+
+  .choice-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .customer-legend {
+    margin-bottom: 8px;
+  }
+
+  .choice-box {
+    padding: 0.6rem 1.2rem; /* More comfortable padding */
+    border: 1px solid #dee2e6; /* Softer border */
+    border-radius: 20px; /* More pill-like shape */
+    background: #f8f9fa; /* Lighter background for unselected */
+    color: #495057; /* Default text color */
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    font-size: 0.9em;
+    user-select: none; /* Prevent text selection on click */
+  }
+
+  .form-group {
+    margin-top: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .form-group > label {
+    margin-bottom: 0.75rem;
+  }
+
+
+  .choice-box:hover {
+    background: #e9ecef; /* Subtle hover effect */
+    border-color: #adb5bd;
+  }
+
+  .choice-input:checked + .choice-box {
+    background: #fd7e14; /* Orange-red for city */
+    border-color: #fd7e14;
+    color: #fff;
+    box-shadow: 0 2px 5px rgba(253, 126, 20, 0.2); /* Subtle shadow for selected */
+  }
+
+  .source-choices .choice-input:checked + .choice-box {
+    background: #dc3545; /* Bootstrap red for source */
+    border-color: #dc3545;
+    color: #fff;
+    box-shadow: 0 2px 5px rgba(220, 53, 69, 0.2); /* Subtle shadow for selected */
+  }
+
+  /* button row */
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 40px; /* More space above buttons */
+  }
+
+  .btn-validate {
+    padding: 0.4rem 0.8rem;
+    background: #3b82f6;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-validate:hover { background: #2563eb; }
+  .btn-validate:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
+
+  .btn-primary {
+    background: #007bff; /* Standard Bootstrap blue */
+    color: #fff;
+    padding: 14px 30px; /* More generous padding */
+    border: none;
+    border-radius: 8px; /* Match input border-radius */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Softer shadow */
+    font-size: 1.05em; /* Slightly larger font */
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease; /* Smooth transitions */
+  }
+
+  .btn-primary:hover {
+    background: #0056b3; /* Darker blue on hover */
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    transform: translateY(-1px); /* Slight lift effect */
+  }
+
+  .inline-fields.phone-group {
+    display: flex;
+    gap: 1rem;
+    margin: -0.5rem 0;  /* vertical spacing around them */
+  }
+
+  inline-fields.phone-group .form-group {
+    flex: 1;
+  }
+
+  .btn-primary:active {
+    transform: translateY(0); /* Press down effect */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+</style>
+
+<div class="content-wrapper">
+  <div class="page-title">
+    Create Customer &amp; Lead
+    {% if interest_id %}
+    <small class="text-muted">(#{{ interest_id }})</small>
+    {% endif %}
+  </div>
+
+  {% if customer_form.non_field_errors %}
+  <div class="alert alert-danger">
+    {{ customer_form.non_field_errors }}
+  </div>
+  {% endif %}
+  {% if lead_form.non_field_errors %}
+  <div class="alert alert-danger">
+    {{ lead_form.non_field_errors }}
+  </div>
+  {% endif %}
+
+
+  <form method="post" action="{% url 'customers:create_with_lead' %}">
+    {% csrf_token %}
+
+    {% if interest_id %}
+    <input
+    type="hidden"
+    name="from_interest"
+    value="{{ interest_id }}"
+    />
+    {% endif %}
+
+    <fieldset>
+      <legend class="customer-legend">Customer Details</legend>
+
+      <div class="inline-fields">
+        <!-- Primary Phone -->
+        <div class="form-group">
+          <label for="{{ customer_form.primary_phone.id_for_label }}">Primary Phone</label>
+          <!-- notice we're giving the SAME div both the "input-group" AND the "validate-group" classes -->
+          <div class="input-group validate-group">
+            <span class="input-group-text">+91</span>
+            {{ customer_form.primary_phone }}
+            <button
+            type="button"
+            id="validate-phone"
+            class="btn validate-btn"
+            >Validate</button>
+          </div>
+          <small id="validate-feedback" class="help-text"></small>
+        </div>
+
+        <!-- Secondary Phone -->
+        <div class="form-group">
+          <label for="{{ customer_form.secondary_phone.id_for_label }}">Secondary Phone</label>
+          <div class="input-group">
+            <span class="input-group-text">+91</span>
+            {{ customer_form.secondary_phone }}
+          </div>
+          {% if customer_form.secondary_phone.errors %}
+          <span class="error">{{ customer_form.secondary_phone.errors.0 }}</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="inline-fields name-group">
+        <div class="form-group">
+          <label for="{{ customer_form.designation.id_for_label }}">Designation</label>
+          {{ customer_form.designation }}
+        </div>
+        <div class="form-group">
+          <label for="{{ customer_form.first_name.id_for_label }}">First Name</label>
+          {{ customer_form.first_name }}
+        </div>
+        <div class="form-group">
+          <label for="{{ customer_form.last_name.id_for_label }}">Last Name</label>
+          {{ customer_form.last_name }}
+        </div>
+      </div>
+
+      {# Address (new single‐line text input) #}
+      <div class="form-group">
+        <label for="{{ customer_form.address.id_for_label }}">Address</label>
+        {{ customer_form.address }}
+        {% if customer_form.address.errors %}
+        <div class="text-danger">{{ customer_form.address.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      {# City as orange pills #}
+      <div class="form-group">
+        <label>City</label>
+        <div class="choices status-choices">
+          {% for val,label in customer_form.city.field.choices %}
+          {% if val %}
+          <input type="radio"
+          name="{{ customer_form.city.name }}"
+          id="city_{{ forloop.counter }}"
+          value="{{ val }}"
+          class="choice-input"
+          {% if customer_form.city.value|stringformat:"s" == val|stringformat:"s" %}checked{% endif %} />
+          <label for="city_{{ forloop.counter }}" class="choice-box">{{ label }}</label>
+          {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+
+      {# Source as red pills #}
+      <div class="form-group">
+        <label>Source</label>
+        <div class="choices source-choices">
+          {% for val,label in customer_form.source.field.choices %}
+          {% if val %}
+          <input type="radio"
+          name="{{ customer_form.source.name }}"
+          id="src_{{ forloop.counter }}"
+          value="{{ val }}"
+          class="choice-input"
+          {% if customer_form.source.value|stringformat:"s" == val|stringformat:"s" %}checked{% endif %} />
+          <label for="src_{{ forloop.counter }}" class="choice-box">{{ label }}</label>
+          {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Lead Information</legend>
+
+      <!-- System Size (kW) -->
+      <p class="form-group inline-fields" style="align-items: flex-start;">
+        <label for="{{ lead_form.system_size.id_for_label }}">System Size</label>
+        <div class="input-group unit-group system-size-group">
+          {{ lead_form.system_size }}
+          <span class="input-group-text unit-right">kW</span>
+        </div>
+        {% if lead_form.system_size.help_text %}
+        <small class="help-text">{{ lead_form.system_size.help_text }}</small>
+        {% endif %}
+      </p>
+
+      {# — Pill‐style choices for System Type — #}
+      <div class="form-group system-type-choices">
+        <label>System Type</label>
+        <div class="choices">
+          {% for val,label in lead_form.system_type.field.choices %}
+          {% if val %}
+          <input type="radio" name="{{ lead_form.system_type.name }}"
+          id="sys_{{ forloop.counter }}" value="{{ val }}"
+          class="choice-input"
+          {% if lead_form.system_type.value == val %}checked{% endif %}/>
+          <label for="sys_{{ forloop.counter }}" class="choice-box">{{ label }}</label>
+          {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+
+      {# — Pill‐style choices for Lead Quality — #}
+      <div class="form-group lead-quality-choices">
+        <label>Lead Quality</label>
+        <div class="choices">
+          {% for val,label in lead_form.lead_quality.field.choices %}
+          {% if val %}
+          <input
+          type="radio"
+          name="{{ lead_form.lead_quality.name }}"
+          id="lq_{{ forloop.counter }}"
+          value="{{ val }}"
+          class="choice-input"
+          {% if lead_form.lead_quality.value|stringformat:"s" == val|stringformat:"s" %}checked{% endif %}
+          />
+          <label for="lq_{{ forloop.counter }}" class="choice-box">
+            {{ label }}
+          </label>
+          {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+
+      {# — Pill‐style choices for Grid Type — #}
+      <div class="form-group grid-type-choices">
+        <label>Grid Type</label>
+        <div class="choices">
+          {% for val,label in lead_form.grid_type.field.choices %}
+          {% if val %}
+          <input
+          type="radio"
+          name="{{ lead_form.grid_type.name }}"
+          id="gt_{{ forloop.counter }}"
+          value="{{ val }}"
+          class="choice-input"
+          {% if lead_form.grid_type.value|stringformat:"s" == val|stringformat:"s" %}checked{% endif %}
+          />
+          <label for="gt_{{ forloop.counter }}" class="choice-box">
+            {{ label }}
+          </label>
+          {% endif %}
+          {% endfor %}
+        </div>
+        {% if lead_form.grid_type.help_text %}
+        <small class="help-text">{{ lead_form.grid_type.help_text }}</small>
+        {% endif %}
+      </div>
+
+      {# — Remarks collapsed to ~2 lines — #}
+      <p class="form-group">
+        <label for="{{ lead_form.remarks.id_for_label }}">Remarks</label>
+        {{ lead_form.remarks }}
+      </p>
+
+      {# ─── Sales Department ─────────────────────────────────── #}
+      <div class="form-group">
+        <label for="{{ lead_form.department.id_for_label }}">Department</label>
+        {{ lead_form.department }}
+        {% if lead_form.department.errors %}
+        <div class="text-danger">{{ lead_form.department.errors.0 }}</div>
+        {% endif %}
+      </div>
+      
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Save Both</button>
+      </div>
+
+    </fieldset>
+
+
+  </form>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn      = document.getElementById('validate-phone');
+    const input    = document.getElementById('{{ customer_form.primary_phone.id_for_label }}');
+    const feedback = document.getElementById('validate-feedback');
+
+  // all the fields we want to lock/unlock:
+    const lockableIds = [
+      '{{ customer_form.secondary_phone.id_for_label }}',
+      '{{ customer_form.designation.id_for_label }}',
+      '{{ customer_form.first_name.id_for_label }}',
+      '{{ customer_form.last_name.id_for_label }}',
+    // if you have address, city, source inputs:
+      'id_address',
+    'id_city',    // or radio group container
+    'id_source'
+  ];
+
+  function setLocked(lock) {
+    lockableIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      // inputs/textareas
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')
+        el.readOnly = lock;
+      // selects
+      if (el.tagName === 'SELECT')
+        el.disabled = lock;
+      // radio groups: disable each input
+      if (el.type === undefined && el.querySelectorAll) {
+        el.querySelectorAll('input').forEach(i => i.disabled = lock);
+      }
+    });
+  }
+
+  btn.addEventListener('click', async () => {
+    const phone = input.value.trim();
+    if (!/^\d{10}$/.test(phone)) {
+      feedback.textContent = 'Please enter a valid 10-digit number.';
+      feedback.style.color = 'crimson';
+      return;
+    }
+
+    btn.disabled = true;
+    feedback.textContent = 'Checking…';
+    feedback.style.color = '#555';
+
+    try {
+      const resp = await fetch(
+    `{% url 'customers:api_customer_exists' %}?phone=${encodeURIComponent(phone)}`
+    );
+      if (!resp.ok) throw new Error(`Status ${resp.status}`);
+
+      const data = await resp.json();
+      if (data.exists) {
+        feedback.textContent = 'Existing customer — fields populated.';
+        feedback.style.color = 'green';
+
+        // populate each field
+        document.getElementById('{{ customer_form.secondary_phone.id_for_label }}').value = data.customer.secondary_phone || '';
+        document.getElementById('{{ customer_form.designation.id_for_label }}').value     = data.customer.designation || '';
+        document.getElementById('{{ customer_form.first_name.id_for_label }}').value      = data.customer.first_name || '';
+        document.getElementById('{{ customer_form.last_name.id_for_label }}').value       = data.customer.last_name || '';
+        document.getElementById('id_address').value                                      = data.customer.address || '';
+
+        // for city & source (radio groups), check the right input
+        if (data.customer.city) {
+          const cityInput = document.querySelector(`input[name="city"][value="${data.customer.city}"]`);
+          if (cityInput) cityInput.checked = true;
+        }
+        if (data.customer.source) {
+          const srcInput = document.querySelector(`input[name="source"][value="${data.customer.source}"]`);
+          if (srcInput) srcInput.checked = true;
+        }
+
+        // now lock everything
+        setLocked(true);
+
+      } else {
+        feedback.textContent = 'No customer found — you may proceed.';
+        feedback.style.color = 'green';
+        // unlock for fresh entry
+        setLocked(false);
+      }
+
+    } catch (err) {
+      console.error(err);
+      feedback.textContent = 'Lookup error — try again.';
+      feedback.style.color = 'crimson';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+});
+
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const VALIDATE_BTN_ID = 'validate-phone';
+    const PRIMARY_ID      = '{{ customer_form.primary_phone.id_for_label }}';
+
+    const btn      = document.getElementById(VALIDATE_BTN_ID);
+    const input    = document.getElementById(PRIMARY_ID);
+    const feedback = document.getElementById('validate-feedback');
+
+  // Utility to disable/enable fields, except the primary-phone
+    function setLocked(lock) {
+      document.querySelectorAll('.content-wrapper fieldset').forEach(fs => {
+        fs.querySelectorAll('input, select, textarea').forEach(f => {
+          if (f.id === PRIMARY_ID) return;
+          f.disabled = lock;
+        });
+      });
+    }
+
+  // 1) Lock everything on load
+    setLocked(true);
+
+    btn.addEventListener('click', async () => {
+      const phone = input.value.trim();
+      if (!/^\d{10}$/.test(phone)) {
+        feedback.textContent = 'Enter a 10-digit number';
+        feedback.style.color = 'crimson';
+        return;
+      }
+
+      btn.disabled     = true;
+      feedback.textContent = 'Checking…';
+      feedback.style.color = '#666';
+
+      try {
+        const resp = await fetch(`{% url 'customers:api_customer_exists' %}?phone=${phone}`);
+        const data = await resp.json();
+
+        if (data.exists) {
+          feedback.textContent = 'Found—fields populated';
+          feedback.style.color = 'green';
+        // Populate & optionally set readOnly if you like:
+          ['designation','first_name','last_name','secondary_phone',
+           'address','city','source']
+           .forEach(name => {
+             const el = document.getElementById(`id_${name}`);
+             if (!el) return;
+             el.value = data.customer[name] || '';
+           // if you want them read-only:
+           // if(el.tagName==='INPUT') el.readOnly = true;
+           // if(el.tagName==='SELECT') el.disabled = true;
+           });
+         } else {
+          feedback.textContent = 'No customer found—continue';
+          feedback.style.color = 'green';
+        }
+      } catch (e) {
+        console.error(e);
+        feedback.textContent = 'Lookup error—try again';
+        feedback.style.color = 'crimson';
+      } finally {
+        btn.disabled = false;
+      // 2) Unlock everything now
+        setLocked(false);
+      }
+    });
+  });
+</script>
+{% endblock %}

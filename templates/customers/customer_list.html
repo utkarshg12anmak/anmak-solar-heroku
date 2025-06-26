@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Customers{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --primary-color: #38A169;
+    --bg-light: #f7f9fc;
+    --text-primary: #1a202c;
+    --text-muted: #4a5568;
+    --card-bg: #ffffff;
+    --card-shadow: rgba(0, 0, 0, 0.05);
+    --header-bg: #2D3748;
+    --btn-new-bg: #3182CE;
+  }
+  .page-header {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 1.5rem;
+    justify-content: space-between;
+    
+  }
+  .page-header h1 {
+    font-size: 1.75rem;
+    margin: 0;
+    color: var(--text-primary);
+  }
+  .btn-new {
+    background: var(--btn-new-bg);
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.2s;
+  }
+  .btn-new:hover {
+    background: #2C5282;
+  }
+  .card {
+    background: var(--card-bg);
+    box-shadow: 0 2px 4px var(--card-shadow);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    overflow-x: auto;
+  }
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+  .table th, .table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #E2E8F0;
+    text-align: left;
+    white-space: nowrap;
+  }
+  .table th {
+    background: var(--header-bg);
+    color: #fff;
+    font-weight: 600;
+  }
+  .table tbody tr:hover {
+    background: var(--bg-light);
+  }
+  .pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+    gap: 0.5rem;
+  }
+  .pagination a, .pagination span {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    text-decoration: none;
+  }
+  .pagination a { background: var(--card-bg); color: var(--text-primary); }
+  .pagination a:hover { background: var(--bg-light); }
+  .pagination .current { background: var(--primary-color); color: #fff; }
+
+    .page-header .record-count {
+    font-size: 1.1rem;
+    color: #6c757d;
+    margin: 0 1rem;
+    }
+
+  .page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.title-group {
+  display: flex;
+  align-items: center;
+}
+
+.page-header h1 {
+  margin: 0;
+}
+
+.record-count {
+  font-size: 1.1rem;
+  color: #6c757d;
+  margin: 0;               /* reset any stray margins */
+}  
+
+
+/* ─── Search Bar Container ────────────────────────── */
+.search-container {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+/* ─── Text Input ─────────────────────────────────── */
+.search-container input[type="text"] {
+  flex: 1 0 200px;               /* grow to fill, but no smaller than 200px */
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-container input[type="text"]:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  outline: none;
+}
+
+/* ─── Primary Button (Search) ────────────────────── */
+.btn-filter {
+  background-color: #3182ce;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.btn-filter:hover {
+  background-color: #2c5282;
+}
+
+/* ─── Secondary Button (Reset) ───────────────────── */
+.btn-reset {
+  background-color: #e53e3e;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+.btn-reset:hover {
+  background-color: #c53030;
+}
+
+/* ─── Edit Link as Button ────────────────────────── */
+.btn-edit {
+  background-color: #D69E2E;
+  color: #fff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+.btn-edit:hover {
+  background-color: #B7791F;
+}
+
+
+</style>
+
+<div class="page-header">
+  <div class="title-group">
+    <h1>Manage Customers</h1>
+    <span class="record-count">
+      ({{ page_obj.paginator.count }} records)
+    </span>
+  </div>
+  <a href="{% url 'customers:add' %}" class="btn-new">+ New Customer</a>
+</div>
+
+<form method="get" class="search-container" style="margin-bottom:1rem; display:flex; gap:.5rem;">
+  <input
+    type="text"
+    name="q"
+    value="{{ request.GET.q|default:'' }}"
+    placeholder="Search by name or phone…"
+    class="filter-input"
+    style="width: 20%; min-width:200px;"
+  />
+  <button type="submit" class="btn-filter">Search</button>
+  <a href="{% url 'customers:list' %}" class="btn-reset">Reset</a>
+</form>
+
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr>
+        <th style="width: 3rem; text-align: right;">#</th>
+        <th>Name</th>
+        <th>Primary Phone</th>
+        <th>Secondary Phone</th>
+        <th>City</th>
+        <th>Source</th>
+
+        <!-- audit -->
+        <th>Created At</th>
+        <th>Created By</th>
+        <th>Updated At</th>
+        <th>Updated By</th>
+
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for customer in object_list %}
+      <tr>
+        <td style="text-align: right;">
+      {{ page_obj.start_index|add:forloop.counter0 }}
+    </td>
+        <td>{{ customer.first_name }}{% if customer.last_name %}&nbsp;{{ customer.last_name }}{% endif %}</td>
+        <td>{{ customer.primary_phone }}</td>
+        <td>{{ customer.secondary_phone|default:"—" }}</td>
+        <td>{{ customer.city.name }}</td>
+        <td>{{ customer.source.name }}</td>
+        
+        <!-- audit -->
+        <td>{{ customer.created_at|date:"Y-m-d H:i" }}</td>
+        <td>{{ customer.created_by.get_full_name }}</td>
+        <td>{{ customer.updated_at|date:"Y-m-d H:i" }}</td>
+        <td>{{ customer.updated_by.get_full_name }}</td>
+
+        <td>
+          {% if request.user in customer.city.view_edit_users.all %}
+            <a href="{% url 'customers:edit' customer.pk %}"
+               class="btn-edit">
+               Edit
+            </a>
+          {% endif %}
+        </td>
+        
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="7" class="text-center text-muted">
+          No customers found.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if is_paginated %}
+<div class="pagination">
+  {% for num in page_obj.paginator.page_range %}
+    {% if num == page_obj.number %}
+      <span class="current">{{ num }}</span>
+    {% else %}
+      <a href="?page={{ num }}">{{ num }}</a>
+    {% endif %}
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

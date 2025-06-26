@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anmak Solar CRM - Login</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    html {
+      background: url('landing_page.png') no-repeat center center fixed;
+      background-size: cover;
+      background-attachment: fixed;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      color: #333;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    .login-container {
+      width: 400px;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(10px);
+      border-radius: 10px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      border: 1px solid #e0e0e0;
+    }
+    .login-container:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+    }
+    .login-header {
+      padding: 30px 30px 8px;
+      text-align: center;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .login-header h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: #2d3748;
+      margin-bottom: 8px;
+    }
+    .login-header p {
+      font-size: 0.9rem;
+      color: #718096;
+    }
+    .login-body {
+      padding: 30px;
+    }
+    .login-body label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #4a5568;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .login-body input[type="text"],
+    .login-body input[type="password"] {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      font-size: 1rem;
+      transition: border-color 0.2s, box-shadow 0.2s ease;
+      background-color: #edf2f7;
+      color: #2d3748;
+    }
+    .login-body input:focus {
+      outline: none;
+      border-color: #003347;
+      box-shadow: 0 0 0 3px rgba(0, 51, 71, 0.16);
+    }
+    .login-body .toggle-password-label {
+      display: flex;
+      align-items: center;
+      font-size: 0.9rem;
+      color: #4a5568;
+      margin-bottom: 24px;
+    }
+    .login-body .toggle-password-label input {
+      margin-right: 8px;
+      transform: scale(1.1);
+    }
+    .login-body button {
+      width: 100%;
+      padding: 14px 16px;
+      background-color: #003347;
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s, box-shadow 0.3s ease;
+      margin-top: 16px;
+    }
+    .login-body button:hover {
+      background-color: #002e41;
+      box-shadow: 0 4px 12px rgba(0, 51, 71, 0.3);
+    }
+    .login-body button:active {
+      box-shadow: 0 2px 6px rgba(0, 51, 71, 0.3);
+      transform: translateY(1px);
+    }
+    .login-footer {
+      text-align: center;
+      padding: 24px;
+      font-size: 0.85rem;
+      color: #a0aec0;
+      border-top: 1px solid #f0f0f0;
+    }
+    .login-footer a {
+      color: #003347;
+      text-decoration: none;
+      margin: 0 12px;
+      font-weight: 500;
+      transition: color 0.2s, opacity 0.2s ease;
+    }
+    .login-footer a:hover {
+      color: #002431;
+      opacity: 0.8;
+    }
+    /* Modal styles */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 24px;
+      width: 90%;
+      max-width: 400px;
+      position: relative;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+    .close-button {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #718096;
+      cursor: pointer;
+    }
+    .modal-content h3 {
+      margin-top: 0;
+      color: #2d3748;
+    }
+    .modal-content input[type="email"] {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      margin: 12px 0;
+      font-size: 1rem;
+    }
+    .modal-content button {
+      width: 100%;
+      padding: 12px 16px;
+      background-color: #003347;
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background-color 0.3s, box-shadow 0.3s ease;
+    }
+    .modal-content button:hover {
+      background-color: #002e41;
+      box-shadow: 0 4px 12px rgba(0,51,71,0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container login-box">
+    <div class="login-header">
+      <h2>Welcome Back</h2>
+      <p>Log in to your account to continue.</p>
+    </div>
+    <div class="login-body">
+      <label for="username">Email</label>
+      <input type="text" id="username" placeholder="Enter your username" />
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="••••••••" />
+      <label class="toggle-password-label" for="togglePassword">
+        <input type="checkbox" id="togglePassword" />
+        <span id="toggleLabel">Show Password</span>
+      </label>
+      <p id="login-status" style="color: red; font-size: 0.85rem; margin-bottom: 10px;"></p>
+      <button onclick="login()">Sign In</button>
+    </div>
+    <div class="login-footer">
+      <a href="#" id="forgotPasswordLink">Forgot password?</a>
+      <span>·</span>
+      <a href="#">Help Center</a>
+    </div>
+  </div>
+
+  <!-- Forgot Password Modal -->
+  <div class="modal" id="forgotPasswordModal">
+    <div class="modal-content">
+      <span class="close-button" id="closeModal">×</span>
+      <h3>Reset Password</h3>
+      <p>Please enter your email address to receive password reset instructions.</p>
+      <input type="email" id="resetEmail" placeholder="Enter your email" />
+      <p id="reset-status" style="color: red; font-size: 0.85rem; margin-top: 4px;"></p>
+      <button id="forgotSubmit">Submit</button>
+    </div>
+  </div>
+
+  <!-- Main App Containers -->
+  <div class="dashboard" style="display: none">
+    <h2>Dashboard</h2>
+    <div id="kpis"></div>
+    <button onclick="loadCustomers()">View Customers</button>
+  </div>
+  <div class="customer-list" style="display: none">
+    <h2>Customer List</h2>
+    <div id="customers"></div>
+    <button onclick="document.querySelector('.customer-form').style.display = 'block'">Add Customer</button>
+  </div>
+  <div class="customer-form" style="display: none">
+    <h2>New Customer</h2>
+    <input id="fullName" placeholder="Full Name" />
+    <input id="phone" placeholder="Phone Number" />
+    <input id="email" placeholder="Email" />
+    <input id="city" placeholder="City" />
+    <input id="source" placeholder="Source" />
+    <textarea id="address" placeholder="Address"></textarea>
+    <input id="state" placeholder="State" />
+    <input id="poc" placeholder="POC" />
+    <button onclick="addCustomer()">Submit</button>
+  </div>
+
+  <script>
+    // Forgot Password Modal Logic
+    const forgotLink = document.getElementById('forgotPasswordLink');
+    const modal = document.getElementById('forgotPasswordModal');
+    const closeModal = document.getElementById('closeModal');
+    const forgotSubmit = document.getElementById('forgotSubmit');
+
+    forgotLink.addEventListener('click', e => {
+      e.preventDefault();
+      document.getElementById('reset-status').innerText = '';
+      modal.style.display = 'flex';
+    });
+    closeModal.addEventListener('click', () => modal.style.display = 'none');
+    forgotSubmit.addEventListener('click', () => {
+      const email = document.getElementById('resetEmail').value;
+      if (!email) {
+        document.getElementById('reset-status').innerText = 'Email is required.';
+        return;
+      }
+      fetch('http://localhost:8080/api/auth/forgot-password', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      })
+      .then(res => {
+        if (res.ok) {
+          return res.json();
+        }
+        throw new Error('Reset failed');
+      })
+      .then(data => {
+        document.getElementById('reset-status').style.color = 'green';
+        document.getElementById('reset-status').innerText = data.message || 'Check your email for reset instructions.';
+        setTimeout(() => modal.style.display = 'none', 2000);
+      })
+      .catch(err => {
+        document.getElementById('reset-status').innerText = 'Failed to send reset email.';
+        console.error(err);
+      });
+    });
+
+    // 1. Login
+    function login() {
+      const form = new URLSearchParams();
+      form.append('username', document.getElementById('username').value);
+      form.append('password', document.getElementById('password').value);
+      fetch('http://localhost:8080/api/auth/login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: form.toString()
+      })
+      .then(res => { if (res.ok) return res.json(); throw new Error('Unauthorized'); })
+      .then(data => {
+        if (data.success) {
+          document.querySelector('.login-box').style.display = 'none';
+          document.querySelector('.dashboard').style.display = 'block';
+          loadKPIs();
+        } else {
+          document.getElementById('login-status').innerText = 'Login failed. Please check your credentials.';
+        }
+      })
+      .catch(error => {
+        console.error('Login error:', error);
+        document.getElementById('login-status').innerText = 'An error occurred during login. Please try again.';
+      });
+    }
+    // 2. Load KPI cards
+    function loadKPIs() {
+      fetch('http://localhost:8080/api/auth/login', { credentials: 'include' })
+        .then(res => res.json())
+        .then(data => {
+          let html = '';
+          for (let key in data) html += `<p><strong>${key}:</strong> ${data[key]}</p>`;
+          document.getElementById('kpis').innerHTML = html;
+        })
+        .catch(error => {
+          console.error('Error loading KPIs:', error);
+          document.getElementById('kpis').innerHTML = '<p>Failed to load KPIs.</p>';
+        });
+    }
+    // 3. Load customer list
+    function loadCustomers() {
+      document.querySelector('.dashboard').style.display = 'none';
+      document.querySelector('.customer-list').style.display = 'block';
+      fetch('http://localhost:8080/api/customers', { credentials: 'include' })
+        .then(res => res.json())
+        .then(customers => {
+          let html = '<ul>';
+          customers.forEach(c => html += `<li>${c.customerId} - ${c.fullName}</li>`);
+          html += '</ul>';
+          document.getElementById('customers').innerHTML = html;
+        })
+        .catch(error => {
+          console.error('Error loading customers:', error);
+          document.getElementById('customers').innerHTML = '<p>Failed to load customer data.</p>';
+        });
+    }
+    // 4. Add a new customer
+    function addCustomer() {
+      const customer = {
+        fullName: document.getElementById('fullName').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        city: document.getElementById('city').value,
+        source: document.getElementById('source').value,
+        address: document.getElementById('address').value,
+        state: document.getElementById('state').value,
+        poc: document.getElementById('poc').value
+      };
+      fetch('http://localhost:8080/api/customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(customer)
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert('Customer Added: ' + data.customerId);
+        document.querySelector('.customer-form').style.display = 'none';
+        loadCustomers();
+      })
+      .catch(error => {
+        console.error('Error adding customer:', error);
+        alert('Failed to add customer. Please try again.');
+      });
+    }
+    // 5. Toggle password visibility
+    document.getElementById('togglePassword')
+      .addEventListener('change', function () {
+        const pwdInput = document.getElementById('password');
+        const label = document.getElementById('toggleLabel');
+        if (this.checked) {
+          pwdInput.type = 'text'; label.textContent = 'Hide Password';
+        } else {
+          pwdInput.type = 'password'; label.textContent = 'Show Password';
+        }
+      });
+  </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Done</title>
+</head>
+<body>
+  <script>
+    // if this window was opened by another, reload that one…
+    if (window.opener && !window.opener.closed) {
+      window.opener.location.reload();
+    }
+    // …and then close this one
+    window.close();
+  </script>
+</body>
+</html>

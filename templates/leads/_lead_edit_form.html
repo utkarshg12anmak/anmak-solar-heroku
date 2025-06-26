@@ -1,0 +1,100 @@
+{# ========================= _lead_edit_form.html ========================= #}
+
+<style>
+  /* Make the overlay a flex container so we can center the modal */
+.modal-overlay {
+  display: flex;               /* instead of display:none or block */
+  align-items: center;         /* vertically center when content is shorter */
+  justify-content: center;     /* horizontally center */
+  padding: 1rem;               /* give it some breathing room on very small screens */
+}
+
+/* Constrain the modal box itself */
+.modal-wrapper {
+  max-height: 90vh;            /* never taller than 90% of the viewport */
+  overflow-y: auto;            /* scroll internally if content is too tall */
+}
+
+
+</style>
+
+<div class="modal-overlay">
+  <div class="modal-wrapper">
+    <div class="modal-header">
+      <h2>Edit Lead #{{ lead.pk }}</h2>
+      <button id="closeModal">&times;</button>
+    </div>
+
+    <form id="lead-edit-form" method="post" novalidate>
+      {% csrf_token %}
+
+      {# Loop over each visible field in the form #}
+      {% for field in form.visible_fields %}
+        <div class="form-group">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}
+            <small class="help-text">{{ field.help_text }}</small>
+          {% endif %}
+          {% for err in field.errors %}
+            <div style="color: crimson; margin-top: 0.25rem;">
+              {{ err }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endfor %}
+
+      <div class="modal-actions">
+        <button type="submit">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const overlay = document.querySelector(".modal-overlay");
+    const closeBtn = document.getElementById("closeModal");
+
+    // 2) Close when the × is clicked:
+    closeBtn.addEventListener("click", () => {
+      overlay.style.display = "none";
+    });
+
+    // 3) Close when clicking *on* the overlay background:
+    overlay.addEventListener("click", (e) => {
+      // if the click target *is* the overlay (not a child element), hide it
+      if (e.target === overlay) {
+        overlay.style.display = "none";
+      }
+    });
+
+    // 4) Your existing AJAX‐submit logic
+    document.getElementById("lead-edit-form").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const formEl = this;
+      const url = "{% url 'leads:edit_form' lead.pk %}";
+      const data = new FormData(formEl);
+
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+        body: data
+      });
+
+      try {
+        const obj = await resp.json();
+        if (obj.success) {
+          overlay.style.display = "none";
+          return;
+        }
+      } catch (err) {
+        // Not JSON → HTML with validation errors
+      }
+
+      // Re-inject HTML with errors
+      const newHtml = await resp.text();
+      document.getElementById("leadModalContainer").innerHTML = newHtml;
+    });
+  })();
+</script>

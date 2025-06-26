@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Anmak Solar CRM - Leads</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    /* Global & Body */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      background: url('landing_page.png') no-repeat center center fixed;
+      background-size: cover;
+    }
+    /* Sidebar */
+    .sidebar {
+      width: 240px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding: 24px 16px;
+      background-color: #003347;
+      color: #fff;
+    }
+    .sidebar .bottom-group { margin-top: auto; }
+    .sidebar .logo { text-align: center; margin-bottom: 16px; }
+    .sidebar .logo img { width: 200px; display: block; margin: 0 auto; }
+    .sidebar nav ul { list-style: none; margin: 0; padding: 0; }
+    .sidebar nav ul li { margin: 8px 0; }
+    .sidebar nav ul li:first-child { margin-top: 8px; }
+    .sidebar nav ul li a {
+      display: block;
+      text-decoration: none;
+      color: #fff;
+      font-weight: 500;
+      padding: 10px 12px;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+    .sidebar nav ul li a:hover { background: rgba(255,255,255,0.1); }
+    .sidebar nav ul li a.active { background: rgba(255,255,255,0.2); border-left:4px solid #fff; padding-left:16px; }
+    /* Profile & Logout */
+    .sidebar .profile { display: flex; align-items: center; gap: 12px; }
+    .sidebar .profile img.avatar { width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid #fff; }
+    .sidebar .profile .info { display:flex; flex-direction:column; }
+    .sidebar .profile .info .name { font-weight:600; font-size:0.95rem; }
+    .sidebar .profile .info .designation { color:rgba(255,255,255,0.75); font-size:0.8rem; }
+    .sidebar .bottom-group hr { border:none; border-top:1px solid rgba(255,255,255,0.3); margin:16px 0; }
+    .sidebar .logout button { width:100%; padding:10px; margin-top:8px; background:#e53e3e; color:#fff; border:none; border-radius:6px; font-weight:500; cursor:pointer; transition:background 0.2s; }
+    .sidebar .logout button:hover { background:#c53030; }
+
+    /* Main */
+    .main {
+      flex:1;
+      background:#f7f9fc;
+      padding:32px;
+      overflow-y:auto;
+    }
+    .main-header { margin-bottom:16px; }
+    .main-header h1 { font-size:1.75rem; color:#1a202c; }
+
+    /* Kanban Board */
+    .kanban-board {
+      display: flex;
+      gap: 16px;
+      height: calc(100vh - 112px);
+    }
+    .column {
+      background: #edf2f7;
+      flex: 1;
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    .column h2 {
+      font-size: 1.125rem;
+      color: #1a202c;
+      margin-bottom: 12px;
+    }
+    .card {
+      background: #fff;
+      padding: 12px;
+      border-radius: 4px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="logo">
+      <img src="logo_white.svg" alt="Anmak Solar Logo"/>
+    </div>
+    <nav>
+      <ul>
+        <li><a href="index.html">Dashboard</a></li>
+        <li><a href="users.html">Users</a></li>
+        <li><a href="#" class="active">Leads</a></li>
+        <li><a href="orders.html">Orders</a></li>
+        <li><a href="settings.html">Settings</a></li>
+      </ul>
+    </nav>
+    <div class="bottom-group">
+      <div class="profile">
+        <img src="profile-user.png" alt="User Avatar" class="avatar"/>
+        <div class="info">
+          <span class="name">Utkarsh</span>
+          <span class="designation">Sales Manager</span>
+        </div>
+      </div>
+      <hr/>
+      <div class="logout">
+        <button onclick="fetch('http://localhost:8080/api/auth/logout',{method:'POST',credentials:'include'}).then(()=>window.location.href='login.html');">Log Out</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="main-header">
+      <h1>Leads</h1>
+    </div>
+    <div class="kanban-board">
+      <div class="column">
+        <h2>Draft</h2>
+        <div class="card">Lead #1: Client Inquiry</div>
+        <div class="card">Lead #2: Follow-up Info</div>
+      </div>
+      <div class="column">
+        <h2>In-Progress</h2>
+        <div class="card">Lead #3: Site Survey Scheduled</div>
+      </div>
+      <div class="column">
+        <h2>Completed</h2>
+        <div class="card">Lead #4: Proposal Sent</div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

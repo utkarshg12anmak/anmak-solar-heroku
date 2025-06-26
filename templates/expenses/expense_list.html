@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+{% load tz %}
+
+
+<style>
+  /* Header bar */
+  .expense-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  .btn-new {
+    padding: 0.6rem 1.2rem;
+    background-color: #3182ce;
+    color: #fff;
+    border-radius: 9999px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+  .btn-new:hover {
+    background-color: #2b6cb0;
+  }
+
+  /* Table styling */
+  .table-wrapper { overflow-x: auto; }
+  table.expense-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 900px;
+  }
+  table.expense-table th {
+    position: sticky;
+    top: 0;
+    background: #f0f4f8;
+    padding: 0.75rem;
+    font-weight: 600;
+    color: #334e68;
+    border-bottom: 1px solid #cbd2d9;
+    text-align: left;
+    white-space: nowrap;
+  }
+  table.expense-table td {
+    padding: 0.65rem 0.75rem;
+    border-bottom: 1px solid #e1e8ee;
+    white-space: nowrap;
+  }
+  table.expense-table tbody tr:nth-child(even) {
+    background: #fafcfe;
+  }
+
+  /* Action buttons */
+  .btn-action {
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    margin-right: 0.3rem;
+  }
+  .btn-view {
+    background: #48bb78;
+    color: #fff;
+  }
+  .btn-view:hover { background: #38a169; }
+  .btn-edit {
+    background: #f6ad55;
+    color: #fff;
+  }
+  .btn-edit:hover { background: #dd6b20; }
+
+  /* Pagination */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.5rem;
+    gap: 0.5rem;
+  }
+  .pagination a, .pagination span {
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #334e68;
+    border: 1px solid #cbd2d9;
+  }
+  .pagination a:hover { background: #edf2f7; }
+  .pagination .current {
+    background: #3182ce;
+    color: #fff;
+    border-color: #2b6cb0;
+  }
+</style>
+
+<div class="expense-page">
+  <div class="expense-header">
+    <h1>Expenses</h1>
+    <a href="{% url 'expenses:add' %}" class="btn-new">+ New Expense</a>
+  </div>
+
+  <div class="table-wrapper">
+    <table class="expense-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Type</th>
+          <th>Category</th>
+          <th>Amount</th>
+          <th>Date(s)</th>
+          <th>Created By</th>
+          <th>Created At</th>
+          <th>Updated By</th>
+          <th>Updated At</th>
+          <th>Remarks</th>
+          <th>Actions</th>
+          <th>Attachment</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in page_obj %}
+        <tr>
+          <td>{{ e.id }}</td>
+          <td>{{ e.get_expense_type_display }}</td>
+          <td>{{ e.parent_category.name }} → {{ e.child_category.name }}</td>
+          <td>₹{{ e.amount }}</td>
+          <td>
+            {% if e.expense_type == 'one_time' %}
+              {{ e.expense_date|date:"M j, Y" }}
+            {% else %}
+              {{ e.start_date|date:"M j, Y" }}–{{ e.end_date|date:"M j, Y" }}
+            {% endif %}
+          </td>
+          <td>
+            {{ e.created_by.get_full_name|default:"—" }}
+          </td>
+          <td>
+              {% localtime on %}
+              {{ e.created_at|date:"Y-m-d H:i" }}
+              {% endlocaltime %}
+          </td>
+          <td>
+            {{ e.updated_by.get_full_name|default:"—" }}
+          </td>
+          <td>
+            {% localtime on %}
+              {{ e.updated_at|date:"Y-m-d H:i" }}
+            {% endlocaltime %}
+          </td>
+          <td>{{ e.remarks|truncatechars:20 }}</td>
+          <td>
+            <a href="{% url 'expenses:detail' e.pk %}" class="btn-action btn-view">View</a>
+            <a href="{% url 'expenses:edit' e.pk %}"  class="btn-action btn-edit">Edit</a>
+          </td>
+          <td>
+            {% if e.attachment %}
+              <a href="{{ e.attachment.url }}" target="_blank">Download</a>
+            {% else %}
+              —
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="11" style="text-align:center; color:#617d98; padding:1rem;">
+            No expenses to display.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# Pagination controls #}
+  <div class="pagination">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}">‹ Prev</a>
+    {% endif %}
+
+    {% for num in page_obj.paginator.page_range %}
+      {% if num == page_obj.number %}
+        <span class="current">{{ num }}</span>
+      {% else %}
+        <a href="?page={{ num }}">{{ num }}</a>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}">Next ›</a>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  // Take any ISO timestamp cell and subtract 11 hours so it shows IST
+  document.querySelectorAll('.ts').forEach(cell => {
+    const iso = cell.dataset.iso;
+    if (!iso) return;
+    const d = new Date(iso);
+    // subtract 11 hours = 39600000 ms
+    const adj = new Date(d.getTime() - 11 * 60 * 60 * 1000);
+    const pad = n => String(n).padStart(2,'0');
+    cell.textContent = 
+      `${adj.getFullYear()}-${pad(adj.getMonth()+1)}-${pad(adj.getDate())}`
+      + ` ${pad(adj.getHours())}:${pad(adj.getMinutes())}`;
+  });
+</script>
+{% endblock %}

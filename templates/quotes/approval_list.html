@@ -1,0 +1,641 @@
+{% extends "base.html" %}
+{% load humanize tz %}
+
+{% block content %}
+
+<style>
+  /* Base styles for a clean slate */
+  body {
+    font-family: 'Inter', sans-serif; /* A modern, clean sans-serif font */
+    background-color: #f8fafc; /* Light background for the whole page */
+    color: #334155; /* Default text color */
+  }
+
+  /* Card styling */
+  .card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    padding: 2rem;
+    margin: 0rem auto; /* Center the card and add some margin */
+    max-width: 1500px; /* Max width for better readability */
+    box-sizing: border-box; /* Include padding in width calculation */
+  }
+
+  .card-title {
+    font-size: 1.8rem; /* Slightly larger title */
+    font-weight: 700; /* Bolder */
+    color: #1e293b; /* Darker title color */
+    margin-bottom: 1.8rem; /* More space below title */
+    text-align: center; /* Center the title */
+  }
+
+  /* --- Tab Switcher (Pill-Shaped Segmented Buttons - FINAL REVISION FOR CLARITY) --- */
+  .tab-switcher {
+    display: inline-flex;
+    background: #f0f4f8; /* A very light, subtle base color for the pill container */
+    border-radius: 9999px; /* Pill shape */
+    padding: 3px; /* Reduced padding for a tighter pill appearance */
+    margin-bottom: 2rem;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.08); /* Subtle inner shadow */
+    border: 1px solid #e2e8f0; /* Light border for the whole pill */
+  }
+
+  /* Hide the actual radio inputs visually */
+  .tab-switcher input[type="radio"] {
+    display: none;
+  }
+
+  .tab-switcher label {
+    padding: 7px 20px; /* Adjusted padding for segments for sleekness */
+    font-weight: 500; /* Less bold for unselected state */
+    font-size: 0.95rem;
+    border-radius: 9999px; /* Make each label segment pill-shaped */
+    cursor: pointer;
+    transition: all 0.3s ease; /* Smooth transitions */
+    color: #64748b; /* Muted gray for inactive text */
+    user-select: none; /* Prevent text selection on click */
+    display: flex; /* To align text and counter */
+    align-items: center;
+    gap: 8px; /* Space between text and counter */
+    background: transparent; /* Make inactive labels transparent to show parent background */
+  }
+
+  /* Styles for the CURRENTLY SELECTED tab */
+  .tab-switcher input[type="radio"]:checked + label {
+    background: #4f46e5; /* PRIMARY BRAND COLOR for active segment for high contrast */
+    color: white; /* Text becomes white for contrast */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.25); /* Stronger shadow for "pop" effect */
+    font-weight: 600; /* Bolder for selected state */
+    position: relative;
+    z-index: 1; /* Bring active segment slightly forward */
+  }
+
+  /* Counter styling */
+  .tab-counter {
+    background-color: #6366f1; /* Default counter background */
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    min-width: 20px;
+    text-align: center;
+    line-height: 1; /* For better vertical alignment */
+  }
+
+  /* Counter styling when its tab is active */
+  .tab-switcher input[type="radio"]:checked + label .tab-counter {
+    background-color: white; /* White counter background when tab is active */
+    color: #4f46e5; /* Counter text color matches active tab background */
+  }
+
+  /* --- Table Styling --- */
+  .data-table {
+    width: 100%;
+    border-collapse: separate; /* Use separate to control border-spacing if needed */
+    border-spacing: 0;
+    font-size: 0.9rem;
+    background-color: #ffffff; /* Ensure table background is white */
+    border-radius: 8px; /* Rounded corners for the table */
+    overflow: hidden; /* Ensures rounded corners apply to content */
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 1rem 1.25rem; /* More padding for spaciousness */
+    border-bottom: 1px solid #e2e8f0; /* Lighter border */
+    text-align: left;
+    white-space: nowrap; /* Prevent wrapping in table cells */
+  }
+
+  .data-table th {
+    background-color: #f8fafc; /* Light header background */
+    color: #475569; /* Darker header text */
+    font-weight: 700; /* Bolder header font */
+    text-transform: uppercase; /* Uppercase headers */
+    letter-spacing: 0.05em; /* Slight letter spacing */
+    font-size: 0.8rem;
+  }
+
+  .data-table tbody tr:last-child td {
+    border-bottom: none; /* No border on the last row */
+  }
+
+  .data-table tbody tr:hover {
+    background-color: #f0f8ff; /* Subtle hover effect for rows */
+  }
+
+  .data-table .text-right {
+    text-align: right;
+  }
+
+  /* --- Buttons --- */
+  .btn {
+    padding: 0.6rem 1.2rem; /* More padding */
+    border-radius: 8px; /* More rounded corners */
+    font-size: 0.9rem;
+    font-weight: 600; /* Bolder text */
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease; /* Smooth transitions */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Subtle shadow */
+  }
+
+  .btn:hover {
+    filter: brightness(0.95); /* Slightly darken on hover */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* More prominent shadow on hover */
+  }
+
+  .btn-primary {
+    background: #4f46e5; /* Primary brand color */
+    color: white;
+  }
+
+  .btn-success {
+    background: #10b981; /* Green for success */
+    color: white;
+  }
+
+  .btn-danger {
+    background: #ef4444; /* Red for danger */
+    color: white;
+  }
+
+  .btn-secondary {
+    background: #e2e8f0; /* Light gray for secondary actions */
+    color: #334155;
+  }
+
+  .btn + .btn {
+    margin-left: 0.75rem; /* More space between buttons */
+  }
+
+  /* Link styling within table */
+  .table-link {
+    color: #2563eb; /* Blue for links */
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .table-link:hover {
+    text-decoration: underline;
+  }
+
+  /* Pagination */
+  .pagination {
+    margin-top: 2rem;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 500;
+  }
+
+  .pagination a {
+    color: #2563eb;
+    text-decoration: none;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+  }
+
+  .pagination a:hover {
+    background-color: #e0f2fe;
+  }
+
+  .pagination span {
+    padding: 0.5rem 0.75rem;
+    color: #64748b;
+  }
+
+  /* --- Modal Styling --- */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6); /* Darker overlay */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999; /* High z-index */
+    opacity: 0; /* Start hidden */
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+  }
+
+  .modal-overlay.open {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .modal-wrapper {
+    background: #ffffff;
+    border-radius: 12px;
+    max-width: 800px; /* Increased width of the modal */
+    width: 90%;
+    padding: 2rem; /* More padding */
+    position: relative;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2); /* More prominent shadow */
+    transform: translateY(-20px); /* Start slightly above center */
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+
+  .modal-overlay.open .modal-wrapper {
+    transform: translateY(0); /* Animate to center */
+    opacity: 1;
+  }
+
+  .modal-close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 2rem; /* Larger close button */
+    cursor: pointer;
+    color: #94a3b8; /* Lighter color for close button */
+    transition: color 0.2s ease;
+  }
+
+  .modal-close-btn:hover {
+    color: #334155; /* Darker on hover */
+  }
+
+  .modal-content h3 {
+    font-size: 1.5rem;
+    margin-top: 0;
+    color: #1e293b;
+    border-bottom: 1px solid #e2e8f0; /* Separator for title */
+    padding-bottom: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .modal-content p {
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+  }
+
+  .modal-content strong {
+    color: #1e293b;
+  }
+
+  .modal-content h4 {
+    font-size: 1.2rem;
+    margin: 1.5rem 0 0.75rem;
+    color: #1e293b;
+  }
+
+  .modal-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+
+  .modal-table th,
+  .modal-table td {
+    padding: 0.75rem;
+    border: 1px solid #e2e8f0;
+    text-align: left;
+  }
+
+  .modal-table th {
+    background-color: #f8fafc;
+    font-weight: 600;
+  }
+
+  .modal-table td:last-child {
+    text-align: right; /* Align line total to right */
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .card {
+      padding: 1.2rem;
+      margin: 1rem;
+    }
+
+    .card-title {
+      font-size: 1.5rem;
+    }
+
+    .tab-switcher label {
+      padding: 6px 18px;
+      font-size: 0.85rem;
+    }
+
+    .data-table th,
+    .data-table td {
+      padding: 0.8rem 1rem;
+      font-size: 0.85rem;
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+    }
+
+    .btn + .btn {
+      margin-left: 0.5rem;
+    }
+
+    .modal-wrapper {
+      width: 95%;
+      padding: 1.5rem;
+    }
+
+    .modal-close-btn {
+      font-size: 1.8rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .tab-switcher {
+      display: flex;
+      flex-direction: column;
+      padding: 4px;
+    }
+    .tab-switcher label {
+      width: 100%;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+    .tab-switcher label:last-child {
+      margin-bottom: 0;
+    }
+    .data-table {
+      font-size: 0.8rem;
+    }
+    .data-table th,
+    .data-table td {
+      padding: 0.6rem 0.8rem;
+    }
+    .btn {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.8rem;
+    }
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .btn + .btn {
+      margin-left: 0;
+    }
+  }
+
+    .btn-group {
+    display: inline-flex;
+    gap: 0.5rem;              /* space between buttons */
+    align-items: center;      /* vertical align if needed */
+  }
+  .btn-group form {
+    margin: 0;                /* remove default block spacing */
+  }
+  
+</style>
+
+<section class="card">
+  <h2 class="card-title">Quotation Approvals</h2>
+
+  <form id="tab-form" class="tab-switcher">
+    <input type="radio" id="tab-pending" name="tab" value="pending" {% if tab != "completed" %}checked{% endif %}>
+    <label for="tab-pending">
+      <span>Pending
+        {% comment %}
+          The 'pending_count' variable needs to be passed from your Django view.
+          For example, in your view's context, you would have:
+          'pending_count': Quote.objects.filter(status='pending').count()
+        {% endcomment %}
+        {% if pending_count is not None %}
+          <span class="tab-counter">{{ pending_count }}</span>
+        {% endif %}
+      </span>
+    </label>
+
+    <input type="radio" id="tab-completed" name="tab" value="completed" {% if tab == "completed" %}checked{% endif %}>
+    <label for="tab-completed">
+      <span>Completed</span>
+    </label>
+  </form>
+
+  <div style="overflow-x:auto;">
+    <table class="data-table">
+      <thead>
+        {% if tab == "pending" %}
+          <tr>
+            <th>Quote&nbsp;ID</th>
+            <th>Status</th>
+            <th>Lead</th>
+            <th class="text-right">Amount&nbsp;(₹)</th>
+            <th>Created&nbsp;By</th>
+            <th>Created&nbsp;At</th>
+            <th></th> {# View #}
+            <th></th> {# Approve/Decline #}
+          </tr>
+        {% else %}
+          <tr>
+            <th>Quote&nbsp;ID</th>
+            <th>Status</th>
+            <th>Lead</th>
+            <th class="text-right">Amount&nbsp;(₹)</th>
+            <th>Created&nbsp;By</th>
+            <th>Created&nbsp;At</th>
+            <th>Approved&nbsp;By</th>
+            <th>Approved&nbsp;At</th>
+            <th></th> {# View #}
+            <th>Updated&nbsp;By</th>
+            <th>Updated&nbsp;At</th>
+          </tr>
+        {% endif %}
+      </thead>
+
+      <tbody>
+      {% for q in quotes %}
+        
+         <tr
+            class="quote-row"
+            data-quote-id="{{ q.pk }}"
+            data-selling-price="{{ q.selling_price }}"
+            data-membership-level="{{ q.membership_level }}"
+            data-max-amount="{{ q.limit_amount }}"
+            data-minimum-price="{{ q.minimum_price }}"
+            data-can-approve="{{ q.can_approve|yesno:"true,false" }}"
+          >
+          <td>#{{ q.pk }}</td>
+          <td>{{ q.get_status_display }}</td>
+
+          <td>
+            <a href="{% url 'leads:edit' q.lead.pk %}" target="_blank" class="table-link">
+              #{{ q.lead.pk }}
+            </a>
+          </td>
+
+          <td class="text-right">₹{{ q.selling_price|floatformat:2|intcomma }}</td>
+          <td>{{ q.created_by.get_full_name }}</td>
+          <td>{{ q.created_at|timezone:"Asia/Kolkata"|date:"d-M-Y H:i" }}</td>
+
+          {% if tab == "pending" %}
+            <td class="text-center">
+              <button class="btn btn-secondary view-btn" data-id="{{ q.pk }}">View Details</button>
+            </td>
+              <td>
+                {% if q.status == q.STATUS_PENDING %}
+                  {% if q.can_approve %}
+                    <div class="btn-group">
+                      <form method="post" action="{% url 'quotes:approve_quote' q.pk %}">
+                        {% csrf_token %}
+                        <button class="btn btn-success">Approve</button>
+                      </form>
+                      <form method="post" action="{% url 'quotes:decline_quote' q.pk %}">
+                        {% csrf_token %}
+                        <button class="btn btn-danger">Decline</button>
+                      </form>
+                    </div>
+                  {% else %}
+                    <span class="text-muted">No approval rights</span>
+                  {% endif %}
+                {% else %}
+                  <em>{{ quote.get_status_display }}</em>
+                {% endif %}
+              </td>
+          {% else %}
+            <td>{{ q.approved_by.get_full_name|default:"—" }}</td>
+            <td>
+              {% if q.approved_at %}
+                {{ q.approved_at|timezone:"Asia/Kolkata"|date:"d-M-Y H:i" }}
+              {% else %}—{% endif %}
+            </td>
+            <td class="text-center">
+              <button class="btn btn-secondary view-btn" data-id="{{ q.pk }}">View Details</button>
+            </td>
+            <td>{{ q.updated_by.get_full_name|default:"—" }}</td>
+            <td>{{ q.updated_at|timezone:"Asia/Kolkata"|date:"d-M-Y H:i" }}</td>
+          {% endif %}
+        </tr>
+
+        {# Hidden detail row for modal #}
+        <template id="detail-{{ q.pk }}">
+          <div class="modal-content">
+            <h3>Quote #{{ q.pk }}</h3>
+            <p><strong>Status:</strong> {{ q.get_status_display }}</p>
+            <p><strong>Minimum Price:</strong> ₹{{ q.minimum_price|floatformat:2|intcomma }}</p>
+            <p><strong>Selling Price:</strong> ₹{{ q.selling_price|floatformat:2|intcomma }}</p>
+            <h4>Items Included</h4>
+            <table class="modal-table">
+              <thead>
+                <tr>
+                  <th>#</th> {# NEW: Column for row number #}
+                  <th>Item</th>
+                  <th class="text-right">Qty</th>
+                  <th class="text-right">Price per Item</th> {# NEW: Column for calculated price per item #}
+                  <th class="text-right">Line Total</th>
+                </tr>
+              </thead>
+              <tbody>
+              {% for it in q.items.all %}
+                <tr>
+                  <td>{{ forloop.counter }}</td> {# NEW: Display row number #}
+                  <td>{{ it.price_rule.item.product_name }}</td>
+                  <td class="text-right">{{ it.quantity|floatformat:2 }}</td>
+                  <td class="text-right">
+                      {% if it.quantity and it.quantity != 0 %}
+                        ₹{{ it.price_per_item|floatformat:2|intcomma }}
+                      {% else %}
+                        ₹0.00
+                      {% endif %}
+                    </td>
+                  <td class="text-right">₹{{ it.calculated_price|floatformat:2|intcomma }}</td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </template>
+      {% empty %}
+        <tr><td colspan="11" style="padding:1.5rem; text-align:center; color:#64748b;">No quotations to display.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if is_paginated %}
+    <div class="pagination">
+      {% if page_obj.has_previous %}
+        <a href="?tab={{ tab }}&page={{ page_obj.previous_page_number }}">← Previous&nbsp;</a>
+      {% endif %}
+      <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+        <a href="?tab={{ tab }}&page={{ page_obj.next_page_number }}">&nbsp;Next →</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</section>
+
+<div id="quote-modal" class="modal-overlay">
+  <div class="modal-wrapper">
+    <button id="quote-modal-close" class="modal-close-btn">&times;</button>
+    <div id="quote-modal-body"></div>
+  </div>
+</div>
+
+<script>
+  /** tab switcher **/
+  document.getElementById('tab-form').addEventListener('change', e => {
+    const val = e.target.value;
+    const url = new URL(window.location);
+    url.searchParams.set('tab', val);
+    url.searchParams.delete('page');      // reset pagination on tab switch
+    window.location = url.toString();
+  });
+
+  /** “View” buttons and modal logic **/
+  const quoteModal = document.getElementById('quote-modal');
+  const quoteModalBody = document.getElementById('quote-modal-body');
+  const quoteModalClose = document.getElementById('quote-modal-close');
+
+  document.querySelectorAll('.view-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      const tmpl = document.getElementById(`detail-${id}`);
+      if (tmpl) {
+        quoteModalBody.innerHTML = tmpl.innerHTML;
+        quoteModal.classList.add('open'); // Add 'open' class to show modal
+      }
+    });
+  });
+
+  quoteModalClose.addEventListener('click', () => {
+    quoteModal.classList.remove('open'); // Remove 'open' class to hide modal
+  });
+
+  quoteModal.addEventListener('click', e => {
+    // Close modal if clicking on the overlay itself, not the content
+    if (e.target === quoteModal) {
+      quoteModal.classList.remove('open');
+    }
+  });
+
+  // Optional: Close modal with Escape key
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && quoteModal.classList.contains('open')) {
+      quoteModal.classList.remove('open');
+    }
+  });
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  document.querySelectorAll(".quote-row").forEach(function(row) {
+    console.log(
+      `Quote ${row.dataset.quoteId}:`,
+      {
+        selling_price: row.dataset.sellingPrice,
+        minimum_price: row.dataset.minimumPrice,
+        membership_level: row.dataset.membershipLevel,
+        max_amount: row.dataset.maxAmount,
+        can_approve: row.dataset.canApprove
+      }
+    );
+  });
+});
+</script>
+
+{% endblock %}

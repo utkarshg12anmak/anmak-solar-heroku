@@ -1,0 +1,249 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  {% load static %}
+
+  <!-- in <head> -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <!-- range plugin style is same, no extra CSS needed -->
+
+  <meta name="csrf-token" content="{{ csrf_token }}">
+
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>{% block title %}Anmak Solar CRM{% endblock %}</title>
+
+  
+  <link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">
+  
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"/>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      display: flex; height: 100vh; overflow: hidden;
+      background: url('{% static "landing_page.png" %}') no-repeat center fixed;
+      background-size: cover;
+    }
+    .sidebar {
+      width: 260px; background: #003347; color: #fff;
+      display: flex; flex-direction: column; padding: 24px 16px;
+    }
+    .logo { text-align: center; margin-bottom: 24px; }
+    .logo img { width: 180px; display: block; margin: 0 auto; }
+    nav ul { list-style: none; }
+    nav li { position: relative; margin: 8px 0; }
+    nav a {
+      display: block; text-decoration: none; color: #fff;
+      padding: 10px 14px; border-radius: 6px;
+      transition: background 0.2s;
+    }
+    nav a:hover { background: rgba(255,255,255,0.1); }
+    nav a.active { background: rgba(255,255,255,0.2); }
+
+    /* submenu */
+    .submenu {
+      display: none; list-style: none; margin: 4px 0 4px 8px;
+    }
+    .submenu li a {
+      padding: 8px 14px; font-size: 0.95rem; border-radius: 4px;
+      background: rgba(255,255,255,0.04);
+    }
+    .submenu li a:hover { background: rgba(255,255,255,0.1); }
+
+    /* expand-on-hover/click */
+    .has-submenu:hover > .submenu,
+    .has-submenu.open > .submenu {
+      display: block;
+    }
+    .has-submenu > a::after {
+      content: '▸'; float: right; transition: transform 0.2s;
+    }
+    .has-submenu:hover > a::after,
+    .has-submenu.open > a::after {
+      transform: rotate(90deg);
+    }
+
+    .bottom-group { margin-top: auto; }
+    .profile { display: flex; align-items: center; gap: 12px; }
+    .avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%; border: 2px solid #fff;
+    }
+    .info { display: flex; flex-direction: column; }
+    .name { font-weight: 600; }
+    .designation {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.75);
+    }
+    hr {
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.3);
+      margin: 16px 0;
+    }
+    .logout button {
+      width: 100%; padding: 10px;
+      background: #e53e3e; color: #fff;
+      border: none; border-radius: 6px;
+      font-weight: 500; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .logout button:hover { background: #c53030; }
+
+    .main {
+      flex: 1; background: #f7f9fc;
+      padding: 32px; overflow-y: auto;
+    }
+    .main h1 {
+      font-size: 2rem; color: #1a202c;
+      margin-bottom: 8px;
+    }
+    .main p  {
+      font-size: 1rem; color: #4a5568;
+      margin-bottom: 24px;
+    }
+  </style>
+</head>
+<body>
+  
+  <aside class="sidebar">
+    <div class="logo">
+      <img src="{% static 'logo_white.svg' %}" alt="Anmak Solar Logo"/>
+    </div>
+    <nav>
+      <ul>
+        <li>
+          <a href="{% url 'dashboard' %}"
+             class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            Dashboard
+          </a>
+        </li>
+        <li class="has-submenu">
+          <a href="javascript:void(0);">Sales</a>
+          <ul class="submenu">
+            <li>
+              <a href="{% url 'interests:list' %}"
+                 class="{% if request.resolver_match.namespace == 'interests' and request.resolver_match.url_name == 'list' %}active{% endif %}">
+                Interests
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'leads:list' %}"
+                 class="{% if request.resolver_match.namespace == 'leads' %}active{% endif %}">
+                Leads
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'customers:list' %}"
+                 class="{% if request.resolver_match.namespace == 'customers' %}active{% endif %}">
+                Customers
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'profiles:on_duty' %}"
+                 class="{% if request.resolver_match.url_name == 'on_duty' %}active{% endif %}">
+                On-Duty
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'quotes:approval_list' %}"
+                 class="{% if request.resolver_match.namespace == 'quotes' and request.resolver_match.url_name == 'approval_list' %}active{% endif %}">
+                Quotations
+              </a>
+            </li>
+            <li>
+              <a href="#">Payments</a>
+            </li>
+          </ul>
+        </li>
+        <li class="has-submenu">
+          <a href="javascript:void(0);">Inventory</a>
+          <ul class="submenu">
+            <li>
+              <a href="{% url 'items:list' %}"
+                 class="{% if request.path == '/items/' %}active{% endif %}">
+                Items
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'items:price_rules_list' %}"
+                 class="{% if request.path == '/items/price-settings/rules/' %}active{% endif %}">
+                Price Rules
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li>
+          <a href="{% url 'expenses:list' %}"
+             class="{% if request.resolver_match.namespace == 'expenses' %}active{% endif %}">
+            Expenses
+          </a>
+        </li>
+      </ul>
+    </nav>
+    <div class="bottom-group">
+      <div class="profile">
+        <img src="{% static 'profile-user.png' %}" alt="Avatar" class="avatar"/>
+        <div class="info">
+          <span class="name">{{ request.user.first_name }} {{ request.user.last_name }}</span>
+          <span class="designation">{% if request.user.groups.all %}{{ request.user.groups.all.0.name }}{% endif %}</span>
+        </div>
+      </div>
+      <hr/>
+      <div class="logout">
+        <form method="post" action="{% url 'logout' %}">
+          {% csrf_token %}
+          <button type="submit">Log Out</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+  
+
+  <main class="main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Toast container -->
+  <div id="toast-container" style="position: fixed; bottom: 16px; right: 16px; z-index: 9999;"></div>
+
+  <!-- before </body>: scripts unchanged -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/rangePlugin.js"></script>
+  <script>
+    document.querySelectorAll('.has-submenu > a').forEach(anchor => {
+      anchor.addEventListener('click', e => {
+        e.preventDefault();
+        anchor.parentElement.classList.toggle('open');
+      });
+    });
+  </script>
+
+  <style>
+    /* Simple toast styling */
+    .toast {
+      background-color: rgba(0,0,0,0.8);
+      color: #fff;
+      padding: 12px 16px;
+      margin-top: 8px;
+      border-radius: 4px;
+      font-size: 14px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+
+
+</body>
+</html>

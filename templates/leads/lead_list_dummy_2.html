@@ -1,0 +1,263 @@
+{# leads/templates/leads/lead_list.html #}
+{% extends "base.html" %}
+{% load static tz %}
+
+
+{% block content %}
+<style>
+
+  .leads-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: auto;               /* auto‐size columns */
+  }
+  .leads-table thead th {
+    background: #003347;
+    color: #fff;
+    padding: 0.75rem 1rem;
+    text-align: left;
+  }
+  .leads-table thead th:first-child  { border-top-left-radius: 0.5rem;  }
+  .leads-table thead th:last-child   { border-top-right-radius: 0.5rem; }
+
+  .leads-table th, .leads-table td {
+    white-space: nowrap;
+    border-bottom: 1px solid #E2E8F0;
+  }
+  .leads-table td {
+    padding: 0.75rem 1rem;
+  }
+
+  .leads-table tbody tr:hover {
+    background: #f7f9fc;
+  }
+
+  .page-header {
+    display: flex;
+
+    align-items: baseline;
+    margin-bottom: 1rem;
+  }
+  .page-header h1 {
+    font-size: 1.75rem;
+    margin: 0;
+  }
+  .page-header .record-count {
+    font-size: 1.25rem;
+    color: #6c757d;
+    margin-left: 0.5rem;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    padding: 1rem;
+    overflow-x: auto;
+  }
+
+  .btn-edit {
+    background-color: #D69E2E;    /* amber/orange */
+    color: #fff;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.2s;
+  }
+  .btn-edit:hover {
+    background-color: #B7791F;
+  }
+
+  .table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+  }
+  .table thead th {
+    background: #003347;
+    color: #fff;
+    padding: 0.75rem 1rem;
+    text-align: left;
+  }
+  /* curved corners on the header row */
+  .table thead th:first-child  { border-top-left-radius: 0.5rem;  }
+  .table thead th:last-child   { border-top-right-radius: 0.5rem; }
+
+  .table tbody td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .table tbody tr:hover { background: #f7f9fc; }
+
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  .pagination a, .pagination span {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    text-decoration: none;
+    color: #1a202c;
+  }
+  .pagination a:hover { background: #f7f9fc; }
+  .pagination .current { background: #38a169; color: #fff; }
+
+  /* =========================
+     Search‐bar CSS
+     ========================= */
+  .search-container {
+    margin-bottom: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  /* Shrink search field to roughly 20% of page width */
+  .search-container input[type="text"] {
+    width: 20%;                /* 20% of the container width */
+    min-width: 200px;          /* enforce a reasonable minimum so it never disappears on small screens */
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 0.375rem;
+    font-size: 1rem;
+    color: #333;
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  }
+  .search-container input[type="text"]:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  }
+
+  /* Filter button (blue) */
+  .btn-filter {
+    background-color: #3182ce;  /* blue-600 */
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0.375rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  .btn-filter:hover {
+    background-color: #2c5282;  /* blue-700 */
+  }
+
+  /* Reset button (red) */
+  .btn-reset {
+    background-color: #e53e3e;  /* red-600 */
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0.375rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    text-decoration: none;      /* ensure the anchor looks like a button */
+  }
+  .btn-reset:hover {
+    background-color: #c53030;  /* red-700 */
+  }
+</style>
+
+<div class="page-header">
+  <h1>Leads</h1>
+  <span class="record-count">
+    ({{ page_obj.paginator.count }} records &bull; ₹{{ total_amount_sum }})
+  </span>
+</div>
+
+{# ==== Search Form ==== #}
+<form method="get" class="search-container">
+  <input
+    type="text"
+    name="q"
+    placeholder="Search by Lead ID, phone, or customer name…"
+    value="{{ request.GET.q|default:'' }}"
+    aria-label="Search leads"
+  >
+  <button type="submit" class="btn-filter">Filter</button>
+
+  {# “Reset” is just a link to the same view without any query string #}
+  <a href="{% url 'leads:list' %}" class="btn-reset">Reset</a>
+</form>
+
+
+<div class="card">
+ <table class="leads-table">
+  <thead>
+    <tr>
+      <th>Lead ID</th>
+      <th>Phone</th>
+      <th>Name</th>
+      <th>City</th>
+      <th>System Size (kW)</th>
+      <th>System Type</th>
+      <th>Lead Quality</th>
+      <th>Grid Type</th>
+      <th>Total Amount (₹)</th>
+      <th>Lead Stage</th>
+      <th>Lead Manager</th>
+      <th>Created At</th>
+      <th>Updated At</th>
+      <th>Created By</th>
+      <th>Updated By</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for lead in object_list %}
+    <tr>
+      <td>{{ lead.pk }}</td>
+      <td>{{ lead.customer.primary_phone }}</td>
+      <td>{{ lead.customer.first_name }}{% if lead.customer.last_name %} {{ lead.customer.last_name }}{% endif %}</td>
+      <td>{{ lead.customer.city.name }}</td>
+      <td>{{ lead.system_size }} kW</td>
+      <td>{{ lead.get_system_type_display }}</td>
+      <td>{{ lead.get_lead_quality_display }}</td>
+      <td>{{ lead.get_grid_type_display }}</td>
+      <td>{% if lead.total_amount %}₹{{ lead.total_amount }}{% else %}&ndash;{% endif %}</td>
+      <td>{% if lead.stage %}{{ lead.stage.name }}{% else %}&ndash;{% endif %}</td>
+      <td>{% if lead.lead_manager %}{{ lead.lead_manager.get_full_name }}{% else %}&ndash;{% endif %}</td>
+      <td>{{ lead.created_at|timezone:"Asia/Kolkata"|date:"Y-m-d H:i" }}</td>
+      <td>{{ lead.updated_at|timezone:"Asia/Kolkata"|date:"Y-m-d H:i" }}</td>
+      <td>{{ lead.created_by.get_full_name }}</td>
+      <td>{{ lead.updated_by.get_full_name }}</td>
+      <td><a href="{% url 'leads:edit' lead.pk %}" class="btn-edit">Edit</a></td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="16" class="text-center text-muted">No leads found.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+{% if is_paginated %}
+<div class="pagination">
+  {% if page_obj.has_previous %}
+  <a href="?page={{ page_obj.previous_page_number }}">‹ Prev</a>
+  {% endif %}
+
+  {% for num in page_obj.paginator.page_range %}
+  {% if page_obj.number == num %}
+  <span class="current">{{ num }}</span>
+  {% else %}
+  <a href="?page={{ num }}">{{ num }}</a>
+  {% endif %}
+  {% endfor %}
+
+  {% if page_obj.has_next %}
+  <a href="?page={{ page_obj.next_page_number }}">Next ›</a>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

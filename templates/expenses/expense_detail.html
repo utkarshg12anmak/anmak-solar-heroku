@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<style>
+  .detail-container {
+    max-width: 700px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+  .detail-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    padding: 2rem;
+  }
+  .detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  .detail-header h1 {
+    font-size: 1.75rem;
+    margin: 0;
+    color: #2d3748;
+  }
+  .pill {
+    background: #3182ce;
+    color: #fff;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .field-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  .field-row:last-child { margin-bottom: 0; }
+  .field-label {
+    color: #4a5568;
+    font-weight: 600;
+  }
+  .field-value {
+    color: #1a202c;
+  }
+  .btn-group {
+    margin-top: 2rem;
+    display: flex;
+    gap: 1rem;
+  }
+  .btn {
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    transition: background 0.2s;
+  }
+  .btn-back {
+    background: #edf2f7;
+    color: #2d3748;
+  }
+  .btn-back:hover { background: #e2e8f0; }
+  .btn-edit {
+    background: #3182ce;
+    color: #fff;
+  }
+  .btn-edit:hover { background: #2b6cb0; }
+  /* timestamp correction */
+</style>
+
+<div class="detail-container">
+  <div class="detail-card">
+    <div class="detail-header">
+      <h1>Expense&nbsp;#{{ expense.id }}</h1>
+      <span class="pill">{{ expense.get_expense_type_display }}</span>
+    </div>
+
+    <div class="field-row">
+      <div><span class="field-label">Category</span></div>
+      <div class="field-value">
+        {{ expense.parent_category.name }} → {{ expense.child_category.name }}
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div><span class="field-label">Amount</span></div>
+      <div class="field-value">₹{{ expense.amount }}</div>
+    </div>
+
+    <div class="field-row">
+      <div><span class="field-label">Date(s)</span></div>
+      <div class="field-value">
+        {% if expense.expense_type == 'one_time' %}
+          {{ expense.expense_date|date:"M j, Y" }}
+        {% else %}
+          {{ expense.start_date|date:"M j, Y" }}
+          &mdash;
+          {{ expense.end_date|date:"M j, Y" }}
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div><span class="field-label">Remarks</span></div>
+      <div class="field-value">{{ expense.remarks|linebreaksbr }}</div>
+    </div>
+
+    <div class="field-row">
+      <div><span class="field-label">Created By</span></div>
+      <div class="field-value">
+        {{ expense.created_by.get_full_name|default:"—" }}
+      </div>
+    </div>
+
+    <div class="detail-field">
+      <strong>Attachment:</strong>
+      {% if expense.attachment %}
+        <a href="{{ expense.attachment.url }}" target="_blank">Download file</a>
+      {% else %}
+        <em>No attachment</em>
+      {% endif %}
+    </div>
+
+    <div class="field-row">
+      <div><span class="field-label">Created At</span></div>
+      <div class="field-value ts" data-iso="{{ expense.created_at|date:'c' }}">—</div>
+    </div>
+
+    <div class="detail-row">
+      <strong>Attachment:</strong>
+      {% if expense.attachment %}
+        <a href="{{ expense.attachment.url }}" target="_blank">Download file</a>
+      {% else %}
+        <em>None</em>
+      {% endif %}
+    </div>
+
+    <div class="field-row">
+      <div><span class="field-label">Updated By</span></div>
+      <div class="field-value">
+        {{ expense.updated_by.get_full_name|default:"—" }}
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div><span class="field-label">Updated At</span></div>
+      <div class="field-value ts" data-iso="{{ expense.updated_at|date:'c' }}">—</div>
+    </div>
+
+    <div class="btn-group">
+      <a href="{% url 'expenses:list' %}" class="btn btn-back">← Back</a>
+      <a href="{% url 'expenses:edit' expense.pk %}" class="btn btn-edit">Edit</a>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Convert any ISO timestamp cell into IST (+5.5h)
+  document.querySelectorAll('.ts').forEach(td => {
+    const iso = td.dataset.iso;
+    if (!iso) return;
+    const d = new Date(iso);
+    // UTC ms + IST offset (5.5h)
+    const utc = d.getTime() - d.getTimezoneOffset()*60000;
+    const ist = new Date(utc + 5.5*3600000);
+    const pad = n => n.toString().padStart(2,'0');
+    td.textContent = 
+      `${ist.getFullYear()}-${pad(ist.getMonth()+1)}-${pad(ist.getDate())}` +
+      ` ${pad(ist.getHours())}:${pad(ist.getMinutes())}`;
+  });
+</script>
+{% endblock %}

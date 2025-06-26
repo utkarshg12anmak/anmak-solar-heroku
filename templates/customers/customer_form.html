@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if object %}Edit Customer{% else %}New Customer{% endif %}{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --btn-save: #38A169;
+    --btn-save-hover: #2F855A;
+    --btn-cancel: #A0AEC0;
+    --btn-cancel-hover: #718096;
+    --card-bg: #fff;
+    --card-shadow: rgba(0,0,0,0.05);
+    --text-primary: #1a202c;
+    --pill-city: #dd6b20;
+    --pill-source: #3182ce;
+  }
+  .page-header { margin-bottom: 1.5rem; }
+  .page-header h1 { color: var(--text-primary); font-size: 1.75rem; }
+
+  .flex-row { display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+  .col--sm { flex:0 0 140px; }
+  .col--lg { flex:1 1 calc(50% - 80px); }
+
+  .error-message {
+      color: #E53E3E;           /* a “Django red” */
+      font-size: 0.875rem;      /* a little smaller than body text */
+      margin-top: 0.25rem;      /* a touch of breathing room */
+    }
+
+  .card {
+    background: var(--card-bg);
+    box-shadow: 0 2px 4px var(--card-shadow);
+    border-radius: 0.5rem;
+    padding: 2rem;
+    max-width: 700px;
+    margin: 0 auto 2rem;
+  }
+
+  .row { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .col { flex: 1; min-width: 160px; }
+  label { display: block; margin-bottom: 0.25rem; font-weight: 600; color: var(--text-primary); }
+  input, select, textarea {
+    width: 100%; padding: 0.5rem; border: 1px solid #CBD5E0; border-radius: 0.375rem;
+    box-sizing: border-box;
+  }
+  textarea { height: 4rem; }
+
+  /* right after your .row and .col definitions */
+  .row.designation-row .col.designation { flex: 0 0 140px; }
+  .row.designation-row .col.name { flex: 1 1 calc(50% - 80px); }
+
+  .input-group { display: flex; }
+  .input-group-text {
+    background: #edf2f7; border: 1px solid #CBD5E0; border-right: none;
+    padding: 0.5rem; border-radius: .375rem 0 0 .375rem;
+    line-height: 1;
+  }
+  .input-group input {
+    border-left: none; border-radius: 0 .375rem .375rem 0;
+  }
+
+  .phone-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .phone-row .col {
+    flex: 1;
+  }
+  label.required::after {
+    content: " *";
+    color: #e53e3e;
+  }
+  .error-message {
+    color: #e53e3e;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+
+  .form-group { margin-bottom: 1.5rem; }
+
+  .form-group.address-group { margin-bottom: 2rem; }
+
+  .choices { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+  .choice-input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .choice-box {
+    padding: 0.4rem 0.8rem; border: 1px solid #CBD5E0; border-radius: 0.375rem;
+    cursor: pointer; user-select: none; transition: background 0.2s, border-color 0.2s;
+  }
+  .choice-input:checked + .choice-box { color: #fff; }
+  /* city = orange */
+  .city-choices .choice-input:checked + .choice-box {
+    background: var(--pill-city); border-color: var(--pill-city);
+  }
+  /* source = blue */
+  .source-choices .choice-input:checked + .choice-box {
+    background: var(--pill-source); border-color: var(--pill-source);
+  }
+
+  .form-actions { text-align: right; margin-top: 1.5rem; }
+  .btn {
+    padding: 0.5rem 1rem; border: none; border-radius: 0.375rem;
+    font-weight: 500; color: #fff; cursor: pointer; text-decoration: none;
+  }
+  .btn-save { background: var(--btn-save); }
+  .btn-save:hover { background: var(--btn-save-hover); }
+  .btn-cancel { background: var(--btn-cancel); margin-right: 0.5rem; }
+  .btn-cancel:hover { background: var(--btn-cancel-hover); }
+</style>
+
+<div class="page-header">
+  <h1>{% if object %}Edit Customer{% else %}New Customer{% endif %}</h1>
+</div>
+
+<div class="card">
+  <form method="post">
+    {% csrf_token %}
+
+   <div class="flex-row">
+      <div class="col col--sm">
+        <label for="id_designation">Designation*</label>
+        {{ form.designation }}
+      </div>
+      <div class="col col--lg">
+        <label for="id_first_name">First Name*</label>
+        {{ form.first_name }}
+      </div>
+      <div class="col col--lg">
+        <label for="id_last_name">Last Name</label>
+        {{ form.last_name }}
+      </div>
+    </div>
+
+    <div class="phone-row">
+      <div class="col">
+        <label for="id_primary_phone" class="required">Primary Phone</label>
+        <div class="input-group">
+          <span class="input-group-text">+91</span>
+          {{ form.primary_phone }}
+        </div>
+        {% if form.primary_phone.errors %}
+          <div class="error-message">
+            {{ form.primary_phone.errors.0 }}
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="col">
+        <label for="id_secondary_phone">Secondary Phone</label>
+        <div class="input-group">
+          <span class="input-group-text">+91</span>
+          {{ form.secondary_phone }}
+        </div>
+        {% if form.secondary_phone.errors %}
+          <div class="error-message">
+            {{ form.secondary_phone.errors.0 }}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-top:1rem;">
+      <label for="id_address">Address</label>
+      {{ form.address }}
+    </div>
+
+    <div class="form-group">
+      <label>City*</label>
+      <div class="choices city-choices">
+        {% for val,label in form.city.field.choices %}
+          {% if val %}
+            <input
+              type="radio"
+              id="city_{{ forloop.counter }}"
+              name="{{ form.city.name }}"
+              value="{{ val }}"
+              class="choice-input"
+              {% if form.city.value|stringformat:"s" == val|stringformat:"s" %}checked{% endif %}
+              required
+            />
+            <label for="city_{{ forloop.counter }}" class="choice-box">{{ label }}</label>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-top:1rem;">
+      <label>Customer Source*</label>
+      <div class="choices source-choices">
+        {% for val,label in form.source.field.choices %}
+          {% if val %}
+            <input
+              type="radio"
+              id="src_{{ forloop.counter }}"
+              name="{{ form.source.name }}"
+              value="{{ val }}"
+              class="choice-input"
+              {% if form.source.value|stringformat:"s" == val|stringformat:"s" %}checked{% endif %}
+              required
+            />
+            <label for="src_{{ forloop.counter }}" class="choice-box">{{ label }}</label>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a href="{% url 'customers:list' %}" class="btn btn-cancel">Cancel</a>
+      <button type="submit" class="btn btn-save">
+        {% if object %}Save Changes{% else %}Create Customer{% endif %}
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,2403 @@
+{% extends "base.html" %}
+{% load static tz %}
+{% load humanize %}
+{% load static tz %}
+
+
+{% block content %}
+
+<style>
+  /* Base & Utility Styles */
+  :root {
+    --primary-color: #38a169; /* Green */
+    --primary-hover-color: #2f855a;
+    --secondary-color: #D69E2E; /* Amber */
+    --secondary-hover-color: #B7791F;
+    --accent-color-1: #EF4444; /* Red for Button 1 */
+    --accent-color-2: #8B5CF6; /* Purple for Button 2 */
+    --text-dark: #1a202c;
+    --text-medium: #4a5568;
+    --text-light: #6c757d;
+    --bg-light: #f7fafc; /* Light gray for background */
+    --border-color: #e2e8f0; /* Lighter border */
+    --card-bg: #fff;
+    --shadow-light: 0 4px 12px rgba(0,0,0,0.08); /* More pronounced shadow */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-xxl: 3rem;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+    line-height: 1.6;
+    margin: 0; /* Remove default body margin */
+  }
+
+  /* Main Layout Grid */
+  .main-layout {
+    display: grid;
+    grid-template-columns: 1fr; /* Content fills full width */
+    min-height: 100vh; /* Ensure layout takes full viewport height */
+  }
+
+  /* Side Navigation (Removed - keeping class for reference if needed elsewhere) */
+  /*
+  .side-nav {
+    background-color: var(--sidebar-bg);
+    padding: var(--spacing-xl);
+    color: var(--sidebar-text);
+    border-right: 1px solid var(--border-color);
+    box-shadow: 2px 0 8px rgba(0,0,0,0.03);
+  }
+  */
+
+  /* Content Area */
+  .content-area {
+    padding: var(--spacing-md) var(--spacing-md); /* More horizontal padding */
+    display: flex;
+    flex-direction: column; /* Stack header, workflow, and dashboard */
+    gap: var(--spacing-xl); /* Gap between major sections */
+  }
+
+  /* ————— Page Header ————— */
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .lead-info {
+    flex-grow: 1; /* Allows lead info to take available space */
+  }
+
+  .lead-title {
+    font-size: 2.5rem; /* Adjusted for overall balance */
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  .lead-subtitle {
+    font-size: 1.05rem;
+    color: var(--text-medium);
+    margin-top: var(--spacing-xs);
+  }
+
+  .header-actions {
+    display: flex;
+    gap: var(--spacing-md);
+  }
+
+  /* ————— Workflow Stages ————— */
+  .workflow-stages {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* Align stages to the left */
+    flex-wrap: wrap; /* Allow stages to wrap on smaller screens */
+    gap: var(--spacing-sm); /* Gap between stages and connectors */
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .stage {
+    background-color: #f0f4f8; /* Default stage color */
+    color: var(--text-medium);
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    white-space: nowrap; /* Prevent stage text from wrapping */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: background-color 0.2s ease;
+  }
+
+  .stage.active {
+    background-color: var(--primary-color);
+    color: var(--card-bg);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+
+  .connector {
+    width: 30px; /* Length of the arrow line */
+    height: 2px;
+    background-color: var(--border-color);
+    position: relative;
+    margin: 0 var(--spacing-xs); /* Small margin to separate from stages */
+  }
+
+  .connector::after {
+    content: '';
+    position: absolute;
+    right: -2px; /* Position at the end of the line */
+    top: 50%;
+    transform: translateY(-50%) rotate(45deg);
+    width: 8px;
+    height: 8px;
+    border-top: 2px solid var(--border-color);
+    border-right: 2px solid var(--border-color);
+  }
+
+  /* ————— Dashboard Grid (Main Content) ————— */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr; /* Left column wider (2 parts), right column narrower (1 part) */
+    gap: var(--spacing-xl);
+    align-items: start; /* Align items to the top of their grid cells */
+  }
+
+  .left-column, .right-column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xl); /* Gap between cards within columns */
+  }
+
+  /* ————— Card Styling ————— */
+  .card {
+    background: var(--card-bg);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-light);
+    padding: var(--spacing-xl);
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+  }
+
+  .card-header h2 {
+    font-size: 1.6rem; /* Slightly smaller than page title, but prominent */
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+  }
+
+  /* Updated details-grid styling */
+  .details-grid {
+    display: grid; /* Use grid for structured layout */
+    /* Define responsive columns for the detail items */
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* At least 200px wide, fills space */
+    gap: var(--spacing-lg) var(--spacing-xxl); /* Vertical and horizontal gap between detail items */
+  }
+
+  .detail-item {
+    display: flex;
+    flex-direction: column; /* Stack key above value */
+    align-items: flex-start; /* Align key and value to the left within their item */
+    /* No flex or max-width needed here, grid handles sizing */
+  }
+
+  .detail-item .key {
+    font-weight: 600;
+    color: var(--text-medium);
+    margin-bottom: var(--spacing-xs); /* Small gap between key and value */
+    text-align: left; /* Ensure key is left-aligned */
+  }
+
+  .detail-item .value {
+    color: var(--text-dark);
+    text-align: left; /* Ensure value is left-aligned */
+  }
+
+  /* Buttons */
+  .btn {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 0.375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-primary {
+    background: var(--accent-color-1); /* Red button */
+    color: var(--card-bg);
+  }
+  .btn-primary:hover {
+    background: #DC2626; /* Darker red */
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .btn-secondary {
+    background: var(--accent-color-2); /* Purple button */
+    color: var(--card-bg);
+  }
+  .btn-secondary:hover {
+    background: #6D28D9; /* Darker purple */
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--spacing-xs);
+    border-radius: 50%; /* Circular background for icon */
+    transition: background-color 0.2s ease;
+    display: flex; /* To center SVG */
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-icon:hover {
+    background-color: rgba(0,0,0,0.05); /* Light hover effect */
+  }
+
+  .btn-icon svg {
+    width: 20px; /* Size of the icon */
+    height: 20px;
+    stroke: var(--text-medium); /* Default icon color */
+    transition: stroke 0.2s ease;
+  }
+
+  .btn-icon:hover svg {
+    stroke: var(--text-dark); /* Darken icon on hover */
+  }
+
+  /* Specific icon for the plus button */
+  .btn-icon.plus-icon {
+    background-color: #E0F2F7; /* Light blue background for plus icon */
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+  }
+  .btn-icon.plus-icon:hover {
+    background-color: #BFDBFE; /* Darker blue on hover */
+  }
+  .btn-icon.plus-icon svg {
+    stroke: #2563EB; /* Blue color for plus icon */
+  }
+
+  #leadEditModal {
+    display: none; /* hidden by default */
+    position: fixed;
+    z-index: 1000;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.4);
+    overflow: auto;
+  }
+
+  #leadEditModal .modal-content {
+    background: #fff;
+    margin: 5% auto;
+    border-radius: 0.5rem;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    padding: 1rem;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.5);
+    display: none;           /* Hidden until “display: flex” is set */
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
+  .modal-wrapper {
+    background: #fff;
+    border-radius: 0.5rem;
+    max-width: 600px;
+    width: 90%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    padding: 1.5rem;
+    position: relative;
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+  }
+  .modal-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+  }
+  .modal-header button#closeModal {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    color: #718096;
+  }
+  .modal-header button#closeModal:hover {
+    color: #4a5568;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+  .form-group label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+  }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #cbd5e0;
+    border-radius: 0.375rem;
+    box-sizing: border-box;
+  }
+  .modal-actions {
+    margin-top: 1.5rem;
+    text-align: right;
+  }
+  .modal-actions button[type="submit"] {
+    background: #38a169;
+    color: #fff;
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .modal-actions button[type="submit"]:hover {
+    background: #2f855a;
+  }
+
+
+  /* Responsive Adjustments */
+  @media (max-width: 1024px) {
+    .main-layout {
+      grid-template-columns: 1fr; /* Content fills full width */
+    }
+
+    .content-area {
+      padding: var(--spacing-lg);
+    }
+
+    .dashboard-grid {
+      grid-template-columns: 1fr; /* Stack columns on smaller screens */
+    }
+
+    .page-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--spacing-md);
+    }
+
+    .header-actions {
+      width: 100%; /* Make buttons take full width if stacked */
+      justify-content: flex-start;
+    }
+
+    .lead-title {
+      font-size: 2rem;
+    }
+
+    .card-header h2 {
+      font-size: 1.4rem;
+    }
+
+    /* Responsive adjustments for new detail-item layout */
+    .detail-item {
+      max-width: 100%; /* Full width on small screens */
+    }
+  }
+
+  @media (max-width: 768px) {
+    .lead-title {
+      font-size: 1.8rem;
+    }
+    .lead-subtitle {
+      font-size: 0.95rem;
+    }
+    .btn {
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+    }
+    .stage {
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+    }
+  }
+
+  /* Basic modal backdrop */
+  #site-visit-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0; right: 0; bottom: 0;
+    background-color: rgba(0,0,0,0.5);
+    overflow: auto;
+  }
+  /* Centered modal content */
+  #site-visit-modal .modal-content {
+    background-color: #fff;
+    margin: 5% auto;
+    padding: 1em;
+    border-radius: 4px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+
+  /* ─────────────────────────────────────────────────────
+   Site Visit Cards (rounded, shadow, VIEW button)
+   ───────────────────────────────────────────────────── */
+
+   .site-visit-section {
+    margin-top: 24px;
+  }
+
+/* Header row: “Site Visits” title + “+” button */
+.site-visit-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.site-visit-header-row h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #111;
+}
+
+/* Grid container for cards */
+.site-visit-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+
+/* Individual card */
+.site-visit-card {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Left‐side text block inside card */
+.site-visit-info {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Title line: “Visit #127” */
+.site-visit-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #222;
+  line-height: 1.2;
+}
+
+/* Date/time line below title */
+.site-visit-datetime {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #555;
+  line-height: 1.3;
+}
+
+.site-visit-items-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+
+}
+
+
+.site-visit-item {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  margin-bottom: 12px;
+  
+}
+
+/* Left “info” portion inside each item */
+.site-visit-info {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Title line: “Visit #7” */
+.site-visit-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #222;
+  line-height: 1.2;
+}
+
+/* Date/time line below title */
+.site-visit-datetime {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #555;
+  line-height: 1.3;
+}
+
+/* VIEW button on the right */
+.site-visit-button {
+  background-color: #4dabf7;
+  color: #fff;
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+.site-visit-button:hover {
+  background-color: #339af0;
+}
+
+/* “No visits scheduled” fallback text */
+.no-visits-text {
+  margin: 0;
+  font-size: 14px;
+  color: #777;
+}
+
+/* If you already have a .card, you can omit or trim these: */
+.card-header {
+  border-bottom: 1px solid #e0e0e0;
+  padding: 12px 16px;
+}
+.card-content {
+  /* padding is already inlined, but you could move it here */
+}
+
+#reminder-modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: none;  /* hidden until needed */
+  z-index: 2000;
+  overflow: auto;
+}
+#reminder-modal > * {
+  position: relative;
+  z-index: 2001;
+}
+
+.reminder-item {
+  display: grid;
+  grid-template-columns: 3fr 2fr 1fr 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e2e8f0;  /* light grey line between items */
+}
+.reminder-desc {
+  font-weight: 500;
+  color: #1a202c;
+}
+.reminder-due {
+  color: #4a5568;  /* medium grey text */
+}
+.reminder-priority,
+.reminder-status {
+  color: #6c757d;  /* darker grey */
+  text-transform: uppercase;
+  font-size: 0.875rem;
+}
+.reminder-actions button {
+  background-color: #38a169;  /* green */
+  border: none;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  color: #fff;
+  cursor: pointer;
+}
+.reminder-actions button:hover {
+  background-color: #2f855a;  /* darker green */
+}
+
+/* Container for the entire reminders list */
+.reminders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* space between tickets */
+  margin-top: 16px;
+}
+
+/* Single “ticket” wrapper */
+.reminder-ticket {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Left side of each ticket: message + subtext */
+.reminder-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-wrap: anywhere; /* allow long messages to break */
+}
+
+/* Reminder headline (the “message”) */
+.reminder-message {
+  font-size: 1.125rem; /* slightly larger */
+  font-weight: 600;
+  color: #1A202C; /* dark text */
+  margin: 0;
+  line-height: 1.3;
+}
+
+/* Sub‐info row: due date + separator + priority */
+.reminder-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: #4A5568; /* medium‐gray */
+}
+
+.reminder-meta .due-datetime {
+  color: #2563EB; /* blue */
+}
+
+.reminder-meta .separator-dot {
+  width: 4px;
+  height: 4px;
+  background-color: #CBD5E0; /* light gray */
+  border-radius: 50%;
+}
+
+.reminder-meta .priority {
+  color: #DC2626; /* red for “HIGH PRIORITY” */
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+/* Right‐side checkmark button */
+.reminder-complete-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.reminder-complete-btn .icon-circle {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: #48BB78; /* green when pending */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+/* Gray background when completed */
+.reminder-complete-btn.completed .icon-circle {
+  background-color: #A0AEC0; /* gray */
+}
+
+/* The checkmark inside (white stroke) */
+.reminder-complete-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke: #FFFFFF;
+}
+
+/* Hover effect for pending reminders */
+.reminder-complete-btn:not(.completed) .icon-circle:hover {
+  background-color: #38A169; /* darker green on hover */
+}
+
+/* Disable hover on completed */
+.reminder-complete-btn.completed .icon-circle:hover {
+  background-color: #A0AEC0;
+}
+
+
+.modal-overlay {
+  position: fixed; top:0; left:0; right:0; bottom:0;
+  background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+.modal-wrapper {
+  background: #fff;
+  border-radius: .5rem;
+  max-width: 500px; width: 90%;
+  padding: 1rem;
+  position: relative;
+}
+.close-modal {
+  position: absolute; top: .5rem; right: .5rem;
+  background: transparent; border: none; font-size: 1.5rem;
+  cursor: pointer;
+}
+
+/* in your existing <style> block or app CSS */
+.ir-button {
+  background: #8B5CF6;      /* purple */
+  color: #fff;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.9rem;
+  margin-left: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.ir-button:hover {
+  background: #7C3AED;
+}
+
+
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0,0,0,0.3);
+  color: #fff;
+  border: none;
+  padding: 0.5rem;
+  cursor: pointer;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  z-index: 10;
+}
+
+/* ── SI Button Overrides ── */
+.si-button {
+  background-color: #fbbf24;    /* Tailwind “yellow-400” */
+  border-color: #fbbf24;
+  color: #1a202c;               /* dark text for contrast */
+  padding: 0.25rem 0.5rem;      /* smaller left/right padding */
+  font-weight: 500;
+  transition: background 0.2s;
+}
+.si-button:hover {
+  background-color: #eab308;    /* Tailwind “yellow-500” */
+  border-color: #eab308;
+}
+
+
+/* ── Delete Button ── */
+.delete-button {
+  background: transparent;
+  border: none;
+  padding: 0.25rem;
+  margin-left: 0.5rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+.delete-button img {
+  width: 1rem;
+  height: 1rem;
+  object-fit: contain;
+  filter: invert(30%);
+  transition: filter 0.2s;
+}
+.delete-button:hover img {
+  filter: invert(10%);
+}
+
+/* -------------------------------------------------------------------
+   Normalize all three buttons to exactly the same height / width
+   ------------------------------------------------------------------- */
+/* ─────────────────────────────────────────────────────────────────
+   FORCE all three to exactly 40×40px squares, no extra padding
+   ───────────────────────────────────────────────────────────────── */
+.site-visit-card button.ir-button,
+.site-visit-card button.si-button,
+.site-visit-card button.delete-button {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+
+  /* exact same size */
+  width: 2.5rem !important;   /* 40px */
+  height: 2.5rem !important;  /* 40px */
+
+  /* zero out inherited padding */
+  padding: 0 !important;
+  margin-left: 0.5rem;        /* small gutter between siblings */
+
+  border-radius: 0.375rem !important;
+  font-size: 0.9rem;          /* so “IR”/“SI” don’t wrap */
+
+
+  padding: 12px 12px;
+}
+
+/* IR keeps its purple */
+.site-visit-card button.ir-button {
+  background: #8B5CF6 !important;
+  color: #fff !important;
+}
+.site-visit-card button.ir-button:hover {
+  background: #7C3AED !important;
+}
+
+/* SI overrides both .btn and .btn-primary padding/size */
+.site-visit-card button.si-button {
+  background-color: #fbbf24 !important;
+  color: #1a202c !important;
+}
+/* OPTIONAL hover */
+.site-visit-card button.si-button:hover {
+  background-color: #eab308 !important;
+}
+
+/* Delete needs no background, just center the SVG bigger */
+.site-visit-card button.delete-button {
+  background: transparent !important;
+}
+.site-visit-card button.delete-button img {
+  width: 1.25rem !important;  /* 20px */
+  height: 1.25rem !important;
+  filter: invert(30%);
+  transition: filter 0.2s;
+  margin-left: 0;
+}
+.site-visit-card button.delete-button:hover img {
+  filter: invert(10%);
+}
+
+
+/* 3) (Optional) If you want the IR button to line up exactly, you can also zero its margin */
+/* .ir-button { margin-left: 0; } */
+
+/* 1) Make the card a flex container and give a uniform gap */
+.site-visit-card {
+  display: flex;                /* flex layout */
+  align-items: center;          
+  justify-content: flex-start;  /* pack items at the left */
+  gap: 0.5rem;                  /* 8px between IR, SI, delete */
+  padding: 12px 12px;           /* shrink right padding from 16px→12px */
+}
+
+/* 2) Remove any leftover manual margins on the buttons */
+.site-visit-card button.ir-button,
+.site-visit-card button.si-button,
+.site-visit-card button.delete-button {
+  margin: 0 !important;        /* no offsets—gap handles it all */
+}
+
+/* 3) If you want them all to be a consistent square: */
+.site-visit-card button.ir-button,
+.site-visit-card button.si-button,
+.site-visit-card button.delete-button {
+  width: 2.5rem;    /* 40px */
+  height: 2.5rem;   /* 40px */
+  padding: 0;       /* no extra inner padding */
+}
+
+/* 4) Tweak the delete-icon itself if needed */
+.site-visit-card button.delete-button img {
+  margin: 0;        /* kill any auto-margins the img might have */
+}
+
+  /* Quotations-card grid (single-column) */
+  /* Quotations card grid */
+.quotations-grid {
+  display: grid;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+/* Individual quote card */
+.quotation-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  transition: background 0.2s, opacity 0.2s;
+}
+
+/* fade out “Deleted” quotes */
+.quotation-card.deleted {
+  opacity: 0.6;
+  background: #f9fafb;
+}
+
+/* Left info column */
+.quotation-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* First line: ID + amount */
+.quotation-header {
+  display: flex;
+  gap: 1rem;
+  align-items: baseline;
+}
+.quote-id {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+.quote-amount {
+  font-size: 1rem;
+  color: var(--text-dark);
+}
+
+/* Status text below */
+.quotation-status {
+  font-size: 0.875rem;
+  color: var(--text-medium);
+}
+
+/* Right actions */
+.quotation-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Use your existing .btn classes */
+.btn-danger {
+  background: #e53e3e;
+  color: #fff;
+}
+.btn-danger:hover {
+  background: #c53030;
+}
+
+/* ─── Quotations Card Styles ────────────────────────────────────────── */
+  .quotations-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .quote-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fff;
+  }
+  .quote-info {
+    display: flex;
+    flex-direction: column;
+    gap: .1rem;
+  }
+  .quote-header {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+  }
+  .quote-id {
+    font-size: 1rem;
+    font-weight: 500;
+  }
+   .quote-header {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;        /* tiny space between number & badge */
+}
+
+.badge {
+  /* remove any margin-left you had before */
+  margin-left: 0 !important;
+
+  /* everything else stays the same */
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  border-radius: 9999px;
+  text-align: center;
+  vertical-align: middle;
+  color: #fff !important;
+}
+
+  /* just keep your existing backgrounds */
+
+    /* just keep your existing backgrounds */
+    .badge-pending   { background: #fbbf24;opacity:90%; }
+    .badge-approved  { background: #38A169;opacity:90%; }
+    .badge-declined  { background: #EF4444;opacity:90%; }
+    .badge-deleted   { background: #EF4444;opacity:90%; }
+
+  .quote-meta {
+    color: #38A169;
+    font-size: 1rem;
+  }
+  .quote-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .btn-icon {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .btn-icon img {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  /* --------------------
+   Quote Detail Modal
+   -------------------- */
+/* ────────────────
+   Quote Modal Styles
+   ──────────────── */
+.quote-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6) !important;       /* darker backdrop */
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000 !important;
+}
+
+.quote-modal-card {
+  background: #ffffff;
+  border-radius: 1rem;                            /* extra round */
+  box-shadow: 0 16px 48px rgba(0,0,0,0.15);
+  max-width: 520px;
+  width: 85%;
+  overflow: hidden;
+  position: relative;
+  transform: translateY(-10px);
+  transition: transform 0.25s ease-out;
+}
+.quote-modal-overlay .quote-modal-card {
+  transform: translateY(0);                      /* slide in */
+}
+
+.quote-modal-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #a0aec0;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.quote-modal-close:hover {
+  color: #4a5568;
+}
+
+.quote-modal-body {
+  padding: 2rem;
+  color: #2d3748;
+  font-family: 'Inter', sans-serif;
+  line-height: 1.6;
+}
+
+/* Headings */
+.quote-modal-body h3 {
+  margin-top: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #1a202c;
+}
+.quote-modal-body p {
+  margin: 0.75rem 0;
+}
+
+/* Links */
+.quote-modal-body a {
+  color: #3182ce;
+  text-decoration: none;
+}
+.quote-modal-body a:hover {
+  text-decoration: underline;
+}
+
+/* Primary button */
+.quote-modal-body .btn-primary {
+  display: inline-block;
+  margin: 1.25rem 0;
+  padding: 0.65rem 1.4rem;
+  background: #e53e3e;
+  color: #fff;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+.quote-modal-body .btn-primary:hover {
+  background: #c53030;
+}
+
+/* Items table */
+.quote-modal-body table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 0.5rem;
+  margin-top: 1.25rem;
+}
+.quote-modal-body th,
+.quote-modal-body td {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+}
+.quote-modal-body th {
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 600;
+  color: #4a5568;
+}
+.quote-modal-body td {
+  background: #f7fafc;
+  border-radius: 0.375rem;
+}
+</style>
+
+
+
+<div class="main-layout">
+  <main class="content-area">
+    {# ————— Page Header ————— #}
+    <header class="page-header">
+      <div class="lead-info">
+        <h1 class="lead-title">Lead #{{ lead.pk }}</h1>
+        <div class="lead-subtitle">
+          {{ lead.customer.first_name }}
+          {% if lead.customer.last_name %} {{ lead.customer.last_name }}{% endif %}
+          &bull; {{ lead.system_size }} kW
+          &bull; {{ lead.get_grid_type_display }}
+          &bull; {{ lead.get_system_type_display }}
+          &bull; {{ lead.customer.city.name }}
+        </div>
+      </div>
+
+      <div class="header-actions">
+        {# “Previous Stage” only if prev_stage exists #}
+        {% if prev_stage %}
+        <form
+        method="post"
+        action="{% url 'leads:prev_stage' lead.pk %}"
+        style="display:inline"
+        >
+        {% csrf_token %}
+        <button type="submit" class="btn btn-secondary">Previous Stage</button>
+      </form>
+      {% endif %}
+
+      {# “Next Stage” only if next_stage exists #}
+      {% if next_stage %}
+      <form
+      method="post"
+      action="{% url 'leads:next_stage' lead.pk %}"
+      style="display:inline"
+      >
+      {% csrf_token %}
+      <button type="submit" class="btn btn-primary">Next Stage</button>
+    </form>
+    {% endif %}
+
+  </div>
+</header>
+
+{# ————— Workflow Stages ————— #}
+<section class="workflow-stages">
+  {% for stage in all_stages %}
+  <div class="stage{% if stage.id == lead.stage_id %} active{% endif %}">
+    {{ stage.name }}
+  </div>
+  {% if not forloop.last %}
+  <div class="connector"></div>
+  {% endif %}
+  {% endfor %}
+</section>
+
+{# ————— Dashboard Grid (Main Content) ————— #}
+<div class="dashboard-grid">
+  <div class="left-column">
+    {# ————— Lead Details Card ————— #}
+    <div class="card lead-details-card">
+      <div class="card-header">
+        <h2>Lead Details</h2>
+        {# We no longer wrap the edit button in a link; we handle it via JS #}
+        {# Edit button (pencil icon) #}
+        <button id="openLeadEditBtn" class="btn-icon" style="margin-left:1rem;">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg" style="width:20px; height:20px;">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M15.232 5.232l3.536 3.536
+          m-2.036-5.036a2.5 2.5 0 113.536 3.536
+          L6.5 21.036H3v-3.572L16.732 3.732z" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="details-grid">
+      <div class="detail-item">
+        <div class="key">System Size (kW)</div>
+        <div class="value">{{ lead.system_size }}</div>
+      </div>
+      <div class="detail-item">
+        <div class="key">System Type</div>
+        <div class="value">{{ lead.get_system_type_display }}</div>
+      </div>
+      <div class="detail-item">
+        <div class="key">Lead Quality</div>
+        <div class="value">{{ lead.get_lead_quality_display }}</div>
+      </div>
+      <div class="detail-item">
+        <div class="key">Grid Type</div>
+        <div class="value">{{ lead.get_grid_type_display }}</div>
+      </div>
+      <div class="detail-item">
+        <div class="key">Total Amount (₹)</div>
+        <div class="value">
+          {% if lead.total_amount %}₹{{ lead.total_amount }}{% else %}&ndash;{% endif %}
+        </div>
+      </div>
+      <div class="detail-item">
+        <div class="key">Remarks</div>
+        <div class="value">
+          {% if lead.remarks %}{{ lead.remarks }}{% else %}&ndash;{% endif %}
+        </div>
+      </div>
+      <div class="detail-item">
+        <div class="key">Created At</div>
+        <div class="value">
+          {{ lead.created_at|timezone:"Asia/Kolkata"|date:"Y-m-d H:i" }}
+        </div>
+      </div>
+      <div class="detail-item">
+        <div class="key">Created By</div>
+        <div class="value">{{ lead.created_by.get_full_name }}</div>
+      </div>
+      <div class="detail-item">
+        <div class="key">Updated At</div>
+        <div class="value">
+          {{ lead.updated_at|timezone:"Asia/Kolkata"|date:"Y-m-d H:i" }}
+        </div>
+      </div>
+      <div class="detail-item">
+        <div class="key">Updated By</div>
+        <div class="value">{{ lead.updated_by.get_full_name }}</div>
+      </div>
+
+      <div class="detail-item">
+        <div class="key">Lead Manager</div>
+        <div class="value">
+          {% if lead.lead_manager %}
+          {{ lead.lead_manager.get_full_name }}
+          {% else %}
+          &ndash;
+          {% endif %}
+        </div>
+      </div>
+          <div class="detail-item">
+      <div class="key">Lead Department</div>
+      <div class="value">
+        {{ lead.department.name }}
+      </div>
+    </div>
+    </div>
+  </div>
+
+  {# ————— Customer Details Card ————— #}
+  <div class="card customer-details-card">
+    <div class="card-header">
+      <h2>Customer Details</h2>
+      <a href="{% url 'customers:edit' lead.customer.pk %}" class="btn-icon">
+        <!-- pencil SVG for customer edit -->
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" 
+        xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 
+        2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+      </svg>
+    </a>
+  </div>
+
+  <div class="details-grid">
+    <div class="detail-item">
+      <div class="key">Primary Phone</div>
+      <div class="value">{{ lead.customer.primary_phone }}</div>
+    </div>
+    <div class="detail-item">
+      <div class="key">Secondary Phone</div>
+      <div class="value">
+        {% if lead.customer.secondary_phone %}
+        {{ lead.customer.secondary_phone }}
+        {% else %}
+        &ndash;
+        {% endif %}
+      </div>
+    </div>
+    <div class="detail-item">
+      <div class="key">Name</div>
+      <div class="value">
+        {% if lead.customer.designation %}
+        {{ lead.customer.designation }} {{ lead.customer.first_name }}
+        {{ lead.customer.last_name }}
+        {% else %}
+        &ndash;
+        {% endif %}
+      </div>
+    </div>
+    <div class="detail-item">
+      <div class="key">Address</div>
+      <div class="value">
+        {% if lead.customer.address %}
+        {{ lead.customer.address }}
+        {% else %}
+        &ndash;
+        {% endif %}
+      </div>
+    </div>
+    <div class="detail-item">
+      <div class="key">City</div>
+      <div class="value">
+        {% if lead.customer.city %}
+        {{ lead.customer.city.name }}
+        {% else %}
+        &ndash;
+        {% endif %}
+      </div>
+    </div>
+    <div class="detail-item">
+      <div class="key">Source</div>
+      <div class="value">
+        {% if lead.customer.source %}
+        {{ lead.customer.source.name }}
+        {% else %}
+        &ndash;
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="right-column">
+
+  {# ————— Quotations Card ————— #}
+ <!-- Quotations Card: replace existing placeholder with this -->
+<div class="card quotations-card">
+  <div class="card-header">
+    <h2>Quotations</h2>
+    <button id="openQuotationBtn" type="button" class="btn-icon plus-icon">
+      <!-- + icon SVG -->
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m0 0H6"/>
+      </svg>
+    </button>
+  </div>
+  <div class="card-content">
+    {% if lead.quotes.exists %}
+      <div class="quotations-container">
+        {% for quote in lead.quotes.all %}
+          {% with qid=quote.pk|stringformat:"03d" %}
+          <div class="quote-card" id="quote-card-{{ quote.pk }}">
+            <div class="quote-info">
+              <div class="quote-header">
+                <span class="quote-id">Quote #{{ qid }}</span>
+                    <span class="badge
+                    {% if quote.status == quote.STATUS_PENDING   %} badge-pending{% endif %}
+                    {% if quote.status == quote.STATUS_APPROVED  %} badge-approved{% endif %}
+                    {% if quote.status == quote.STATUS_DECLINED  %} badge-declined{% endif %}
+                    {% if quote.status == quote.STATUS_DELETED   %} badge-deleted{% endif %}
+                ">
+                  {{ quote.get_status_display }}
+                </span>
+              </div>
+              <div class="quote-meta">
+                ₹{{ quote.selling_price|floatformat:2|intcomma }}
+                &nbsp;•&nbsp; {{ quote.items.count }} Item{{ quote.items.count|pluralize }}
+              </div>
+            </div>
+            <div class="quote-actions">
+              {% if quote.status == quote.STATUS_PENDING %}
+                <button
+                  class="btn-icon delete-quote-btn"
+                  data-lead-id="{{ lead.pk }}"
+                  data-quote-id="{{ quote.pk }}"
+                  title="Delete Quote #{{ qid }}"
+                >
+                  <img src="{% static 'delete.svg' %}" alt="Delete">
+                </button>
+              {% endif %}
+              <button
+                class="btn-icon view-quote-btn"
+                data-quote-id="{{ quote.pk }}"
+                title="View Quote #{{ qid }}"
+              >
+                <img src="{% static 'link.svg' %}" alt="View">
+              </button>
+            </div>
+          </div>
+
+          {# Hidden detail panel for this quote #}
+          <div id="quote-detail-{{ quote.pk }}" style="display:none;">
+            <h3>Quote #{{ qid }}</h3>
+            <p><strong>Status:</strong> {{ quote.get_status_display }}</p>
+            <p>
+              <strong>Lead:</strong>
+              <a href="{% url 'leads:edit' lead.pk %}" target="_blank">
+                #{{ lead.pk|stringformat:"03d" }}
+              </a>
+            </p>
+            <p><strong>Minimum Price:</strong>
+              ₹{{ quote.minimum_price|floatformat:2|intcomma }}</p>
+            <p><strong>Selling Price:</strong>
+              ₹{{ quote.selling_price|floatformat:2|intcomma }}</p>
+
+
+                {% if quote.status == quote.STATUS_APPROVED %}
+                  <button
+                    class="btn btn-primary"
+                    id="download-approved-quote-{{ quote.pk }}"
+                    data-quote-id="{{ quote.pk }}"
+                  >
+                    Download Department Draft (PDF)
+                  </button>
+                {% endif %}
+
+
+            <h4>Items ({{ quote.items.count }})</h4>
+            <table style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr>
+                  <th style="text-align:left;border-bottom:1px solid #ddd;padding:.25rem">Item</th>
+                  <th style="text-align:right;border-bottom:1px solid #ddd;padding:.25rem">Qty</th>
+                  <th style="text-align:right;border-bottom:1px solid #ddd;padding:.25rem">Line Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in quote.items.all %}
+                <tr>
+                  <td style="padding:.25rem">{{ item.price_rule.item.product_name }}</td>
+                  <td style="padding:.25rem;text-align:right">{{ item.quantity }}</td>
+                  <td style="padding:.25rem;text-align:right">
+                    ₹{{ item.calculated_price|floatformat:2|intcomma }}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endwith %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <p style="color: #6c757d;">No quotations available yet.</p>
+    {% endif %}
+  </div>
+
+</div>
+
+
+<!-- Quote Detail Modal -->
+<div id="quoteDetailModal" class="modal-overlay" style="display:none;">
+  <div class="quote-modal-card">
+    <button id="closeQuoteDetailModal" class="quote-modal-close">&times;</button>
+    <div id="quoteDetailContent" class="quote-modal-body">
+      <!-- your existing detail markup goes here -->
+    </div>
+  </div>
+</div>
+
+
+
+{% include "quotations/partials/quotation_modal.html" %}
+
+
+{# ————— Site Visit Card ————— #}
+<div class="card site-visit-container-card"> <div class="card-header">
+  <h2>Site Visit</h2>
+  
+
+  <button id="openVisitBtn"
+  data-url="{% url 'visit_details:visit_add' lead.pk %}"
+  class="btn-icon plus-icon">
+
+  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"
+  xmlns="http://www.w3.org/2000/svg">
+  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+  d="M12 6v6m0 0v6m0-6h6m0 0H6"/>
+</svg>
+</button>
+</div>
+
+<!-- placeholder for AJAX-loaded site-visit form -->
+<div id="visitModalContainer" style="display:none;"></div>
+
+<div class="card-content">
+  {% if site_visits %}
+  <div class="site-visit-cards">
+    {% for v in site_visits %}
+    <div class="site-visit-card">
+      <div class="site-visit-info">
+        <div class="site-visit-title">Visit #{{ v.pk }}</div>
+        <div class="site-visit-datetime">
+          {{ v.visit_date|date:"d-M-Y" }}
+          {{ v.start_time|time:"H:i" }} – {{ v.end_time|time:"H:i" }}
+        </div>
+      </div>
+
+      <button
+      class="ir-button"
+      data-pdf-url="{% url 'visit_details:visit_preview' v.pk %}"
+      >
+      IR
+    </button>
+    {# SI button: serialize all image URLs into JSON #}
+    {% with imgs=v.images.all %}
+    <button
+    class="si-button btn btn-primary"
+    data-images='[{% for img in imgs %}"{{ img.image.url }}"{% if not forloop.last %},{% endif %}{% endfor %}]'
+    >SI</button>
+
+      <button
+        type="button"
+        class="delete-button"
+        data-delete-url="{% url 'visit_details:visit_delete' v.pk %}"
+        title="Delete this visit"
+      >
+        <img src="{% static 'delete.svg' %}" alt="Delete" />
+      </button>
+
+
+
+    {% endwith %}
+
+
+
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<p class="no-visits-text">No site visits done yet.</p>
+{% endif %}
+</div>
+</div>
+
+
+
+{# ————— End of Site Visit Card ————— #}
+
+
+{# ———— Reminders Card ———— #}
+{# ———— Reminders Card ———— #}
+<div class="card reminders-card">
+  <div class="card-header">
+    <h2>Reminders</h2>
+    <button
+    id="open-reminder-btn"
+    class="btn-icon plus-icon"
+    data-app-label="leads"
+    data-model-name="lead"
+    data-object-id="{{ lead.pk }}"
+    title="Add a new reminder"
+    >
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+    width="24" height="24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+    d="M12 6v6m0 0v6m0-6h6m0 0H6" />
+  </svg>
+</button>
+</div> <!-- /.card-header -->
+
+<div class="card-content">
+  {% if reminders %}
+  <div class="reminders-list">
+    {% for r in reminders %}
+    <div class="reminder-ticket">
+      <!-- Left side: message + meta -->
+      <div class="reminder-info">
+        <p class="reminder-message" style="margin-bottom: 0;">{{ r.message }}</p>
+        <div class="reminder-meta">
+          <span class="due-datetime">
+            {{ r.reminder_time|date:"d-M-Y g:i a" }}
+          </span>
+          <span class="separator-dot"></span>
+          <span class="priority">{{ r.get_priority_display }}</span>
+        </div>
+      </div>
+
+      <!-- Right side: checkmark button -->
+      <button
+      class="reminder-complete-btn {% if r.status == 'COMPLETED' %}completed{% endif %}"
+      data-id="{{ r.pk }}"
+      title="{% if r.status == 'COMPLETED' %}Already Completed{% else %}Mark Completed{% endif %}"
+      >
+      <div class="icon-circle">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+        d="M5 13l4 4L19 7" />
+      </svg>
+    </div>
+  </button>
+</div>
+{% endfor %}
+</div>
+{% else %}
+<p style="color: var(--text-light); font-style: italic; margin-top: 8px;">
+  &mdash; No reminders set. &mdash;
+</p>
+{% endif %}
+</div> <!-- /.card-content -->
+</div> <!-- /.card.reminders-card -->
+{# ———— End of Reminders Card ———— #}
+
+</div>
+</div>
+</main>
+</div>
+
+{# ————— The single “invisible” container for injecting the modal ————— #}
+<div id="leadModalContainer"></div>
+
+{# ================= JS to open the modal and load the partial ================= #}
+<script>
+// A single listener for all modal overlays & close buttons:
+document.addEventListener('click', e => {
+  // 1) Opening the edit modal:
+  if (e.target.matches('#openLeadEditBtn, #openLeadEditBtn *')) {
+    e.preventDefault();
+    fetch("{% url 'leads:edit_form' lead.pk %}", {
+      headers: { "X-Requested-With": "XMLHttpRequest" }
+    })
+    .then(r => r.text())
+    .then(html => {
+      const container = document.getElementById('leadModalContainer');
+      container.innerHTML = html;
+      const ov = container.querySelector('.modal-overlay');
+      if (ov) ov.style.display = 'flex';
+    });
+    return;
+  }
+
+  // 2) Close btn (×) anywhere in a modal:
+  if (e.target.id === 'closeModal') {
+    const ov = e.target.closest('.modal-overlay');
+    if (ov) ov.style.display = 'none';
+    return;
+  }
+
+  // 3) Click on backdrop:
+  if (e.target.classList.contains('modal-overlay')) {
+    e.target.style.display = 'none';
+    return;
+  }
+});
+</script>
+
+
+
+
+<!-- At the end of your body, include this JS: -->
+
+
+{# Invisible “container” for injecting the popup_reminder.html via AJAX ————— #}
+<!-- … your lead‐edit markup, ending with Reminders Card … -->
+
+<!-- The single “invisible” container for injecting popup_reminder.html: -->
+<div id="reminder-modal" style="display: none;"></div>
+
+<!-- ================= DEBUGGING SCRIPT: Drop in EXACTLY this block: ================= -->
+<!-- ================= DEBUGGING SCRIPT (curly quotes replaced) ================= -->
+<script>
+  console.log("📢 Reminder-JS: script has started loading");
+
+  const openReminderBtn = document.getElementById("open-reminder-btn");
+  const reminderModal   = document.getElementById("reminder-modal");
+  console.log("› openReminderBtn:", openReminderBtn);
+  console.log("› reminderModal:", reminderModal);
+
+
+
+  document.addEventListener("DOMContentLoaded", function() {
+  //
+  // 1) “Add Reminder” → fetch the form partial via AJAX
+  //
+    const openReminderBtn = document.getElementById("open-reminder-btn");
+    const reminderModal   = document.getElementById("reminder-modal");
+
+  // DEBUG: check if those elements exist
+    console.log("[Reminder] Found openReminderBtn:", openReminderBtn);
+    console.log("[Reminder] Found reminderModal:", reminderModal);
+
+    if (!openReminderBtn || !reminderModal) {
+      console.warn("[Reminder] Missing #open-reminder-btn or #reminder-modal. Stopping script.");
+      return;
+    }
+
+    openReminderBtn.addEventListener("click", async function(e) {
+      e.preventDefault();
+      console.log("[Reminder] \"+\" button clicked");
+
+    const appLabel  = openReminderBtn.dataset.appLabel;   // e.g. "leads"
+    const modelName = openReminderBtn.dataset.modelName;  // e.g. "lead"
+    const objectId  = openReminderBtn.dataset.objectId;   // e.g. "37"
+    console.log("[Reminder] appLabel:", appLabel, "modelName:", modelName, "objectId:", objectId);
+
+    const url = `/reminders/add/${appLabel}/${modelName}/${objectId}/`;
+    console.log("[Reminder] Will fetch URL:", url);
+
+    try {
+      const resp = await fetch(url, {
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+      });
+      console.log("[Reminder] fetch() returned, status:", resp.status);
+
+      if (!resp.ok) {
+        console.error("[Reminder] Fetch not OK (status", resp.status, ")");
+        throw new Error("Network response was not OK");
+      }
+
+      const data = await resp.json();
+      console.log("[Reminder] JSON received:", data);
+
+      reminderModal.innerHTML = data.html;
+      reminderModal.style.display = "flex";
+      console.log("[Reminder] Injected HTML → showing reminderModal.");
+
+      // hook up the injected “Close” button
+      const closeBtn = reminderModal.querySelector("#close-reminder-btn");
+      console.log("[Reminder] Found closeBtn inside injected HTML:", closeBtn);
+      if (closeBtn) {
+        closeBtn.addEventListener("click", function() {
+          console.log("[Reminder] close button clicked → hiding modal");
+          reminderModal.style.display = "none";
+          reminderModal.innerHTML = "";
+        });
+      } else {
+        console.warn("[Reminder] No #close-reminder-btn found in injected HTML.");
+      }
+
+      // hook into the <form> submit
+      const formElem = reminderModal.querySelector("form");
+      if (formElem) {
+        formElem.addEventListener("submit", function(submitEvt) {
+          console.log("[Reminder] Form is submitting…");
+          // allow it to POST normally; you’ll see a network request in DevTools
+        });
+      } else {
+        console.warn("[Reminder] Could not find a <form> in popup HTML.");
+      }
+    }
+    catch (err) {
+      console.error("[Reminder] Error loading reminder form:", err);
+    }
+  });
+
+  //
+  // 2) Close the modal if user clicks on the backdrop
+  //
+    window.addEventListener("click", function(event) {
+      if (event.target === reminderModal) {
+        console.log("[Reminder] Backdrop clicked → hiding modal");
+        reminderModal.style.display = "none";
+        reminderModal.innerHTML = "";
+      }
+    });
+  });
+</script>
+<!-- ================= END DEBUGGING SCRIPT ================= -->
+<!-- ================= END DEBUGGING SCRIPT ================= -->
+
+<!-- 1) Render a hidden modal container -->
+<div id="quote-modal" style="display:none;position:fixed;inset:0;
+align-items:center;justify-content:center;background:rgba(0,0,0,0.4);">
+<div style="background:#fff;padding:1rem;border-radius:6px;max-width:500px;width:90%;">
+  <h3>Create Quote for Lead #{{ lead.pk }}
+    <button id="close-quote" style="float:right">×</button>
+  </h3>
+  <div id="quote-rows"></div>
+  <button id="add-quote-row">+ Add Item</button>
+  <div>
+    <button id="calc-msp">Generate MSP</button>
+    MSP: <span id="quote-msp">₹0.00</span>
+  </div>
+  <div>
+    <label>Selling Price ₹</label>
+    <input type="number" id="quote-sell" min="0" step="0.01">
+  </div>
+  <button id="submit-quote" type="button">Submit</button>
+</div>
+</div>
+
+<!-- 2) Expose the filtered price_rules array -->
+<script>
+  window.PRICE_RULES = {{ price_rules|safe }};
+</script>
+
+<!-- 3) Hook it all up -->
+<script>
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const leadId = {{ lead.pk }};
+    const modal  = document.getElementById('quote-modal');
+    const rows   = document.getElementById('quote-rows');
+    let items = [{ price_rule:null, quantity:0 }];
+
+    function render() {
+      rows.innerHTML = "";
+      items.forEach((it,i)=>{
+        const div = document.createElement('div');
+        div.style="display:flex;gap:.5rem;margin:.5rem 0";
+        const sel = document.createElement('select');
+        sel.innerHTML = `<option value="">—select—</option>` +
+        window.PRICE_RULES.map(r=>
+          `<option value="${r.id}" data-price="${r.base_price}">
+             ${r["item__product_name"]} @ ₹${r.base_price}
+        </option>`
+        ).join("");
+        sel.value = it.price_rule||"";
+        sel.onchange = ()=>{ items[i].price_rule = sel.value; };
+        div.appendChild(sel);
+
+        const qty = document.createElement('input');
+        qty.type="number"; qty.step="0.01"; qty.min="0";
+        qty.value = it.quantity;
+        qty.onchange = ()=>{ items[i].quantity = parseFloat(qty.value)||0; };
+        div.appendChild(qty);
+
+        const btn = document.createElement('button');
+        btn.innerText="×"; btn.onclick = ()=>{
+          if (items.length>1) { items.splice(i,1); render(); }
+        };
+        div.appendChild(btn);
+
+        rows.appendChild(div);
+      });
+    }
+
+    document.getElementById('add-quote-row').onclick = ()=>{
+      items.push({ price_rule:null, quantity:0 });
+      render();
+    };
+
+    document.getElementById('calc-msp').onclick = ()=>{
+      const total = items.reduce((sum,it)=>{
+        const pr = window.PRICE_RULES.find(r=>r.id==it.price_rule);
+        return sum + (pr? pr.base_price*it.quantity : 0);
+      },0);
+      document.getElementById('quote-msp').innerText = `₹${total.toFixed(2)}`;
+      document.getElementById('quote-msp').dataset.value = total;
+    };
+
+    document.getElementById('submit-quote').addEventListener('click', async (e) => {
+  console.log('[Quote] submit-quote clicked', { itemsCount: items.length, sell: document.getElementById('quote-sell').value });
+  e.preventDefault();    // <<< stop the browser’s default form POST
+  e.stopPropagation();
+
+  const selling = parseFloat(document.getElementById('quote-sell').value);
+  if (!selling) {
+    console.log('[Quote] no selling price entered');
+    return alert("Enter selling price");
+  }
+
+  console.log('[Quote] payload', { items, selling_price: selling });
+  try {
+    const resp = await fetch(
+      `/quotes/leads/${leadId}/create-json/`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}',
+          'X-Requested-With':'XMLHttpRequest',
+        },
+        body: JSON.stringify({ items, selling_price: selling }),
+      }
+    );
+    console.log('[Quote] fetch returned, status', resp.status);
+    const json = await resp.json();
+    console.log('[Quote] response JSON', json);
+    if (json.success) {
+      console.log('[Quote] success → reload');
+      window.location.reload();
+    } else {
+      console.warn('[Quote] error from server', json.error);
+      alert("Error: " + (json.error || "unknown"));
+    }
+  } catch (err) {
+    console.error('[Quote] fetch failed', err);
+    alert("Network error: see console");
+  }
+});
+
+    document.getElementById('openQuotationBtn').onclick = ()=>{ render(); modal.style.display='flex'; };
+    document.getElementById('close-quote').onclick       = ()=> modal.style.display='none';
+    modal.onclick = e=>{ if(e.target===modal) modal.style.display='none'; };
+
+    render();
+  });
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const openBtn = document.getElementById("openVisitBtn");
+    const modalContainer = document.getElementById("visitModalContainer");
+    console.log("🔍 site-visit: openBtn →", openBtn);
+    console.log("🔍 site-visit: modalContainer →", modalContainer);
+
+    if (!openBtn) {
+      console.error("❌ Could not find #openVisitBtn in the DOM");
+      return;
+    }
+    console.log("📥 site-visit: URL to fetch →", openBtn.dataset.url);
+    // …now your existing openBtn.addEventListener(…) code…
+  });
+</script>
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const openBtn = document.getElementById("openVisitBtn");
+    const modalContainer = document.getElementById("visitModalContainer");
+
+    openBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const url = openBtn.dataset.url;
+
+      try {
+      // 1) Fetch the form fragment
+        const resp = await fetch(url, {
+          headers: { "X-Requested-With": "XMLHttpRequest" }
+        });
+        if (!resp.ok) throw new Error("Network error");
+
+        const html = await resp.text();
+
+      // 2) Inject and display the modal
+        modalContainer.innerHTML = html;
+      modalContainer.style.display = "flex";     // your CSS .modal-overlay uses flex
+
+      // 3) Wire up the “×” button inside the new markup
+      const closeBtn = modalContainer.querySelector("#closeVisitModal");
+      closeBtn.addEventListener("click", () => {
+        modalContainer.style.display = "none";
+        modalContainer.innerHTML = "";
+      });
+
+      // 4) Close when clicking outside the .modal-wrapper
+      modalContainer.addEventListener("click", (evt) => {
+        if (evt.target === modalContainer) {
+          modalContainer.style.display = "none";
+          modalContainer.innerHTML = "";
+        }
+      });
+
+      // 5) (Optional) If you want AJAX submission:
+      const form = modalContainer.querySelector("#visitForm");
+      form.addEventListener("submit", async (submitEvt) => {
+        submitEvt.preventDefault();
+        const formData = new FormData(form);
+        const postResp = await fetch(form.action, {
+          method: "POST",
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+          body: formData
+        });
+        if (postResp.ok) {
+          // on success, close modal and reload the visit list
+          modalContainer.style.display = "none";
+          modalContainer.innerHTML = "";
+          location.reload();
+        } else {
+          // on error re-display form with validation errors
+          modalContainer.innerHTML = await postResp.text();
+        }
+      });
+
+    } catch (err) {
+      console.error("Error loading visit form:", err);
+      // you could show an inline error here
+    }
+  });
+  });
+</script>
+
+<!-- PDF Preview Modal -->
+<!-- add this once, near the bottom of your page -->
+<div id="irModal" class="modal-overlay" style="display:none;">
+  <div class="modal-wrapper" style="max-width:1000px; width:100%;">
+    <div class="modal-header">
+      <h2>Inspection Report</h2>
+      <button id="closeIrModal" class="close-modal">&times;</button>
+    </div>
+    <div class="modal-content" style="height:80vh;">
+      <iframe
+      id="irFrame"
+      src=""
+      style="width:100%; height:100%; border:none;"
+      ></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const irButtons = document.querySelectorAll(".ir-button");
+    const modal     = document.getElementById("irModal");
+    const iframe    = document.getElementById("irFrame");
+    const closeBtn  = document.getElementById("closeIrModal");
+
+    irButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const url = btn.dataset.pdfUrl;
+        if (!url) {
+          return alert("No inspection report available for this visit.");
+        }
+        iframe.src = url;
+        modal.style.display = "flex";
+      });
+    });
+
+    closeBtn.addEventListener("click", () => {
+      modal.style.display = "none";
+      iframe.src = "";
+    });
+
+  // clicking outside the wrapper closes too
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.style.display = "none";
+        iframe.src = "";
+      }
+    });
+  });
+</script>
+
+<!-- Site Images Carousel Modal -->
+<div id="siModal" class="modal-overlay" style="display:none;">
+  <div class="modal-wrapper" style="max-width:1000px; width:100%;">
+    <div class="modal-header">
+      <h2>Site Images</h2>
+      <button id="closeSiModal" class="close-modal">&times;</button>
+    </div>
+    <div class="modal-content" style="height:80vh; position:relative; display:flex; align-items:center; justify-content:center;">
+      <button id="prevImage" class="carousel-btn" style="left:1rem;">&#10094;</button>
+      <img id="siImage" src="" style="max-width:100%; max-height:100%;" />
+      <button id="nextImage" class="carousel-btn" style="right:1rem;">&#10095;</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", ()=> {
+    let images = [], idx = 0;
+    const siButtons   = document.querySelectorAll(".si-button"),
+    siModal     = document.getElementById("siModal"),
+    siImage     = document.getElementById("siImage"),
+    closeSi     = document.getElementById("closeSiModal"),
+    prevBtn     = document.getElementById("prevImage"),
+    nextBtn     = document.getElementById("nextImage");
+
+    siButtons.forEach(btn => {
+      btn.addEventListener("click", ()=> {
+        images = JSON.parse(btn.getAttribute("data-images")) || [];
+        if (!images.length) return alert("No images available.");
+        idx = 0;
+        siImage.src = images[idx];
+        siModal.style.display = "flex";
+      });
+    });
+
+    closeSi.addEventListener("click", ()=> siModal.style.display = "none");
+
+    prevBtn.addEventListener("click", ()=> {
+      idx = (idx - 1 + images.length) % images.length;
+      siImage.src = images[idx];
+    });
+    nextBtn.addEventListener("click", ()=> {
+      idx = (idx + 1) % images.length;
+      siImage.src = images[idx];
+    });
+
+  // also allow clicking outside the wrapper to close
+    siModal.addEventListener("click", e => {
+      if (e.target === siModal) siModal.style.display = "none";
+    });
+  });
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // Utility to grab CSRF token from cookie
+  function getCookie(name) {
+    let cookieValue = null;
+    document.cookie.split(";").forEach(c => {
+      const [k, v] = c.trim().split("=");
+      if (k === name) cookieValue = decodeURIComponent(v);
+    });
+    return cookieValue;
+  }
+  const csrftoken = getCookie("csrftoken");
+
+  document.querySelectorAll(".delete-button").forEach(btn => {
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const url = btn.dataset.deleteUrl;
+      if (!url) return;
+
+      if (!confirm("Are you sure you want to delete this visit?")) {
+        return;
+      }
+
+      try {
+        const resp = await fetch(url, {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrftoken,
+            "X-Requested-With": "XMLHttpRequest"
+          }
+        });
+        if (!resp.ok) throw new Error("Network error");
+
+        // reload the page so the deleted visit no longer appears
+        window.location.reload();
+      } catch (err) {
+        console.error("Delete failed", err);
+        alert("Sorry, could not delete. Try again?");
+      }
+    });
+  });
+});
+</script>
+
+<script>
+function bindVisitForm() {
+  const form = document.getElementById("visitForm");
+  const modal = document.getElementById("visitModalContainer");
+  if (!form || !modal) return;
+
+  // remove any old handler
+  form.replaceWith(form.cloneNode(true));
+  const freshForm = document.getElementById("visitForm");
+
+  freshForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const resp = await fetch(freshForm.action, {
+      method: "POST",
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+      body: new FormData(freshForm),
+    });
+    if (resp.redirected) {
+      modal.style.display = "none";
+      modal.innerHTML = "";
+      return window.location.reload();
+    }
+    // On validation errors, re-inject returned HTML
+    modal.innerHTML = await resp.text();
+    bindVisitForm();   // re-bind on the newly inserted form
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const openBtn = document.getElementById("openVisitBtn");
+  const modal   = document.getElementById("visitModalContainer");
+  openBtn.addEventListener("click", async () => {
+    const resp = await fetch(openBtn.dataset.url, {
+      headers: { "X-Requested-With": "XMLHttpRequest" }
+    });
+    const html = await resp.text();
+    modal.innerHTML = html;
+    modal.style.display = "flex";
+    bindVisitForm();
+  });
+});
+</script>
+
+<script>
+  document
+    .getElementById("visitForm")
+    .addEventListener("submit", function(e) {
+      const visitDate = document.getElementById("id_visit_date").value;
+      if (visitDate && new Date(visitDate) > new Date()) {
+        e.preventDefault();
+        alert("Visit date cannot be in the future.");
+      }
+    });
+</script>
+
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const input = document.getElementById("id_inspection_report");
+  if (!input) return;
+
+  input.addEventListener("change", () => {
+    const file = input.files[0];
+    if (file && file.type !== "application/pdf") {
+      alert("🚫 Only PDF files are allowed for the inspection report.");
+      input.value = "";  // clear the bad selection
+    }
+  });
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const inp = document.getElementById("id_images");
+  if (!inp) return;
+
+  inp.addEventListener("change", () => {
+    const files = Array.from(inp.files);
+
+    // total-size check
+    const total = files.reduce((sum, f) => sum + f.size, 0);
+    const MAX_TOTAL = 100 * 1024 * 1024; // 100MB
+    if (total > MAX_TOTAL) {
+      alert("Total size of all images must be ≤ 100 MB.");
+      inp.value = "";
+      return;
+    }
+
+    if (files.length > 10) {
+      alert("Please select no more than 10 images.");
+      inp.value = "";
+      return;
+    }
+    files.forEach(f => {
+      if (!/^image\/(jpeg|png)$/.test(f.type)) {
+        alert(`“${f.name}” isn’t a JPEG or PNG.`);
+        inp.value = "";
+      }
+      // (you can drop the per-file size check now)
+    });
+  });
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const container = document.getElementById("visitModalContainer");
+  if (!container) return;
+
+  container.addEventListener("click", (e) => {
+    // 1) “×” button
+    if (e.target.id === "closeVisitModal") {
+      container.style.display = "none";
+      container.innerHTML = "";
+    }
+    // 2) clicking the overlay itself (backdrop)
+    else if (e.target.classList.contains("modal-overlay")) {
+      container.style.display = "none";
+      container.innerHTML = "";
+    }
+  });
+});
+</script>
+
+<!-- JS to open view modal -->
+<script>
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.querySelectorAll('.view-quote-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const id = btn.dataset.quoteId;
+      const detail = document.getElementById(`quote-detail-${id}`);
+      const modal = document.getElementById('quoteDetailModal');
+      const container = document.getElementById('quoteDetailContent');
+      container.innerHTML = detail.innerHTML;
+      modal.style.display = 'flex';
+    });
+  });
+  document.getElementById('closeQuoteDetailModal')
+    .addEventListener('click', ()=>{
+      document.getElementById('quoteDetailModal').style.display='none';
+      document.getElementById('quoteDetailContent').innerHTML = '';
+    });
+  document.getElementById('quoteDetailModal')
+    .addEventListener('click', e=>{
+      if(e.target.id==='quoteDetailModal'){
+        e.target.style.display='none';
+        document.getElementById('quoteDetailContent').innerHTML = '';
+      }
+    });
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.delete-quote-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.quoteId;
+      if (!confirm(`Delete Quote #${id}? This cannot be undone.`)) return;
+
+      const resp = await fetch(
+        `/quotes/leads/{{ lead.pk }}/quotes/${id}/delete/`,
+        {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        }
+      );
+      const data = await resp.json();
+      if (data.success) {
+        window.location.reload();
+      } else {
+        alert('Could not delete: ' + (data.error || 'unknown error'));
+      }
+    });
+  });
+});
+</script>
+
+<script>
+  
+  document.addEventListener('click', e => {
+  if (e.target.matches('[id^="download-approved-quote-"]')) {
+    const quoteId = e.target.dataset.quoteId;
+    // replace YOUR_QUOTE_URL_NAMESPACE appropriately
+    const url = `/quotes/${quoteId}/download-department-draft/`;
+    window.location.href = url;
+  }
+});
+</script>
+
+{% endblock %}

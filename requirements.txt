@@ -1,0 +1,17 @@
+asgiref==3.8.1
+cffi==1.17.1
+cryptography==45.0.2
+Django==5.2.1
+pycparser==2.22
+sqlparse==0.5.3
+whitenoise==6.9.0
+psycopg2-binary>=2.9.9,<3.0
+django-widget-tweaks==1.4.12
+docx2pdf==0.1.8
+
+gunicorn==21.2.0
+python-dotenv>=1.0.0
+python-docx>=0.8.11
+Pillow>=10.0.0
+dj-database-url>=1.0.0
+waitress>=2.1.0

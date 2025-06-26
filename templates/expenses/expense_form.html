@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<style>
+  .form-container {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+  .form-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    padding: 2rem;
+  }
+  .form-card h1 {
+    font-size: 1.75rem;
+    margin-bottom: 1.5rem;
+    color: #2d3748;
+  }
+  .field-group {
+    margin-bottom: 1.25rem;
+  }
+  .field-group label {
+    display: block;
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 0.5rem;
+  }
+  .field-group input,
+  .field-group select,
+  .field-group textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #cbd5e0;
+    border-radius: 4px;
+    font-size: 1rem;
+  }
+  .field-group small {
+    color: #718096;
+    display: block;
+    margin-top: 0.25rem;
+  }
+  .date-error {
+    color: #e53e3e;
+    margin-top: 0.25rem;
+    font-size: 0.9rem;
+  }
+  .btn-submit {
+    background: #3182ce;
+    color: #fff;
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-submit:disabled {
+    background: #a0aec0;
+    cursor: not-allowed;
+  }
+  .btn-cancel {
+    margin-left: 1rem;
+    color: #3182ce;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .btn-cancel:hover { text-decoration: underline; }
+</style>
+
+<div class="form-container">
+  <div class="form-card">
+    <h1>{% if expense.pk %}Edit Expense{% else %}New Expense{% endif %}</h1>
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <div class="field-group">
+        <label for="id_expense_type">Expense type</label>
+        {{ form.expense_type }}
+      </div>
+
+      <div class="field-group">
+        <label for="id_parent_category">Parent category</label>
+        <select id="id_parent_category" name="parent_category">
+          <option value="">---------</option>
+          {% for parent in form.fields.parent_category.queryset %}
+            <option value="{{ parent.pk }}"
+              {% if form.instance.parent_category_id == parent.pk %}selected{% endif %}
+            >{{ parent.name }}</option>
+          {% endfor %}
+        </select>
+        <small>Select an L1 (parent) category.</small>
+      </div>
+
+      <div class="field-group">
+        <label for="id_child_category">Child category</label>
+        <select id="id_child_category" name="child_category">
+          <option value="">---------</option>
+          {% for child in form.fields.child_category.queryset %}
+            <option value="{{ child.pk }}"
+                    data-parent="{{ child.parent_id }}"
+              {% if form.instance.child_category_id == child.pk %}selected{% endif %}
+            >{{ child }}</option>
+          {% endfor %}
+        </select>
+        <small>Select an L2 (child) category.</small>
+      </div>
+
+      <div class="field-group">
+        <label for="id_amount">Amount (₹)</label>
+        {{ form.amount }}
+      </div>
+
+      <div id="one-time-fields">
+        <div class="field-group">
+          <label for="id_expense_date">Expense date</label>
+          {{ form.expense_date }}
+          <small>Required if One-Time</small>
+        </div>
+      </div>
+
+      <div id="subscription-fields">
+        <div class="field-group">
+          <label for="id_start_date">Start date</label>
+          {{ form.start_date }}
+          <small>Subscription start</small>
+        </div>
+        <div class="field-group">
+          <label for="id_end_date">End date</label>
+          {{ form.end_date }}
+          <small>Subscription end</small>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label for="id_remarks">Remarks</label>
+        {{ form.remarks }}
+        <small>Enter any notes or comments</small>
+      </div>
+
+      <div class="field-group">
+          <label for="{{ form.attachment.id_for_label }}">Attachment</label>
+          {{ form.attachment }}
+          <small>PDF, JPG or PNG – up to 10 MB</small>
+        </div>
+
+        <button type="submit" class="btn-submit">
+          {% if expense.pk %}Save Changes{% else %}Create Expense{% endif %}
+        </button>
+        <a href="{% url 'expenses:list' %}" class="btn-cancel">Cancel</a>
+      </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Elements
+  const typeSelect = document.getElementById('id_expense_type');
+  const expDate    = document.getElementById('id_expense_date');
+  const startDate  = document.getElementById('id_start_date');
+  const endDate    = document.getElementById('id_end_date');
+  const submitBtn  = document.querySelector('.btn-submit');
+  const form       = document.querySelector('form');
+  const parentDD   = document.getElementById('id_parent_category');
+  const childDD    = document.getElementById('id_child_category');
+
+  const oneTimeBlock = document.getElementById('one-time-fields');
+  const subBlock     = document.getElementById('subscription-fields');
+
+  // Turn inputs into native date pickers
+  [expDate, startDate, endDate].forEach(inp => {
+    if (inp) inp.setAttribute('type','date');
+  });
+
+  // Show/hide one-time vs subscription blocks
+  function toggleFields() {
+    const isOne = typeSelect.value === 'one_time';
+    oneTimeBlock.style.display = isOne ? 'block' : 'none';
+    subBlock    .style.display = isOne ? 'none'  : 'block';
+    validateDates();
+  }
+  typeSelect.addEventListener('change', toggleFields);
+
+  // Validate date rules client-side
+  function clearErrors() {
+    document.querySelectorAll('.date-error').forEach(el=>el.remove());
+  }
+  function showError(input,msg) {
+    let div = document.createElement('div');
+    div.className = 'date-error';
+    div.textContent = msg;
+    input.parentNode.appendChild(div);
+  }
+  function validateDates() {
+    clearErrors();
+    const today = new Date().toISOString().substr(0,10);
+    let ok = true;
+
+    if (expDate.value && expDate.value > today) {
+      showError(expDate, "Cannot be in the future");
+      ok = false;
+    }
+    if (typeSelect.value !== 'one_time') {
+      if (startDate.value && startDate.value > today) {
+        showError(startDate, "Cannot be in the future");
+        ok = false;
+      }
+      if (startDate.value && endDate.value && startDate.value > endDate.value) {
+        showError(endDate, "Must be same or after start");
+        ok = false;
+      }
+    }
+
+    submitBtn.disabled = !ok;
+    return ok;
+  }
+  [expDate, startDate, endDate].forEach(inp => {
+    if (inp) inp.addEventListener('input', validateDates);
+  });
+  form.addEventListener('submit', e => {
+    if (!validateDates()) e.preventDefault();
+  });
+
+  // Cascading parent→child filter
+  function filterChildOptions() {
+    const pid = parentDD.value;
+    Array.from(childDD.options).forEach(opt=>{
+      const matches = opt.dataset.parent === pid;
+      opt.hidden = !matches && opt.value!=='';
+    });
+    if (childDD.selectedOptions.length === 0 || childDD.selectedOptions[0].hidden) {
+      childDD.value = '';
+    }
+  }
+  parentDD.addEventListener('change', filterChildOptions);
+
+  // Initialize
+  toggleFields();
+  filterChildOptions();
+});
+</script>
+{% endblock %}
