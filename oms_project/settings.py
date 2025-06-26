@@ -43,6 +43,9 @@ INSTALLED_APPS = [
     'initial_setup.apps.InitialSetupConfig',
 ]
 
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
 if DEBUG:
     INSTALLED_APPS += ['debug_toolbar']
 
@@ -86,12 +89,17 @@ WSGI_APPLICATION = 'oms_project.wsgi.application'
 
 
 # Database
-# Database
-DATABASES = {
-    'default': dj_database_url.config(conn_max_age=600, ssl_require=False)
-}
-
-
+if os.getenv("DATABASE_URL"):
+    DATABASES = {
+        "default": dj_database_url.config(conn_max_age=600),
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
