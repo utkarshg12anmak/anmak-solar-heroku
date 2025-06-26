@@ -29,7 +29,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.auth',
     'django.contrib.humanize',
-    'core',
     'leads',
     'customers',
     'profiles',
