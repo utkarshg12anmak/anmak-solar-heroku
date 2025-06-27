@@ -1,7 +1,12 @@
 # items/forms.py
 
 from django import forms
-from .models import PriceRule, PriceTier
+from .models import PriceRule, PriceTier, Item
+
+class ItemChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        # this becomes the "<option>…</option>" text
+        return f"{obj.product_name} [{obj.sku}]"
 
 class PriceRuleForm(forms.ModelForm):
     class Meta:

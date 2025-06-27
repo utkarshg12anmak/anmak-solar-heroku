@@ -1,6 +1,8 @@
 {# templates/items/price_rule_form.html #}
 {% extends "base.html" %}
 {% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+
 <style>
   /* Card container */
   .form-card {
@@ -82,17 +84,57 @@
   }
   .btn-cancel:hover { background-color: #d1d1d1; transform: translateY(-1px); }
   .btn-cancel:active{ background-color: #c0c0c0; transform: translateY(0); }
+
+    /* make the free-form “Item” search look like your other controls */
+  #id_item {
+    display: block;
+    width: 100%;
+    max-width: 360px;          /* matches your other inputs */
+    margin-bottom: 1rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 1rem;
+    color: #1a202c;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #cbd5e0;
+    border-radius: 0.375rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  #id_item:focus {
+    border-color: #3182ce;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.25);
+  }
+
+  /* force the datalist suggestions dropdown to match */
+  datalist#item-list {
+    font-size: 1rem;
+    color: #1a202c;
+  }
+
+  /* if you need to override styling in Safari/Chrome list suggestions */
+  select::-webkit-calendar-picker-indicator,
+  input[list]::-webkit-calendar-picker-indicator {
+    filter: invert(50%) sepia(0%);
+  }
+
+  #id_item ~ .choices__inner {
+  width: 100%;
+  max-width: 360px;
+  font-size: 1rem;
+}
+
+
+
+
 </style>
+
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 
 <div class="form-card">
   <div class="form-card-header">
-    {% if form.instance.pk %}
-      Edit Price Rule
-    {% else %}
-      Create Price Rule
-    {% endif %}
+    {% if form.instance.pk %}Edit Price Rule{% else %}Create Price Rule{% endif %}
   </div>
-
   <form method="post">
     {% csrf_token %}
 
@@ -103,8 +145,16 @@
     </div>
 
     <div class="form-row">
-      <label for="{{ form.item.id_for_label }}">Item</label>
-      {{ form.item }}
+      <label for="id_item">Item</label>
+      <!-- Render Django's select field for proper labels -->
+      <select id="id_item" name="item" required>
+        <option value="" disabled {% if not form.initial.item %}selected{% endif %}>Select an item…</option>
+        {% for val, label in form.fields.item.choices %}
+          <option value="{{ val }}" {% if form.initial.item == val|stringformat:"s" %}selected{% endif %}>
+            {{ label }}
+          </option>
+        {% endfor %}
+      </select>
       {{ form.item.errors }}
     </div>
 
@@ -127,5 +177,16 @@
   </form>
 </div>
 
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    new Choices('#id_item', {
+      searchEnabled: true,
+      placeholderValue: 'Select an item…',
+      itemSelectText: '',
+      shouldSort: true,
+      addItems: false
+    });
+  });
+</script>
 
 {% endblock %}
