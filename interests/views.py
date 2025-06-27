@@ -19,29 +19,29 @@ from .models import Interest, AuthorizedInterestUser
 from .forms import InterestForm
 from customers.forms import CustomerForm
 from customers.models import Customer
-from profiles.models import Department, DepartmentMembership
+from profiles.models import DepartmentMembership
 
 logger = logging.getLogger(__name__)
 
 
-# --- Mixin for Department-Based Access Control ---
+# --- Mixin for Department-Based Access Control (403 for non-members) ---
 class DepartmentAccessMixin:
-    dept_type = 'Customer Support'
-    region_name = 'Meerut'
+    dept_type     = 'Customer Support'
     category_name = 'Lead Qualification Team'
 
     def dispatch(self, request, *args, **kwargs):
-        self.department = get_object_or_404(
-            Department.objects.select_related('dept_type', 'region', 'category'),
-            dept_type__name=self.dept_type,
-            region__name=self.region_name,
-            category__name=self.category_name
-        )
-        membership = get_object_or_404(
-            DepartmentMembership,
-            user=request.user,
-            department=self.department
-        )
+        user = request.user
+
+        membership = DepartmentMembership.objects.filter(
+            user=user,
+            department__dept_type__name=self.dept_type,
+            department__category__name=self.category_name
+        ).first()
+
+        if not membership:
+            raise PermissionDenied()
+
+        self.department = membership.department
         self.user_level = membership.level
         return super().dispatch(request, *args, **kwargs)
 
@@ -52,7 +52,7 @@ def adjust_dials(request, pk):
         raise Http404()
     try:
         payload = json.loads(request.body)
-        delta = int(payload.get('delta', 0))
+        delta   = int(payload.get('delta', 0))
     except (ValueError, TypeError, json.JSONDecodeError):
         return JsonResponse({'error': 'invalid payload'}, status=400)
 
@@ -65,79 +65,79 @@ def adjust_dials(request, pk):
 
 
 class InterestListView(DepartmentAccessMixin, LoginRequiredMixin, ListView):
-    model = Interest
+    model         = Interest
     template_name = "interests/interest_list.html"
-    paginate_by = 10
-    ordering = ['-updated_at']
+    paginate_by   = 10
+    ordering      = ['-updated_at']
 
     def get_queryset(self):
-        qs = Interest.objects.select_related('created_by')
-        req = self.request
+        qs   = (
+            Interest.objects
+            .select_related(
+                'created_by','updated_by','lead','status','source','mode'
+            )
+        )
+        req  = self.request
+        user = req.user
+        dept = self.department
+        lvl  = self.user_level
+
         filters = Q()
 
-        if not req.GET.get('range'):
+        # ── NEW: look for explicit start/end params ────────────────────
+        start_str = req.GET.get('start')
+        end_str   = req.GET.get('end')
+        if start_str and end_str:
+            try:
+                start_date = date.fromisoformat(start_str)
+                end_date   = date.fromisoformat(end_str)
+            except ValueError:
+                # fallback to today if parsing fails
+                today = timezone.localdate()
+                start_date = end_date = today
+            filters &= Q(created_at__date__range=(start_date, end_date))
+        else:
+            # no params → default to today only
             today = timezone.localdate()
             filters &= Q(created_at__date=today)
 
-        q = req.GET.get('q', '').strip()
+        # ── rest of your existing filters unchanged ────────────────────
+        q = req.GET.get('q','').strip()
         if q:
             filters &= Q(phone_number__icontains=q)
 
-        range_str = req.GET.get('range')
-        if range_str:
-            try:
-                start_str, end_str = (d.strip() for d in range_str.split(' to ', 1))
-                start_date = date.fromisoformat(start_str)
-                end_date = date.fromisoformat(end_str)
-            except ValueError:
-                end_date = timezone.localdate()
-                start_date = end_date - timedelta(days=7)
-            filters &= Q(created_at__date__range=(start_date, end_date))
-
         conn = req.GET.get('connected')
-        if conn in ('0', '1'):
-            filters &= Q(is_connected=(conn == '1'))
+        if conn in ('0','1'):
+            filters &= Q(is_connected=(conn=='1'))
 
-        user_id = req.user.id
-        if self.user_level == 3:
-            filters &= Q(created_by_id=user_id)
+        # your level-based subqueries…
+        if lvl == 3:
+            filters &= Q(created_by_id=user.id)
+        elif lvl == 2:
+            subq = Subquery(
+               DepartmentMembership.objects
+                 .filter(department=dept, level=3)
+                 .values('user_id')
+            )
+            filters &= Q(created_by_id__in=subq) | Q(created_by_id=user.id)
+        elif lvl == 1:
+            subq = Subquery(
+               DepartmentMembership.objects
+                 .filter(department=dept, level__in=[2,3])
+                 .values('user_id')
+            )
+            filters &= Q(created_by_id__in=subq)
         else:
-            if self.user_level == 2:
-                subq = Subquery(
-                    DepartmentMembership.objects.filter(
-                        department=self.department, level=3
-                    ).values('user_id')
-                )
-                filters &= Q(created_by_id__in=subq) | Q(created_by_id=user_id)
-            elif self.user_level == 1:
-                subq = Subquery(
-                    DepartmentMembership.objects.filter(
-                        department=self.department, level__in=[1,2,3]
-                    ).values('user_id')
-                )
-                filters &= Q(created_by_id__in=subq)
-            else:
-                return Interest.objects.none()
+            raise PermissionDenied()
 
         return qs.filter(filters).order_by(*self.ordering)
 
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx.update({
-            'q': self.request.GET.get('q', ''),
-            'range': self.request.GET.get('range', ''),
-            'connected': self.request.GET.get('connected', ''),
-            'department': self.department,
-            'user_level': self.user_level,
-        })
-        return ctx
-
 
 class InterestCreateView(DepartmentAccessMixin, LoginRequiredMixin, CreateView):
-    model = Interest
-    form_class = InterestForm
+    model         = Interest
+    form_class    = InterestForm
     template_name = "interests/interest_form.html"
-    success_url = reverse_lazy("interests:list")
+    success_url   = reverse_lazy("interests:list")
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
@@ -146,21 +146,23 @@ class InterestCreateView(DepartmentAccessMixin, LoginRequiredMixin, CreateView):
 
 
 class InterestCustomerCreateView(DepartmentAccessMixin, LoginRequiredMixin, CreateView):
-    model = Customer
-    form_class = CustomerForm
+    model         = Customer
+    form_class    = CustomerForm
     template_name = "interests/interest_create_from_interest.html"
 
     def get_initial(self):
-        initial = super().get_initial()
+        initial     = super().get_initial()
         interest_pk = self.request.GET.get("from_interest")
-        phone = self.request.GET.get("phone")
-        source_pk = self.request.GET.get("source")
+        phone       = self.request.GET.get("phone")
+        source_pk   = self.request.GET.get("source")
+
         if interest_pk:
-            initial["interest"] = interest_pk
+            initial["interest"]     = interest_pk
         if phone:
             initial["primary_phone"] = phone
         if source_pk:
-            initial["source"] = source_pk
+            initial["source"]       = source_pk
+
         return initial
 
     def form_valid(self, form):
@@ -175,24 +177,26 @@ class InterestCustomerCreateView(DepartmentAccessMixin, LoginRequiredMixin, Crea
 
 
 class InterestUpdateView(DepartmentAccessMixin, LoginRequiredMixin, UpdateView):
-    model = Interest
-    form_class = InterestForm
+    model         = Interest
+    form_class    = InterestForm
     template_name = "interests/interest_form.html"
-    success_url = reverse_lazy("interests:list")
+    success_url   = reverse_lazy("interests:list")
 
     def dispatch(self, request, *args, **kwargs):
-        obj = self.get_object()
+        obj  = self.get_object()
         user = request.user
 
-        auth = AuthorizedInterestUser.objects.filter(user=user).first()
-        dept_access = DepartmentMembership.objects.filter(
+        auth       = AuthorizedInterestUser.objects.filter(user=user).first()
+        dept_match = DepartmentMembership.objects.filter(
             user=user,
             department__dept_type__name='Customer Support',
             department__category__name='Lead Qualification Team'
         ).exists()
-        permitted = bool(dept_access) or (auth and (auth.role_type != 'member' or obj.created_by == user))
+
+        permitted = dept_match or (auth and (auth.role_type != 'member' or obj.created_by == user))
         if not permitted:
             return render(request, "interests/interest_list.html", {"has_access": False})
+
         return super().dispatch(request, *args, **kwargs)
 
     def get_form(self, form_class=None):
@@ -200,7 +204,7 @@ class InterestUpdateView(DepartmentAccessMixin, LoginRequiredMixin, UpdateView):
         if getattr(self.get_object(), 'lead', None) is not None:
             for f in form.fields.values():
                 f.disabled = True
-            messages.info(self.request, "This interest is tied to a Lead, so fields are read-only.")
+            messages.info(self.request, "This interest is tied to a Lead, so fields are read‐only.")
         return form
 
     def form_valid(self, form):
