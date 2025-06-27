@@ -5,6 +5,10 @@ import dj_database_url
 # Base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Determine which environment we’re in.
+# Default to 'prod' so Heroku (which won’t set this) stays in production mode.
+DJANGO_ENV = os.getenv("DJANGO_ENV", "prod").lower()
+
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -17,8 +21,17 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Security
 SECRET_KEY = "django-insecure-*51yuzpyls+3q#n1w4!lyxyf4h3si=pb6($ovjheousnhn)+&j"
-DEBUG = os.environ.get('DEBUG', 'False') == 'True'
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+
+# DEBUG only when DJANGO_ENV is 'local'
+DEBUG = (DJANGO_ENV == "local")
+
+if DJANGO_ENV == "prod":
+    # In prod, honor what you’ve already set in HEROKU via ALLOWED_HOSTS
+    ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
+else:
+    # Local development
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+
 
 # Application definition
 INSTALLED_APPS = [

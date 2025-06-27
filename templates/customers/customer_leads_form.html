@@ -300,16 +300,15 @@
   }
 
   .input-group-text {
-    background: #e9ecef; /* Lighter background for prefix */
+    background-color: #e9ecef;
     border: 1px solid #ced4da;
-    padding: 8 1rem; /* Slightly more padding */
-    display: flex;
-    align-items: center;
     border-right: none;
-    border-radius: 8px 0 0 8px; /* Match input border-radius */
+    border-radius: 8px 0 0 8px;
+    padding: 8px 1rem;          /* add px unit on the first value */
+    display: inline-flex;       /* keep it shrink-to-fit */
+    align-items: center;
     color: #495057;
     font-weight: 500;
-    flex: none;
   }
 
   .input-group input {
