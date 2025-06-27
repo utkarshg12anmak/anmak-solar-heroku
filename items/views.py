@@ -1,42 +1,37 @@
 # items/views.py
 
-from django.views.generic import ListView, View
-from django.urls import reverse_lazy
-from django.db.models import Q  
-from .models import Item, Brand, UOM, CategoryLevel1, CategoryLevel2, UPC
-from django.shortcuts import get_object_or_404, redirect, render
-from django.core.exceptions import ValidationError
-from .models import Item, UPC
-
-from django.urls import reverse_lazy
+from django.views import View
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
-from .models import PriceTier, PriceRule
-from .forms import PriceTierForm, PriceRuleForm
-from .models import PriceRule
-
-
-from .forms import PriceRuleForm  # assume you’ll create a ModelForm for PriceRule
-from django.http import JsonResponse
-
-import json
-
-from django.views.decorators.http import require_POST   # ← add this
-from django.contrib.auth.decorators import login_required  # ← and this
-
-from django.core.exceptions import PermissionDenied
+from django.urls import reverse_lazy
+from django.db.models import Q, Prefetch
+from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import ListView
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.http import JsonResponse
 from profiles.models import DepartmentMembership
 
+from .models import (
+    Item,
+    Brand,
+    UOM,
+    CategoryLevel1,
+    CategoryLevel2,
+    UPC,
+    PriceRule,
+    PriceTier,
+)
+from .forms import PriceRuleForm, PriceTierForm
 
-class ItemListView(ListView):
+class ItemListView(LoginRequiredMixin, ListView):
     model = Item
     template_name = "items/items_list.html"
     context_object_name = "items"
-    paginate_by = 2
+    paginate_by = 10
 
     def dispatch(self, request, *args, **kwargs):
-        # lookup ANY level membership in the right DeptType→Category
+        # Ensure user belongs to Inventory & Pricing -> Inventory
         membership = (
             DepartmentMembership.objects
             .filter(
@@ -48,32 +43,62 @@ class ItemListView(ListView):
         )
         if not membership:
             raise PermissionDenied()
-
         self.membership = membership
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["total_count"] = Item.objects.count()
+        # Reuse paginator count instead of extra COUNT query
+        ctx["total_count"] = ctx["page_obj"].paginator.count
+
         ctx["brands"] = Brand.objects.order_by("name")
         ctx["uoms"] = UOM.objects.order_by("unit_name")
         ctx["l1_categories"] = CategoryLevel1.objects.order_by("name")
-        ctx["l2_categories"] = CategoryLevel2.objects.select_related("parent").order_by("parent__name", "name")
+        ctx["l2_categories"] = (
+            CategoryLevel2.objects.select_related("parent")
+                              .order_by("parent__name", "name")
+        )
 
         ctx["search_query"] = self.request.GET.get("q", "")
-
-        
-        # only L1/L2 can edit or create
+        # Only level 1 and 2 can edit or create
         ctx["can_edit"] = self.membership.level in (1, 2)
-
         return ctx
 
-
     def get_queryset(self):
-        qs = super().get_queryset().select_related("brand", "l1_category", "l2_category", "uom", "created_by")
+        qs = (
+            super().get_queryset()
+            .select_related(
+                "brand", "l1_category", "l2_category", "uom", "created_by", "updated_by"
+            )
+            # Prefetch all UPCs for the page in one query
+            .prefetch_related(
+                Prefetch("upcs", queryset=UPC.objects.order_by("code"))
+            )
+        )
+
         q = self.request.GET.get("q", "").strip()
         if q:
-            from django.db.models import Q
+            qs = qs.filter(
+                Q(sku__icontains=q) |
+                Q(product_name__icontains=q) |
+                Q(brand__name__icontains=q) |
+                Q(l1_category__name__icontains=q) |
+                Q(l2_category__name__icontains=q)
+            )
+        return qs
+        qs = (
+            super().get_queryset()
+            .select_related(
+                "brand", "l1_category", "l2_category", "uom", "created_by"
+            )
+            # Prefetch all UPCs for the page in one query
+            .prefetch_related(
+                Prefetch("upcs", queryset=UPC.objects.order_by("code"))
+            )
+        )
+
+        q = self.request.GET.get("q", "").strip()
+        if q:
             qs = qs.filter(
                 Q(sku__icontains=q) |
                 Q(product_name__icontains=q) |
