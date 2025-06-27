@@ -125,6 +125,21 @@
 }
 
 
+  /* non-field/form-level error box */
+.alert {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+  font-size: 0.95rem;
+}
+
+.alert-danger {
+  background-color: #fde2e2;
+  border-color:   #f5c2c7;
+  color:          #842029;
+}
+
 
 
 </style>
@@ -136,7 +151,17 @@
     {% if form.instance.pk %}Edit Price Rule{% else %}Create Price Rule{% endif %}
   </div>
   <form method="post">
-    {% csrf_token %}
+    {% csrf_token %}    
+
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger">
+        {% for err in form.non_field_errors %}
+          {{ err }}<br>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+
 
     <div class="form-row">
       <label for="{{ form.price_book.id_for_label }}">Price Book</label>

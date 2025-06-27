@@ -4,6 +4,8 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
+
+
 class CategoryLevel1(models.Model):
     name = models.CharField(max_length=100, unique=True)
 
@@ -253,38 +255,39 @@ class PriceBook(models.Model):
         return self.name
 
 class PriceRule(models.Model):
-    price_book    = models.ForeignKey(
+    price_book = models.ForeignKey(
         PriceBook,
         on_delete=models.CASCADE,
         related_name="price_rules"
     )
-    item          = models.ForeignKey(
-        "Item",    # assuming you have an Item model elsewhere in items/models.py
+    item = models.ForeignKey(
+        "Item",
         on_delete=models.CASCADE,
         related_name="price_rules"
     )
-    base_price    = models.DecimalField(
-        max_digits=10, decimal_places=2,
+    base_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
         help_text="Base price per unit (or per kW, depending on unit_type)."
     )
     UNIT_TYPE_CHOICES = [
         ("per_uom", "Per UOM"),
         ("per_kw",  "Per kW"),
     ]
-    unit_type     = models.CharField(
+    unit_type = models.CharField(
         max_length=10,
         choices=UNIT_TYPE_CHOICES,
         default="per_uom",
         help_text="Whether this rule is per UOM or per kW."
     )
-    created_by    = models.ForeignKey(
+    created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         related_name="pricerules_created",
         editable=False
     )
-    updated_by    = models.ForeignKey(
+    updated_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
@@ -295,34 +298,20 @@ class PriceRule(models.Model):
         default=True,
         help_text="Is this item currently available for quoting?"
     )
-    created_at    = models.DateTimeField(auto_now_add=True, editable=False)
-    updated_at    = models.DateTimeField(auto_now=True, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
 
-    def clean(self):
-        super().clean()
-
-        # If this PriceRule instance hasn’t been saved yet, don’t try to inspect self.tiers
-        if self.pk is None:
-            return
-
-        # Now safe to check the related Tier objects (assuming related_name="tiers" on PriceTier)
-        tiers_qs = self.tiers.order_by("min_quantity")
-
-        last_min_q = None
-        for tier in tiers_qs:
-            # Example: ensure no overlapping min_quantity
-            if last_min_q is not None and tier.min_quantity <= last_min_q:
-                raise ValidationError("Each tier's min_quantity must be strictly greater than the previous tier.")
-            last_min_q = tier.min_quantity
-
-            # Ensure no negative values
-            if tier.min_quantity < 0:
-                raise ValidationError("Tier min_quantity cannot be negative.")
-            if tier.price < 0:
-                raise ValidationError("Tier price cannot be negative.")
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['price_book', 'item'],
+                name='unique_pricebook_item'
+            )
+        ]
 
     def __str__(self):
         return f"{self.item} @ {self.base_price} ({self.get_unit_type_display()})"
+
 
 
 class PriceTier(models.Model):
