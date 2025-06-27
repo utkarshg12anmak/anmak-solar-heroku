@@ -211,7 +211,7 @@ class InterestUpdateView(DepartmentAccessMixin, LoginRequiredMixin, UpdateView):
         membership = DepartmentMembership.objects.filter(
             user=user,
             department=self.department,
-            level__in=[1,2]
+            level__in=[1,2,3]
         ).exists()
 
         if not (auth or creator or membership):
