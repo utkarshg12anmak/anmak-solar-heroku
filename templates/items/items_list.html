@@ -541,6 +541,55 @@
       background-color: #d1d5db; /* gray-300 on hover */
     }
 
+        /* Pagination container */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      padding: 0;
+      list-style: none;
+    }
+
+    /* Each page item */
+    .pagination li {
+      display: inline;
+    }
+
+    /* Links & spans */
+    .pagination a,
+    .pagination span {
+      display: inline-block;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.375rem;
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      background-color: var(--card-bg);
+      border: 1px solid var(--bg-light);
+      transition: background 0.2s, color 0.2s;
+    }
+
+    /* Hover on links */
+    .pagination a:hover {
+      background-color: var(--bg-light);
+    }
+
+    /* Current page */
+    .pagination .active span {
+      background-color: var(--primary-color);
+      color: #fff;
+      border-color: var(--primary-color);
+    }
+
+    /* Disabled prev/next */
+    .pagination .disabled span {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background-color: var(--bg-light);
+    }
+
 </style>
 
 <!-- ===== Page Header ===== -->
@@ -1144,6 +1193,8 @@
     + Add another UPC
   </button>
 </div>
+
+
 <!-- ===== End UPC Section (Add) ====== -->
 
 </div> <!-- /.modal-body -->
@@ -1152,6 +1203,7 @@
   <button type="button" class="btn btn-cancel" id="cancelAddItemModal">Cancel</button>
   <button type="submit" class="btn btn-save">Save</button>
 </div>
+
 
 
 
@@ -1576,5 +1628,24 @@
   });
 
 </script>
+
+{% if is_paginated %}
+    <div class="pagination">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}">« Prev</a>
+      {% endif %}
+      {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+          <span class="current">{{ num }}</span>
+        {% else %}
+          <a href="?page={{ num }}">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">Next »</a>
+      {% endif %}
+    </div>
+  {% endif %}
+
 
 {% endblock %}

@@ -33,7 +33,7 @@ class ItemListView(ListView):
     model = Item
     template_name = "items/items_list.html"
     context_object_name = "items"
-    paginate_by = 25
+    paginate_by = 2
 
     def dispatch(self, request, *args, **kwargs):
         # lookup ANY level membership in the right DeptType→Category
