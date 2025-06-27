@@ -20,6 +20,16 @@ from .forms import InterestForm
 from customers.forms import CustomerForm
 from customers.models import Customer
 from profiles.models import DepartmentMembership
+from django.core.exceptions import PermissionDenied
+
+
+from .models import (
+    Interest,
+    AuthorizedInterestUser,
+    InterestStatus,
+    InterestSource,
+    ModeOfContact,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -182,33 +192,63 @@ class InterestUpdateView(DepartmentAccessMixin, LoginRequiredMixin, UpdateView):
     template_name = "interests/interest_form.html"
     success_url   = reverse_lazy("interests:list")
 
-    def dispatch(self, request, *args, **kwargs):
-        obj  = self.get_object()
-        user = request.user
+    def get_queryset(self):
+        # Join in every FK your template touches in one SQL
+        return Interest.objects.select_related(
+            'created_by',
+            'updated_by',
+            'status',
+            'source',
+            'mode',
+            'lead__lead_manager',
+            'customer',
+        )
 
-        auth       = AuthorizedInterestUser.objects.filter(user=user).first()
-        dept_match = DepartmentMembership.objects.filter(
-            user=user,
-            department__dept_type__name='Customer Support',
-            department__category__name='Lead Qualification Team'
-        ).exists()
+    def get_object(self, queryset=None):
+        # This is only called once by the UpdateView machinery
+        obj = super().get_object(queryset)
+        user = self.request.user
 
-        permitted = dept_match or (auth and (auth.role_type != 'member' or obj.created_by == user))
-        if not permitted:
-            return render(request, "interests/interest_list.html", {"has_access": False})
+        # Permission: must be supervisor or creator
+        auth = AuthorizedInterestUser.objects.filter(user=user).first()
+        is_supervisor = auth and auth.role_type == 'supervisor'
+        is_creator    = (obj.created_by_id == user.id)
 
-        return super().dispatch(request, *args, **kwargs)
+        if not (is_supervisor or is_creator):
+            raise PermissionDenied
+
+        return obj
 
     def get_form(self, form_class=None):
+        # Build the form instance (won't re-query the Interest)
         form = super().get_form(form_class)
-        if getattr(self.get_object(), 'lead', None) is not None:
-            for f in form.fields.values():
-                f.disabled = True
-            messages.info(self.request, "This interest is tied to a Lead, so fields are read‐only.")
+
+        # Load these three tables exactly once
+        statuses = list(InterestStatus.objects.all())
+        sources  = list(InterestSource.objects.all())
+        modes    = list(ModeOfContact.objects.all())
+
+        # Override the dropdown choices (avoids count+SELECT)
+        form.fields['status'].choices = [(s.pk, str(s)) for s in statuses]
+        form.fields['source'].choices = [(s.pk, str(s)) for s in sources]
+        form.fields['mode'].choices   = [(m.pk, str(m)) for m in modes]
+
+        # If it’s tied to a Lead, make everything read-only
+        if getattr(self.object, 'lead', None):
+            for field in form.fields.values():
+                field.disabled = True
+            messages.info(
+                self.request,
+                "This interest is tied to a Lead, so fields are read-only."
+            )
+
         return form
 
     def form_valid(self, form):
-        if getattr(self.get_object(), 'lead', None) is not None:
+        # Preserve read-only if tied to a Lead
+        if getattr(self.object, 'lead', None):
             return self.render_to_response(self.get_context_data(form=form))
         form.instance.updated_by = self.request.user
         return super().form_valid(form)
+
+
