@@ -81,11 +81,8 @@ class InterestListView(DepartmentAccessMixin, LoginRequiredMixin, ListView):
     ordering      = ['-updated_at']
 
     def get_queryset(self):
-        qs   = (
-            Interest.objects
-            .select_related(
-                'created_by','updated_by','lead','status','source','mode'
-            )
+        qs   = Interest.objects.select_related(
+            'created_by','updated_by','lead','status','source','mode'
         )
         req  = self.request
         user = req.user
@@ -94,47 +91,43 @@ class InterestListView(DepartmentAccessMixin, LoginRequiredMixin, ListView):
 
         filters = Q()
 
-        # ── NEW: look for explicit start/end params ────────────────────
-        start_str = req.GET.get('start')
-        end_str   = req.GET.get('end')
-        if start_str and end_str:
-            try:
-                start_date = date.fromisoformat(start_str)
-                end_date   = date.fromisoformat(end_str)
-            except ValueError:
-                # fallback to today if parsing fails
-                today = timezone.localdate()
-                start_date = end_date = today
-            filters &= Q(created_at__date__range=(start_date, end_date))
-        else:
-            # no params → default to today only
-            today = timezone.localdate()
-            filters &= Q(created_at__date=today)
-
-        # ── rest of your existing filters unchanged ────────────────────
+        # 1️⃣ Phone search always applies
         q = req.GET.get('q','').strip()
         if q:
             filters &= Q(phone_number__icontains=q)
 
+        # 2️⃣ Date filtering ONLY if start+end are provided
+        start_str = req.GET.get('start')
+        end_str   = req.GET.get('end')
+        if start_str and end_str:
+            try:
+                sd = date.fromisoformat(start_str)
+                ed = date.fromisoformat(end_str)
+            except ValueError:
+                sd = ed = timezone.localdate()
+            filters &= Q(created_at__date__range=(sd, ed))
+        # else: no date filter → show all
+
+        # 3️⃣ Connected filter
         conn = req.GET.get('connected')
         if conn in ('0','1'):
             filters &= Q(is_connected=(conn=='1'))
 
-        # your level-based subqueries…
+        # 4️⃣ Dept-level access
         if lvl == 3:
             filters &= Q(created_by_id=user.id)
         elif lvl == 2:
             subq = Subquery(
-               DepartmentMembership.objects
-                 .filter(department=dept, level=3)
-                 .values('user_id')
+                DepartmentMembership.objects
+                  .filter(department=dept, level=3)
+                  .values('user_id')
             )
             filters &= Q(created_by_id__in=subq) | Q(created_by_id=user.id)
         elif lvl == 1:
             subq = Subquery(
-               DepartmentMembership.objects
-                 .filter(department=dept, level__in=[2,3])
-                 .values('user_id')
+                DepartmentMembership.objects
+                  .filter(department=dept, level__in=[2,3])
+                  .values('user_id')
             )
             filters &= Q(created_by_id__in=subq)
         else:
