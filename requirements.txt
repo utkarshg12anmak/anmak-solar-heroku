@@ -1,4 +1,4 @@
-appscript==1.3.0
+appscript==1.1.2; sys_platform == "darwin"
 asgiref==3.8.1
 cffi==1.17.1
 cryptography==45.0.2
