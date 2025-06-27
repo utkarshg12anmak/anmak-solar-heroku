@@ -22,11 +22,11 @@ class ModeOfContactAdmin(admin.ModelAdmin):
 class InterestSourceAdmin(admin.ModelAdmin):
     list_display = ("name",)
 
-@admin.register(AuthorizedInterestUser)
-class AuthorizedInterestUserAdmin(admin.ModelAdmin):
-    list_display  = ('user', 'role_type')
-    list_filter   = ('role_type',)
-    search_fields = ('user__username', 'user__first_name', 'user__last_name')
+#@admin.register(AuthorizedInterestUser)
+#class AuthorizedInterestUserAdmin(admin.ModelAdmin):
+#    list_display  = ('user', 'role_type')
+#    list_filter   = ('role_type',)
+#    search_fields = ('user__username', 'user__first_name', 'user__last_name') 
 
 class InterestAdminForm(forms.ModelForm):
     class Meta:

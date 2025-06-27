@@ -349,6 +349,7 @@
           <th>Created At</th>
           <th>Updated By</th>
           <th>Updated At</th>
+          <th>Remarks</th>
           <th>Lead ID</th>
           <th>Lead Manager</th>
           <th>Dials</th>
@@ -385,6 +386,7 @@
             <td>{{ interest.created_at|timezone:"Asia/Kolkata"|date:"Y-m-d H:i" }}</td>
             <td>{{ interest.updated_by.get_full_name }}</td>
             <td>{{ interest.updated_at|timezone:"Asia/Kolkata"|date:"Y-m-d H:i" }}</td>
+            <td>{{ interest.remarks }}</td>
              <td>
                 {% if interest.lead %}
                   {{ interest.lead.pk }}
