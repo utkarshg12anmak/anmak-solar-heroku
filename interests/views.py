@@ -198,16 +198,23 @@ class InterestUpdateView(DepartmentAccessMixin, LoginRequiredMixin, UpdateView):
         )
 
     def get_object(self, queryset=None):
-        # This is only called once by the UpdateView machinery
         obj = super().get_object(queryset)
         user = self.request.user
 
-        # Permission: must be supervisor or creator
-        auth = AuthorizedInterestUser.objects.filter(user=user).first()
-        is_supervisor = auth and auth.role_type == 'supervisor'
-        is_creator    = (obj.created_by_id == user.id)
+        # 1) If they have an explicit 'supervisor' record, OK
+        auth = AuthorizedInterestUser.objects.filter(user=user, role_type='supervisor').exists()
 
-        if not (is_supervisor or is_creator):
+        # 2) Or they're the original creator
+        creator = (obj.created_by_id == user.id)
+
+        # 3) Or they are in this department at Level 1 or 2
+        membership = DepartmentMembership.objects.filter(
+            user=user,
+            department=self.department,
+            level__in=[1,2]
+        ).exists()
+
+        if not (auth or creator or membership):
             raise PermissionDenied
 
         return obj
