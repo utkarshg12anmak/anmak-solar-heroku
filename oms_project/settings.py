@@ -9,9 +9,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Default to 'prod' so Heroku (which won’t set this) stays in production mode.
 DJANGO_ENV = os.getenv("DJANGO_ENV", "prod").lower()
 
-# Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
 
 # Static files
 STATIC_URL = '/static/'
@@ -54,9 +51,38 @@ INSTALLED_APPS = [
     'quotes',
     'core.apps.CoreConfig',
     'initial_setup.apps.InitialSetupConfig',
+    "storages",
 ]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ─── S3 BUCKET NAMES ────────────────────────────────────────────────
+AWS_BUCKET_DEV  = "anmak-solar-dev"
+AWS_BUCKET_PROD = "anmak-solar-prod"
+
+# Pick DEV vs PROD entirely in settings—no shell exports needed
+if DJANGO_ENV in ("prod"):
+    AWS_STORAGE_BUCKET_NAME = AWS_BUCKET_PROD
+else:
+    AWS_STORAGE_BUCKET_NAME = AWS_BUCKET_DEV
+
+AWS_S3_REGION_NAME    = os.getenv("AWS_S3_REGION_NAME", "eu-central-1")
+AWS_ACCESS_KEY_ID     = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+
+AWS_DEFAULT_ACL = None
+AWS_QUERYSTRING_AUTH = False
+AWS_S3_OBJECT_PARAMETERS = {
+    "CacheControl": "max-age=86400",
+}
+
+# Tell Django to use S3 for any FileField/ImageField
+AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
+
+# Media
+DEFAULT_FILE_STORAGE = "oms_project.storage_backends.MediaStorage"
+MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
+MEDIA_ROOT = BASE_DIR / 'media'
 
 
 if DEBUG:
