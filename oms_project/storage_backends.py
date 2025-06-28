@@ -9,6 +9,9 @@ class MediaStorage(S3Boto3Storage):
     """
     bucket_name = settings.AWS_STORAGE_BUCKET_NAME
     custom_domain = settings.AWS_S3_CUSTOM_DOMAIN
+    default_acl = None  
+    querystring_auth = False                 # make objects publicly readable
+    object_parameters = {'CacheControl': 'max-age=86400'}    
     default_acl = None
     file_overwrite = False
     location = ""           # don’t prepend any extra folder—`upload_to` is enough
