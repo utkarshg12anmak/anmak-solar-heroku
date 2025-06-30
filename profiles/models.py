@@ -24,9 +24,16 @@ class UserProfile(models.Model):
         related_name="profile"
     )
     is_on_duty = models.BooleanField(default=False)
+    job_title  = models.CharField(
+        max_length=100,
+        default="Not Defined Yet",
+        blank=True,
+        help_text="User’s job title (e.g. Sales Manager)."
+    )
 
-    def __str__(self):
-        return f"{self.user.get_full_name() or self.user.username} Profile"
+    def __str__(self):        
+        title = self.job_title or "Not Defined Yet"
+        return f"{self.user.get_full_name() or self.user.username} ({title})"
 
 class DepartmentType(models.Model):
     name = models.CharField(max_length=100, unique=True)

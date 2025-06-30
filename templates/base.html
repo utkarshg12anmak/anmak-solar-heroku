@@ -194,7 +194,7 @@
         <img src="{% static 'profile-user.png' %}" alt="Avatar" class="avatar"/>
         <div class="info">
           <span class="name">{{ request.user.first_name }} {{ request.user.last_name }}</span>
-          <span class="designation">{% if request.user.groups.all %}{{ request.user.groups.all.0.name }}{% endif %}</span>
+          <span class="designation">{{ request.user.profile.job_title }}</span>
         </div>
       </div>
       <hr/>
