@@ -1,0 +1,99 @@
+<!-- templates/components.html -->
+<!-- Shared variables, component styles, and utilities -->
+<style>
+  :root {
+    --primary-color: #003447;
+    --secondary-color: #f5a623;
+    --border-radius: 4px;
+    --toast-bg-error: #c53030;  /* deep red */
+    --toast-color: #fff;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    background-color: var(--primary-color);
+    color: #fff;
+    border: none;
+    border-radius: var(--border-radius);
+    padding: 0.5em 1em;
+    cursor: pointer;
+  }
+
+  /* Page Header */
+  .page-header { margin-bottom: 1.5rem; }
+  .page-header__title { font-size: 1.75rem; color: var(--primary-color); }
+  .page-header__subtitle { font-size: 1rem; color: #666; }
+
+  /* Status Pill */
+  .status-pill { display: inline-block; padding: 0.25em 0.75em; border: 1px solid var(--primary-color); border-radius: var(--border-radius); font-size: 0.875rem; color: var(--primary-color); }
+  .status-pill--active { background-color: var(--primary-color); color: #fff; }
+
+  /* Table */
+  .table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
+  .table th, .table td { border: 1px solid #ddd; padding: 0.75em; text-align: left; }
+  .table th { background-color: #f9f9f9; }
+
+  /* Pagination */
+  .pagination { display: flex; list-style: none; padding: 0; }
+  .pagination li { margin: 0 0.25em; }
+  .pagination a { display: block; padding: 0.5em 0.75em; text-decoration: none; border: 1px solid #ddd; border-radius: var(--border-radius); color: var(--primary-color); }
+  .pagination .active a { background-color: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+
+  /* Toast notifications */
+  .toast-container { position: fixed; top: 1rem; right: 1rem; z-index: 1050; display: flex; flex-direction: column; gap: 0.5rem; }
+  .toast {
+    position: relative;
+    min-width: 200px;
+    max-width: 400px;
+    padding: 0.75em 1em 0.75em 1.5em;
+    border-radius: var(--border-radius);
+    background-color: var(--toast-bg-error);
+    color: var(--toast-color);
+    font-size: 0.875rem;
+    opacity: 0;
+    transform: translateX(100%);
+    animation: slideIn 0.3s forwards, fadeOut 0.3s forwards 4s;
+  }
+  .toast-close {
+    position: absolute;
+    top: 0.25em;
+    right: 0.5em;
+    font-size: 1.2em;
+    color: var(--toast-color);
+    cursor: pointer;
+  }
+  @keyframes slideIn { to { opacity: 1; transform: translateX(0); } }
+  @keyframes fadeOut { to { opacity: 0; transform: translateX(100%); } }
+</style>
+
+<!-- Toast container placeholder -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Shared scripts -->
+<script>
+  /**
+   * Show an error toast with a close button.
+   * @param {string} msg  The message to display.
+   */
+  function showToast(msg) {
+    var container = document.getElementById('toastContainer');
+    if (!container) return;
+    var toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = msg;
+    // create close button
+    var closeBtn = document.createElement('span');
+    closeBtn.className = 'toast-close';
+    closeBtn.innerHTML = '&times;';
+    closeBtn.onclick = function() { container.removeChild(toast); };
+    toast.appendChild(closeBtn);
+
+    container.appendChild(toast);
+    // auto-remove after fadeOut ends
+    toast.addEventListener('animationend', function(e) {
+      if (e.animationName === 'fadeOut') {
+        if (container.contains(toast)) container.removeChild(toast);
+      }
+    });
+  }
+</script>
