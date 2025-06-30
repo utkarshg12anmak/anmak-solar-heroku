@@ -19,3 +19,6 @@ staticfiles/
 # Logs
 *.log
 
+# Local environment variables
+.env.local
+
