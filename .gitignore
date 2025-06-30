@@ -20,5 +20,5 @@ staticfiles/
 *.log
 
 # Local environment variables
-.env.local2
+.env.local
 
