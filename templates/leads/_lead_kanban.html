@@ -90,6 +90,14 @@
           {{ lead.created_str }} [ {{ lead.age_display }} ]
         </div>
 
+        {# --- Line 6: Remarks if any --- #}
+        {% if lead.remarks %}
+        <div class="kanban-card-footer2">
+           {{ lead.remarks|truncatechars:35 }}
+        </div>
+        {% endif %}
+
+
         {# ─ Line 0: Lead Manager Avatar (initials) ─ #}
 
         <div class="kanban-card-manager-container">
@@ -317,6 +325,13 @@
   font-size: 0.75rem;
   color: #9ca3af;             /* gray-400 */
   margin-top: auto;           /* push footer to bottom if you want cards to grow evenly */
+}
+
+.kanban-card-footer2 {
+  font-size: 0.75rem;
+  color: #c91f1f;             /* gray-400 */
+  margin-top: auto; 
+  margin-bottom: auto;           /* push footer to bottom if you want cards to grow evenly */
 }
 
 /* Make the card body a flex‐column container */
