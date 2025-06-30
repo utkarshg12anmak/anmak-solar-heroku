@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     # Third-party
     'widget_tweaks',
     'storages',
+    'django_crontab',
 ]
 
 # Only add debug_toolbar in DEBUG mode
@@ -212,3 +213,8 @@ if DEBUG:
         'debug_toolbar.panels.sql.SQLPanel',
         # any other panels you need…
     ]
+
+CRONJOBS = [
+    # (cron-schedule, management-command, [optional args])
+    ('0 4 * * *', 'django.core.management.call_command', ['clearsessions']),
+]

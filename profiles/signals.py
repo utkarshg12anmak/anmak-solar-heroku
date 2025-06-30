@@ -2,6 +2,10 @@
 
 from django.contrib.auth.signals import user_logged_in
 from django.dispatch import receiver
+from django.shortcuts import get_object_or_404
+
+from core.models import SiteSettings
+
 
 
 @receiver(user_logged_in)
@@ -47,3 +51,15 @@ def cache_user_data(sender, user, request, **kwargs):
     # 3) Job title (falls back if somehow missing)
     job_title = getattr(user.profile, 'job_title', 'Not Defined Yet')
     request.session['job_title'] = job_title
+
+@receiver(user_logged_in)
+def cache_user_and_set_expiry(sender, user, request, **kwargs):
+    # … your existing session caching (memberships, name, title) …
+
+    # 1) Fetch the timeout from the single settings row (pk=1)
+    settings = SiteSettings.objects.first()
+    hours = settings.session_timeout_hours if settings else 24
+    seconds = hours * 3600
+
+    # 2) Tell Django to expire this session after `seconds`
+    request.session.set_expiry(seconds)
