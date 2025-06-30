@@ -1,12 +1,57 @@
 <!-- templates/components.html -->
+<!-- Preconnect for Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+  rel="stylesheet"
+/>
+
 <!-- Shared variables, component styles, and utilities -->
 <style>
   :root {
     --primary-color: #003447;
     --secondary-color: #f5a623;
     --border-radius: 4px;
-    --toast-bg-error: #c53030;  /* deep red */
+
+    /* Toast colors */
+    --toast-bg-error: #c53030;
     --toast-color: #fff;
+
+    /* Font weight variables */
+    --font-weight-regular: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+
+    /* Status pill colors */
+    --status-default: var(--primary-color);
+    --status-success: #38a169;
+    --status-warning: #dd6b20;
+    --status-error: #c53030;
+    --status-info: #3182ce;
+  }
+
+  /* Global typography */
+  body {
+    font-family: 'Inter',
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      Roboto,
+      'Helvetica Neue',
+      Arial,
+      sans-serif;
+    font-weight: var(--font-weight-regular);
+    line-height: 1.6;
+    color: #333;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: var(--font-weight-semibold);
+    margin-top: 0;
+  }
+  strong, b {
+    font-weight: var(--font-weight-bold);
   }
 
   /* Buttons */
@@ -17,30 +62,121 @@
     border-radius: var(--border-radius);
     padding: 0.5em 1em;
     cursor: pointer;
+    font-weight: var(--font-weight-medium);
   }
 
   /* Page Header */
   .page-header { margin-bottom: 1.5rem; }
-  .page-header__title { font-size: 1.75rem; color: var(--primary-color); }
-  .page-header__subtitle { font-size: 1rem; color: #666; }
+  .page-header__title {
+    font-size: 1.75rem;
+    color: var(--primary-color);
+    font-weight: var(--font-weight-bold);
+  }
+  .page-header__subtitle {
+    font-size: 1rem;
+    color: #666;
+    font-weight: var(--font-weight-medium);
+  }
 
-  /* Status Pill */
-  .status-pill { display: inline-block; padding: 0.25em 0.75em; border: 1px solid var(--primary-color); border-radius: var(--border-radius); font-size: 0.875rem; color: var(--primary-color); }
-  .status-pill--active { background-color: var(--primary-color); color: #fff; }
+  /* Page Title with Count */
+  .page-title {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 1rem;
+  }
+  .page-title__text {
+    font-size: 2rem;
+    color: var(--primary-color);
+    font-weight: var(--font-weight-bold);
+    margin: 0;
+  }
+  .page-title__count {
+    font-size: 1rem;
+    color: var(--secondary-color);
+    font-weight: var(--font-weight-medium);
+    margin-left: 0.5rem;
+  }
+
+  /* Status Pill Base */
+  .status-pill {
+    display: inline-block;
+    padding: 0.25em 0.75em;
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+    font-weight: var(--font-weight-medium);
+    color: #fff;
+    text-transform: capitalize;
+  }
+  .status-pill--default {
+    background-color: var(--status-default);
+  }
+  .status-pill--active {
+    background-color: var(--status-default);
+  }
+  .status-pill--success {
+    background-color: var(--status-success);
+  }
+  .status-pill--warning {
+    background-color: var(--status-warning);
+    color: #1a202c;
+  }
+  .status-pill--error {
+    background-color: var(--status-error);
+  }
+  .status-pill--info {
+    background-color: var(--status-info);
+  }
 
   /* Table */
-  .table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
-  .table th, .table td { border: 1px solid #ddd; padding: 0.75em; text-align: left; }
-  .table th { background-color: #f9f9f9; }
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+  }
+  .table th, .table td {
+    border: 1px solid #ddd;
+    padding: 0.75em;
+    text-align: left;
+    font-weight: var(--font-weight-regular);
+  }
+  .table th {
+    background-color: #f9f9f9;
+    font-weight: var(--font-weight-medium);
+  }
 
   /* Pagination */
-  .pagination { display: flex; list-style: none; padding: 0; }
+  .pagination {
+    display: flex;
+    list-style: none;
+    padding: 0;
+  }
   .pagination li { margin: 0 0.25em; }
-  .pagination a { display: block; padding: 0.5em 0.75em; text-decoration: none; border: 1px solid #ddd; border-radius: var(--border-radius); color: var(--primary-color); }
-  .pagination .active a { background-color: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+  .pagination a {
+    display: block;
+    padding: 0.5em 0.75em;
+    text-decoration: none;
+    border: 1px solid #ddd;
+    border-radius: var(--border-radius);
+    color: var(--primary-color);
+    font-weight: var(--font-weight-medium);
+  }
+  .pagination .active a {
+    background-color: var(--primary-color);
+    color: #fff;
+    border-color: var(--primary-color);
+    font-weight: var(--font-weight-semibold);
+  }
 
   /* Toast notifications */
-  .toast-container { position: fixed; top: 1rem; right: 1rem; z-index: 1050; display: flex; flex-direction: column; gap: 0.5rem; }
+  .toast-container {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1050;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
   .toast {
     position: relative;
     min-width: 200px;
@@ -50,6 +186,7 @@
     background-color: var(--toast-bg-error);
     color: var(--toast-color);
     font-size: 0.875rem;
+    font-weight: var(--font-weight-regular);
     opacity: 0;
     transform: translateX(100%);
     animation: slideIn 0.3s forwards, fadeOut 0.3s forwards 4s;
@@ -68,7 +205,6 @@
 
 <!-- Toast container placeholder -->
 <div class="toast-container" id="toastContainer"></div>
-
 
 
 <!-- Shared scripts -->

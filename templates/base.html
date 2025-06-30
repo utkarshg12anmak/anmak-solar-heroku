@@ -22,6 +22,9 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
     rel="stylesheet"/>
 
+      <!-- 1) Central variables & shared component styles -->
+  {% include "components.html" %}
+
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -209,9 +212,6 @@
     {% block content %}{% endblock %}
   </main>
 
-  <!-- Toast container -->
-  <div id="toast-container" style="position: fixed; bottom: 16px; right: 16px; z-index: 9999;"></div>
-
   <!-- before </body>: scripts unchanged -->
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/rangePlugin.js"></script>
@@ -224,25 +224,7 @@
     });
   </script>
 
-  <style>
-    /* Simple toast styling */
-    .toast {
-      background-color: rgba(0,0,0,0.8);
-      color: #fff;
-      padding: 12px 16px;
-      margin-top: 8px;
-      border-radius: 4px;
-      font-size: 14px;
-      opacity: 0;
-      transform: translateY(10px);
-      transition: opacity 0.3s ease, transform 0.3s ease;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    }
-    .toast.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  </style>
+
 
 
 </body>
