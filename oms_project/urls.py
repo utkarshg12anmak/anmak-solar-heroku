@@ -28,12 +28,12 @@ urlpatterns = [
     path("reminders/", include(("reminders.urls", "reminders"), namespace="reminders")),
     path('quotes/', include('quotes.urls', namespace='quotes')),
     path("visits/", include("visit_details.urls", namespace="visit_details")),
+    path('admin/', admin.site.urls),
 ]
 
 # Debug toolbar URLs only when DEBUG=True
 if settings.DEBUG:
     import debug_toolbar
-
     urlpatterns = [
         path('__debug__/', include(debug_toolbar.urls)),
     ] + urlpatterns

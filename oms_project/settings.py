@@ -1,94 +1,111 @@
 import os
 from pathlib import Path
-import dj_database_url
 
-# Base directory
+import environ
+from django.core.exceptions import ImproperlyConfigured
+
+# ─── Base directory ──────────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Determine which environment we’re in.
-# Default to 'prod' so Heroku (which won’t set this) stays in production mode.
-DJANGO_ENV = os.getenv("DJANGO_ENV", "prod").lower()
+# ─── Read local .env if it exists ───────────────────────────────────────────
+env = environ.Env(
+    DEBUG=(bool, False),
+    DJANGO_ENV=(str, 'prod'),
+)
+env_file = BASE_DIR / '.env.local'
+if env_file.exists():
+    env.read_env(str(env_file))
 
 
-# Static files
+# ─── Core settings ───────────────────────────────────────────────────────────
+SECRET_KEY = env('DJANGO_SECRET_KEY')  # raises error if not set
+DEBUG      = env('DEBUG')
+DJANGO_ENV = env('DJANGO_ENV').lower()
+ALLOWED_HOSTS = env.list(
+    'ALLOWED_HOSTS',
+    default=['localhost', '127.0.0.1']
+)
+
+
+# ─── Database ────────────────────────────────────────────────────────────────
+DATABASES = {
+    'default': env.db_url(
+        'DATABASE_URL',
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
+    )
+}
+
+
+# ─── Static files (CSS, JavaScript, Images) ─────────────────────────────────
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-# Security
-SECRET_KEY = "django-insecure-*51yuzpyls+3q#n1w4!lyxyf4h3si=pb6($ovjheousnhn)+&j"
-
-# DEBUG only when DJANGO_ENV is 'local'
-DEBUG = (DJANGO_ENV == "local")
-
-if DJANGO_ENV == "prod":
-    # In prod, honor what you’ve already set in HEROKU via ALLOWED_HOSTS
-    ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
-else:
-    # Local development
-    ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+STATICFILES_STORAGE = (
+    'whitenoise.storage.CompressedManifestStaticFilesStorage'
+)
 
 
-# Application definition
+# ─── AWS S3 (for Media) ──────────────────────────────────────────────────────
+AWS_ACCESS_KEY_ID     = env('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
+AWS_S3_REGION_NAME    = env('AWS_S3_REGION_NAME', default='eu-central-1')
+AWS_BUCKET_DEV        = env('AWS_BUCKET_DEV')
+AWS_BUCKET_PROD       = env('AWS_BUCKET_PROD')
+AWS_STORAGE_BUCKET_NAME = (
+    AWS_BUCKET_PROD if DJANGO_ENV == 'prod' else AWS_BUCKET_DEV
+)
+AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
+AWS_DEFAULT_ACL      = None
+AWS_QUERYSTRING_AUTH = False
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+DEFAULT_FILE_STORAGE = 'oms_project.storage_backends.MediaStorage'
+MEDIA_URL  = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
+MEDIA_ROOT = BASE_DIR / 'media'
+
+
+# ─── Application definition ─────────────────────────────────────────────────
 INSTALLED_APPS = [
+    # Django core
     'django.contrib.admin',
+    'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.auth',
     'django.contrib.humanize',
+
+    # Third-party
+    'widget_tweaks',
+    'storages',
+]
+
+# Only add debug_toolbar in DEBUG mode
+if DEBUG:
+    INSTALLED_APPS.append('debug_toolbar')
+
+
+# Your apps
+INSTALLED_APPS += [
     'leads',
     'customers',
     'profiles',
     'expenses',
     'interests',
-    'widget_tweaks',
     'items',
     'visit_details',
     'reminders',
     'quotes',
     'core.apps.CoreConfig',
     'initial_setup.apps.InitialSetupConfig',
-    "storages",
 ]
+
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# ─── S3 BUCKET NAMES ────────────────────────────────────────────────
-AWS_BUCKET_DEV  = "anmak-solar-dev"
-AWS_BUCKET_PROD = "anmak-solar-prod"
 
-# Pick DEV vs PROD entirely in settings—no shell exports needed
-if DJANGO_ENV in ("prod"):
-    AWS_STORAGE_BUCKET_NAME = AWS_BUCKET_PROD
-else:
-    AWS_STORAGE_BUCKET_NAME = AWS_BUCKET_DEV
-
-AWS_S3_REGION_NAME    = os.getenv("AWS_S3_REGION_NAME", "eu-central-1")
-AWS_ACCESS_KEY_ID     = os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-
-AWS_DEFAULT_ACL = None
-AWS_QUERYSTRING_AUTH = False
-AWS_S3_OBJECT_PARAMETERS = {
-    "CacheControl": "max-age=86400",
-}
-
-# Tell Django to use S3 for any FileField/ImageField
-AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
-
-# Media
-DEFAULT_FILE_STORAGE = "oms_project.storage_backends.MediaStorage"
-MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
-MEDIA_ROOT = BASE_DIR / 'media'
-
-
-if DEBUG:
-    INSTALLED_APPS += ['debug_toolbar']
-
-# Middleware
+# ─── Middleware ─────────────────────────────────────────────────────────────
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -101,12 +118,15 @@ MIDDLEWARE = [
 ]
 
 if DEBUG:
+    # Debug Toolbar should be first
     MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
 
-# URL Configuration
+
+# ─── URL Configuration ──────────────────────────────────────────────────────
 ROOT_URLCONF = 'oms_project.urls'
 
-# Templates
+
+# ─── Templates ──────────────────────────────────────────────────────────────
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -114,6 +134,7 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -122,65 +143,72 @@ TEMPLATES = [
     },
 ]
 
-# WSGI
+
+# ─── WSGI ───────────────────────────────────────────────────────────────────
 WSGI_APPLICATION = 'oms_project.wsgi.application'
 
 
+# ─── Authentication redirects ────────────────────────────────────────────────
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/accounts/login/'
+LOGIN_URL          = 'login'
 
-# Database
-if os.getenv("DATABASE_URL"):
-    DATABASES = {
-        "default": dj_database_url.config(conn_max_age=600),
-    }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
 
-# Password validation
+# ─── Password validation ─────────────────────────────────────────────────────
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'NAME': (
+            'django.contrib.auth.password_validation.'
+            'UserAttributeSimilarityValidator'
+        ),
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'NAME': (
+            'django.contrib.auth.password_validation.MinimumLengthValidator'
+        ),
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        'NAME': (
+            'django.contrib.auth.password_validation.'
+            'CommonPasswordValidator'
+        ),
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        'NAME': (
+            'django.contrib.auth.password_validation.'
+            'NumericPasswordValidator'
+        ),
     },
 ]
 
-# Internationalization
+
+# ─── Internationalization ────────────────────────────────────────────────────
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'Asia/Kolkata'
-USE_I18N = True
-USE_TZ = True
+TIME_ZONE     = 'Asia/Kolkata'
+USE_I18N      = True
+USE_L10N      = True
+USE_TZ        = True
 
-# Authentication redirects
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/accounts/login/'
-LOGIN_URL = 'login'
 
-# Logging
+# ─── Logging ────────────────────────────────────────────────────────────────
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
+        'console': {'class': 'logging.StreamHandler'},
     },
     'root': {
         'handlers': ['console'],
-        'level': 'DEBUG',
+        'level': 'DEBUG' if DEBUG else 'INFO',
     },
 }
 
+
+# ─── Debug Toolbar (only if DEBUG) ──────────────────────────────────────────
 if DEBUG:
-    INTERNAL_IPS = ['127.0.0.1', 'localhost']
+    INTERNAL_IPS = ['127.0.0.1']
+    DEBUG_TOOLBAR_PANELS = [
+        'debug_toolbar.panels.request.RequestPanel',
+        'debug_toolbar.panels.sql.SQLPanel',
+        # any other panels you need…
+    ]
