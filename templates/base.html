@@ -193,8 +193,8 @@
       <div class="profile">
         <img src="{% static 'profile-user.png' %}" alt="Avatar" class="avatar"/>
         <div class="info">
-          <span class="name">{{ request.user.first_name }} {{ request.user.last_name }}</span>
-          <span class="designation">{{ request.user.profile.job_title }}</span>
+          <span class="name">{{ request.session.user_full_name }}</span>
+          <span class="designation">{{ request.session.job_title }}</span>
         </div>
       </div>
       <hr/>
