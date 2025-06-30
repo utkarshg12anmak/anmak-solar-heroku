@@ -4,6 +4,7 @@
 
 
 {% block content %}
+    
 <style>
 
   .leads-table {
@@ -379,10 +380,12 @@
 </form>
 
 
+
   <!-- ===== Include Table or Kanban based on view_mode ===== -->
   {% if view_mode == "grid" %}
     {% include "leads/_lead_kanban.html" %}
   {% else %}
     {% include "leads/_lead_table.html" %}
   {% endif %}
+
 {% endblock %}

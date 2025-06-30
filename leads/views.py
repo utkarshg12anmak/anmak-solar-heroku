@@ -1,63 +1,40 @@
 # leads/views.py
 
-from django.urls import reverse_lazy
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import ListView, CreateView, UpdateView
-from .models import Lead, LeadStage
-from django.http import JsonResponse
-from customers.models import Customer
-
-from django.shortcuts import render, redirect, get_object_or_404
-from django.views.generic import ListView, View
-from .forms import CustomerSelectionForm, CustomerCreateForm, LeadForm
-from customers.models import Customer
-from django.db.models import Sum
-from django.views import View
-
-from django.db.models import Q
-
-from django.views.generic import TemplateView
+import logging
+from django.db.models import Sum, Q, Prefetch
 from django.utils import timezone
 from datetime import timedelta
-
-from reminders.models import Reminder   # ← Make sure this is present
-from django.contrib.contenttypes.models import ContentType
-
-# leads/views.py (in your LeadUpdateView.get_context_data or similar)
-from items.models import PriceRule
-
-from django.db.models import Q
-from profiles.models import DepartmentMembership
-
-from profiles.mixins import SalesDepartmentRequiredMixin
-
 from zoneinfo import ZoneInfo
-from django.utils import timezone
 
-IST = ZoneInfo("Asia/Kolkata")
-
-import logging
-logger = logging.getLogger(__name__)
-
+from django.urls import reverse_lazy
 from django.contrib.auth import get_user_model
-from profiles.models import Department     # used in context_data
-from customers.models import City          # you already have this
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.contenttypes.models import ContentType
+from django.http import JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
+from django.views import View
+from django.views.generic import ListView, CreateView, UpdateView, TemplateView
 
 from .models import (
-    Lead,
-    LeadStage,
-    SYSTEM_TYPE_CHOICES,
-    LEAD_QUALITY_CHOICES,
-    GRID_TYPE_CHOICES,
+    Lead, LeadStage,
+    SYSTEM_TYPE_CHOICES, LEAD_QUALITY_CHOICES, GRID_TYPE_CHOICES,
 )
-from django.contrib.auth import get_user_model
-User = get_user_model()
+from .forms import CustomerSelectionForm, CustomerCreateForm, LeadForm
 
-from visit_details.models import VisitDetail
-
+from customers.models import Customer, City
+from profiles.models import Department, DepartmentMembership
+from profiles.mixins import SalesDepartmentRequiredMixin
 from items.models import PriceRule
+from visit_details.models import VisitDetail
+from reminders.models import Reminder
 
 
+
+# module-level constants & logger
+IST = ZoneInfo("Asia/Kolkata")
+logger = logging.getLogger(__name__)
+User = get_user_model()
 
 class LeadCreateWithCustomer(View):
     template_name = "leads/lead_with_customer_form.html"
@@ -123,139 +100,135 @@ class LeadListView(LoginRequiredMixin,
     paginate_by = 15
     ordering = ["-updated_at"]
 
+    def get_base_qs(self):
+        """
+        Build (once) and cache the “allowed” Lead queryset with all needed joins.
+        """
+        if not hasattr(self, "_base_qs"):
+            me = self.request.user
+
+            # 1) grab your Sales-dept memberships
+            my_mems = DepartmentMembership.objects.filter(
+                user=me,
+                department__dept_type__name="Sales"
+            ).values("department_id", "level")
+
+            lvl1 = [m["department_id"] for m in my_mems if m["level"] == 1]
+            lvl2 = [m["department_id"] for m in my_mems if m["level"] == 2]
+
+            # 2) build the security Q
+            allowed = Q(lead_manager=me)
+            if lvl1 or lvl2:
+                mgr_ids = DepartmentMembership.objects.filter(
+                    Q(department_id__in=lvl1, level__in=[2,3]) |
+                    Q(department_id__in=lvl2, level=3)
+                ).values_list("user_id", flat=True)
+
+                allowed |= (
+                    Q(department_id__in=(lvl1 + lvl2)) &
+                    Q(lead_manager_id__in=mgr_ids)
+                )
+
+            # 3) select_related all FKs, including customer__source
+            self._base_qs = (
+                Lead.objects
+                    .select_related(
+                        "customer__city",
+                        "customer__source",
+                        "stage",
+                        "lead_manager",
+                        "department",
+                    )
+                    .filter(allowed)
+            )
+
+        return self._base_qs
+
     def get_queryset(self):
-        me = self.request.user
+        qs = self.get_base_qs()
 
-        # 1) Base queryset + search
-        qs = super().get_queryset().select_related(
-            "customer__city", "stage", "lead_manager", "department"
-        )
-        search = self.request.GET.get("q", "").strip()
-        if search:
-            q_obj = Q(pk=search) if search.isdigit() else Q()
-            q_obj |= Q(customer__primary_phone__icontains=search)
-            q_obj |= Q(customer__first_name__icontains=search)
-            q_obj |= Q(customer__last_name__icontains=search)
-            qs = qs.filter(q_obj)
+        # — search —
+        q = self.request.GET.get("q", "").strip()
+        if q:
+            search_q = Q(pk=q) if q.isdigit() else Q()
+            search_q |= Q(customer__primary_phone__icontains=q)
+            search_q |= Q(customer__first_name__icontains=q)
+            search_q |= Q(customer__last_name__icontains=q)
+            qs = qs.filter(search_q)
 
-        # ––– 2) dropdown filters –––
-        city     = self.request.GET.get("city")
-        sys_type = self.request.GET.get("system_type")
-        grid     = self.request.GET.get("grid_type")
-        quality  = self.request.GET.get("lead_quality")
-        mgr      = self.request.GET.get("lead_manager")
-        dept     = self.request.GET.get("department")
+        # — dropdown filters —
+        mapping = {
+            "city":         "customer__city_id",
+            "system_type":  "system_type",
+            "grid_type":    "grid_type",
+            "lead_quality": "lead_quality",
+            "lead_manager": "lead_manager_id",
+            "department":   "department_id",
+        }
+        for param, field in mapping.items():
+            val = self.request.GET.get(param)
+            if val:
+                qs = qs.filter(**{field: val})
 
-
-        if city:      qs = qs.filter(customer__city_id=city)
-        if sys_type:  qs = qs.filter(system_type=sys_type)
-        if grid:      qs = qs.filter(grid_type=grid)
-        if quality:   qs = qs.filter(lead_quality=quality)
-        if mgr:       qs = qs.filter(lead_manager_id=mgr)
-        if dept:      qs = qs.filter(department_id=dept)   
-
-        # 2) Grab only your Sales‐dept memberships
-        my_mems = DepartmentMembership.objects.filter(
-            user=me,
-            department__dept_type__name="Sales"
-        )
-
-        # 3) Build a Q for “dept‐level” access
-        allowed_q = Q(lead_manager=me)  # always see your own leads
-
-        for mem in my_mems:
-            dept = mem.department
-            if mem.level == 1:
-                # Level 1 in dept: include managers at level 2 & level 3 of *this* dept
-                mgr_ids = DepartmentMembership.objects.filter(
-                    department=dept,
-                    level__in=[2,3]
-                ).values_list("user_id", flat=True)
-                allowed_q |= Q(department=dept, lead_manager_id__in=mgr_ids)
-
-            elif mem.level == 2:
-                # Level 2 in dept: include managers at level 3 of *this* dept
-                mgr_ids = DepartmentMembership.objects.filter(
-                    department=dept,
-                    level=3
-                ).values_list("user_id", flat=True)
-                allowed_q |= Q(department=dept, lead_manager_id__in=mgr_ids)
-
-            # Level 3: no extra dept‐wide access beyond your own leads
-
-        # 4) Apply the combined filter
-        return qs.filter(allowed_q)
+        return qs
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        page_leads = ctx["leads"]  # paginated page
 
-        # 2) Compute the total sum of `total_amount`
-        total_sum = self.get_queryset().aggregate(sum=Sum("total_amount"))["sum"] or 0
-        ctx["total_amount_sum"] = total_sum
+        # — total_amount across ALL filtered leads (one more query) —
+        agg = self.get_base_qs().aggregate(sum=Sum("total_amount"))
+        ctx["total_amount_sum"] = agg["sum"] or 0
 
-        # pass your dropdown options & current selections
+        # — static dropdowns —
         ctx.update({
-            "cities": City.objects.all(),
+            "cities":         City.objects.all(),
             "system_types":   SYSTEM_TYPE_CHOICES,
             "grid_types":     GRID_TYPE_CHOICES,
-            "lead_qualities": LEAD_QUALITY_CHOICES,    
-            "lead_managers": User.objects.filter(leads_owned__isnull=False).distinct(),
-            "departments": Department.objects.filter(dept_type__name="Sales"),
+            "lead_qualities": LEAD_QUALITY_CHOICES,
+            "lead_managers":  User.objects.filter(leads_owned__isnull=False).distinct(),
+            "departments":    Department.objects.filter(dept_type__name="Sales"),
 
-            "selected_city":     self.request.GET.get("city", ""),
-            "selected_system":   self.request.GET.get("system_type", ""),
-            "selected_grid":     self.request.GET.get("grid_type", ""),
-            "selected_quality":  self.request.GET.get("lead_quality", ""),
-            "selected_manager":  self.request.GET.get("lead_manager", ""),
+            "selected_city":       self.request.GET.get("city", ""),
+            "selected_system":     self.request.GET.get("system_type", ""),
+            "selected_grid":       self.request.GET.get("grid_type", ""),
+            "selected_quality":    self.request.GET.get("lead_quality", ""),
+            "selected_manager":    self.request.GET.get("lead_manager", ""),
             "selected_department": self.request.GET.get("department", ""),
         })
 
-        # 3) Decide view_mode
-        ctx["view_mode"] = self.request.GET.get("view", "grid")
+        # — view & stages —
+        ctx["view_mode"]       = self.request.GET.get("view", "grid")
+        ctx["lead_stage_list"] = list(LeadStage.objects.order_by("order"))
 
-        # 4) All LeadStage objects
-        lead_stage_list = LeadStage.objects.all().order_by("order")
-        ctx["lead_stage_list"] = lead_stage_list
-
-        # ─────────────────────────────────────────────────────
-        # 5) Attach created_str & age_display to each lead in IST
+        # — compute created_str & age_display on just the 15 leads —
         now_ist = timezone.now().astimezone(IST)
-
-        for lead in ctx["leads"]:
+        for lead in page_leads:
             if lead.created_at:
-                # convert stored UTC → IST
-                created_ist = lead.created_at.astimezone(IST)
-
-                # format
-                lead.created_str = created_ist.strftime("%d-%b-%Y %I:%M %p")
-
-                # compute age in hours/days
-                diff = now_ist - created_ist
-                hours = diff.total_seconds() // 3600
-
-                if hours < 24:
-                    lead.age_display = f"{int(hours)} hr{'s' if hours != 1 else ''}"
+                ci = lead.created_at.astimezone(IST)
+                lead.created_str = ci.strftime("%d-%b-%Y %I:%M %p")
+                diff = now_ist - ci
+                hrs  = diff.total_seconds() // 3600
+                if hrs < 24:
+                    lead.age_display = f"{int(hrs)} hr{'s' if hrs != 1 else ''}"
                 else:
-                    days = diff.days
-                    lead.age_display = f"{days} day{'s' if days != 1 else ''}"
+                    lead.age_display = f"{diff.days} day{'s' if diff.days != 1 else ''}"
             else:
                 lead.created_str = ""
                 lead.age_display = ""
-        # ─────────────────────────────────────────────────────
 
-        # 6) Build per-stage summaries
-        stage_summaries = {}
-        for stage in lead_stage_list:
-            leads_in_stage = [l for l in ctx["leads"] if l.stage_id == stage.id]
-            stage_summaries[stage.id] = {
-                "count": len(leads_in_stage),
-                "kw_sum": sum((l.system_size or 0) for l in leads_in_stage),
-                "amt_sum": sum((l.total_amount or 0) for l in leads_in_stage),
-            }
-        ctx["stage_summaries"] = stage_summaries
+        # — per-stage summary over the current page —
+        summaries = {s.id: {"count":0, "kw_sum":0, "amt_sum":0}
+                     for s in ctx["lead_stage_list"]}
+        for lead in page_leads:
+            summ = summaries[lead.stage_id]
+            summ["count"] += 1
+            summ["kw_sum"]  += (lead.system_size or 0)
+            summ["amt_sum"] += (lead.total_amount or 0)
+        ctx["stage_summaries"] = summaries
 
         return ctx
-
+    
 class LeadCreateView(LoginRequiredMixin, CreateView):
     model = Lead
     form_class = LeadForm
@@ -439,41 +412,50 @@ class LeadKanbanView(SalesDepartmentRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
 
-        # 1) Fetch your stages and leads
-        lead_stage_list = LeadStage.objects.all().order_by("order")
-        leads = Lead.objects.select_related("customer", "lead_manager").all()
+        # prepare IST once
+        ist      = IST
+        now_ist  = timezone.now().astimezone(ist)
 
-        # 2) Prepare IST tzinfo
-        ist = ZoneInfo("Asia/Kolkata")
-        now_ist = timezone.now().astimezone(ist)
+        # 1) build a base Lead queryset that pulls in every FK you'll need
+        lead_qs = Lead.objects.select_related(
+            "lead_manager",
+            "stage",
+            "department",
+            "customer__city",
+            "customer__source",
+        )
 
-        # 3) Convert and log
-        for lead in leads:
-            raw = lead.created_at
-            logger.debug(f"Lead #{lead.pk} raw created_at: {raw!r} (tzinfo={raw.tzinfo!r})")
+        # 2) fetch all stages, prefetching their leads in one go
+        lead_stage_list = (
+            LeadStage.objects
+                     .order_by("order")
+                     .prefetch_related(
+                         Prefetch("lead_set", queryset=lead_qs, to_attr="leads")
+                     )
+        )
 
-            # If raw is naive (tzinfo=None), this will silently treat it as local,
-            # so let’s make sure it’s UTC before converting:
-            if raw.tzinfo is None:
-                raw = raw.replace(tzinfo=timezone.utc)
-                logger.debug(f"  → assigned UTC tzinfo: {raw!r} (tzinfo={raw.tzinfo!r})")
+        # 3) annotate each lead with created_str & age_display exactly as before
+        for stage in lead_stage_list:
+            for lead in stage.leads:
+                created = lead.created_at
+                if created:
+                    created_ist = created.astimezone(ist)
+                    lead.created_str = created_ist.strftime("%d-%b-%Y %I:%M %p")
 
-            created_ist = raw.astimezone(ist)
-            logger.debug(f"  → converted to IST: {created_ist!r} (tzinfo={created_ist.tzinfo!r})")
+                    diff   = now_ist - created_ist
+                    hours  = diff.total_seconds() // 3600
+                    if hours < 24:
+                        lead.age_display = f"{int(hours)} hr{'s' if hours != 1 else ''}"
+                    else:
+                        lead.age_display = f"{diff.days} day{'s' if diff.days != 1 else ''}"
+                else:
+                    lead.created_str  = ""
+                    lead.age_display  = ""
 
-            # Now use that for display
-            lead.created_str = created_ist.strftime("%d-%b-%Y %I:%M %p")
-
-            diff = now_ist - created_ist
-            hours = diff.total_seconds() // 3600
-            if hours < 24:
-                lead.age_display = f"{int(hours)} hr{'s' if hours != 1 else ''}"
-            else:
-                lead.age_display = f"{diff.days} day{'s' if diff.days != 1 else ''}"
-
-        # 4) Pass into template
         ctx["lead_stage_list"] = lead_stage_list
-        ctx["leads"] = leads
+        # if your template also expects ctx["leads"], you can still do:
+        # ctx["leads"] = [lead for stage in lead_stage_list for lead in stage.leads]
+
         return ctx
 
 class SalesDepartmentRequiredMixin:
