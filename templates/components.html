@@ -7,12 +7,40 @@
 <!-- Shared variables, component styles, and utilities -->
 <style>
     :root {
+        /* Primary / branding */
         --primary-color: #003447;
+        /* Secondary / accent */
         --secondary-color: #f5a623;
+        /* Border‐radius (global) */
         --border-radius: 8px;
-        /* Facebook blue for filter, red for reset */
+
+        /* Social / filter button */
         --facebook-color: #1877f2;
+        /* Reset / danger button */
         --reset-button-color: #e53e3e;
+
+        /* Success (eg. success alerts, “connected” badges) */
+        --success-color: #38a169;
+        /* Danger (eg. error messages, destructive actions) */
+        --danger-color: #e53e3e;
+        /* Warning (eg. caution notices) */
+        --warning-color: #dd6b20;
+        /* Info (eg. informational banners) */
+        --info-color: #3182ce;
+
+        /* Light background (cards, panels) */
+        --light-bg-color: #f7fafc;
+        /* Dark background / text (footers, headers, dark modes) */
+        --dark-bg-color: #1a202c;
+        /* Muted text (secondary copy) */
+        --text-muted-color: #718096;
+
+        /* Link color (inline hyperlinks) */
+        --link-color: #3182ce;
+        /* Submit button (forms) */
+        --submit-btn-color: #2b6cb0;
+        /* Disabled state (disabled buttons/inputs) */
+        --disabled-color: #a0aec0;
 
         /* Toast colors */
         --toast-bg-error: #c53030;
@@ -37,13 +65,21 @@
         --border-radius: 0.5rem;
     }
 
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
     /* Page Title & Subtitle */
     .page-title {
-        font-size: 1.4rem;
+        font-size: 2rem;
         /* same as your page-header__title */
-        font-weight: 2000;
+        font-weight: 600;
         /* semi-bold */
-        color: var(--text-primary);
+        color: var(--primary-color);
         margin: 0 0 0.5rem 0;
     }
 
@@ -86,6 +122,7 @@
     h6 {
         font-weight: var(--font-weight-semibold);
         margin-top: 0;
+        color: var(--primary-color);
     }
 
     strong,
@@ -167,40 +204,96 @@
         background-color: var(--status-info);
     }
 
-    /* ─── TABLE WRAPPER ───────────────────────────────────────── */
+    /* ─── TABLE STYLES ───────────────────────────────────────────────── */
     .table-responsive {
         overflow-x: auto;
-        margin-bottom: 1.5rem;
+        border-radius: var(--border-radius);
+        margin: 0 auto 1rem;
+        width: 100%;
+        
     }
 
-    /* ─── CENTRALIZED TABLE STYLES ───────────────────────────── */
     .table {
         width: 100%;
-        border-collapse: collapse;
-        margin: 0;
-        /* spacing now in .table-responsive */
+        border-collapse: separate;
+        border-spacing: 0;
+        background: #fff;
     }
 
     .table th,
     .table td {
-        border: 1px solid #ddd;
-        padding: 0.75rem;
+        padding: 0.75rem 1rem;
         text-align: left;
-        font-weight: var(--font-weight-regular);
-        white-space: nowrap;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        background-clip: padding-box;
     }
 
     .table th {
-        background-color: #f9f9f9;
+        background-color: var(--dark-bg-color, #1a202c);
+        color: #fff;
         font-weight: var(--font-weight-medium);
+    }
+
+    /* Squircle corners on table */
+    .table thead tr:first-child th:first-child {
+        border-top-left-radius: var(--border-radius);
+    }
+
+    .table thead tr:first-child th:last-child {
+        border-top-right-radius: var(--border-radius);
+    }
+
+    .table tfoot tr:last-child td:first-child {
+        border-bottom-left-radius: var(--border-radius);
+    }
+
+    .table tfoot tr:last-child td:last-child {
+        border-bottom-right-radius: var(--border-radius);
+    }
+
+    /* Sticky first X and last Y columns */
+    .sticky-left-1 {
+        position: sticky;
+        left: 0;
+        z-index: 3;
+        background: #fff;
+    }
+
+    .sticky-left-2 {
+        position: sticky;
+        left: 120px;
+        z-index: 2;
+        background: #fff;
+    }
+
+    .sticky-right-1 {
+        position: sticky;
+        right: 0;
+        z-index: 3;
+        background: #fff;
+    }
+
+    .sticky-right-2 {
+        position: sticky;
+        right: 120px;
+        z-index: 2;
+        background: #fff;
     }
 
     /* ─── PAGINATION STYLES ──────────────────────────────────── */
     .pagination {
-        display: inline-flex;
+        display: flex;
+        /* ensure it’s a flex container */
+        justify-content: center;
+        /* center the <li> children */
+        width: 100%;
+        /* span the full width of its parent */
+        margin: 1rem auto 0;
+        /* top margin, auto horiz to reaffirm centering */
+        gap: 0.5rem;
+        /* space between buttons */
         list-style: none;
         padding: 0;
-        gap: 0.25rem;
     }
 
     .pagination li {
@@ -289,9 +382,7 @@
 
 
     .btn {
-        /* default bg, override via variant */
         --btn-bg: var(--primary-color);
-
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -301,15 +392,10 @@
         color: #fff;
         background-color: var(--btn-bg);
         border: none;
-        border-radius: var(--border-radius);
+        /* Squary-squircle corners */
+        border-radius: 0.5rem;
         text-decoration: none;
         cursor: pointer;
-        line-height: 1.25;
-
-        appearance: none;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-
         transition:
             filter var(--btn-transition-time) ease,
             transform var(--btn-transition-time) ease,
@@ -336,6 +422,21 @@
 
     .btn-filter-reset {
         --btn-bg: var(--reset-button-color);
+    }
+
+    .btn-submit {
+        --btn-bg: var(--success-color);
+    }
+
+
+    /* Card container with squircle corners */
+    .card {
+        background-color: #ffffff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        /* Squircle-style corners */
+        border-radius: 1rem;
+        padding: 1rem;
+        overflow-x: auto;
     }
 </style>
 

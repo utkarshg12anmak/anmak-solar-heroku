@@ -90,14 +90,6 @@
     font-size: 1rem;
   }
 
-  .card {
-    background: var(--card-bg);
-    box-shadow: 0 2px 4px var(--card-shadow);
-    border-radius: 0.5rem;
-    padding: 1rem;
-    overflow-x: auto;
-  }
-
   .status-badge {
     display: inline-block;
     padding: 0.25rem 0.5rem;
@@ -118,13 +110,13 @@
 </style>
 
 <div class="page-header">
-  <h1>
-    Manage Interests
+  <div class="page-title">
+    Manage Interests 
     <span class="page-subtitle">
-      ({{ page_obj.paginator.count }} total)
+       ({{ page_obj.paginator.count }} total)
     </span>
-  </h1>
-  <a href="{% url 'interests:add' %}" class="btn">+ New Interest</a>
+  </div>
+  <a href="{% url 'interests:add' %}" class="btn btn-submit">+ New Interest</a>
 </div>
 
 <form id="filter-form" method="get" class="filter-bar">
@@ -163,7 +155,7 @@
   <input type="hidden" name="end" id="end" value="{{ request.GET.end }}">
 </form>
 
-<div class="card">
+<div class="h1">
   {# Wrap the table in a responsive container #}
 <div class="table-responsive">
   <table class="table">
