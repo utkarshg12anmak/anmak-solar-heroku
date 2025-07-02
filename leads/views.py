@@ -97,7 +97,7 @@ class LeadListView(LoginRequiredMixin,
     model = Lead
     template_name = "leads/lead_list.html"
     context_object_name = "leads"
-    paginate_by = 15
+    paginate_by = 200
     ordering = ["-updated_at"]
 
     def get_base_qs(self):

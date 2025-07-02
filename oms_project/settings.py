@@ -12,7 +12,7 @@ env = environ.Env(
     DEBUG=(bool, False),
     DJANGO_ENV=(str, 'prod'),
 )
-env_file = BASE_DIR / '.env.local'
+env_file = BASE_DIR / '.env.local2'
 if env_file.exists():
     env.read_env(str(env_file))
 
