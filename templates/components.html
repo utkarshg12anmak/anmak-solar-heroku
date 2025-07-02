@@ -2,50 +2,52 @@
 <!-- Preconnect for Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link
-  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-  rel="stylesheet"
-/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
 <!-- Shared variables, component styles, and utilities -->
 <style>
-  :root {
-    --primary-color: #003447;
-    --secondary-color: #f5a623;
-    --border-radius: 8px;
+    :root {
+        --primary-color: #003447;
+        --secondary-color: #f5a623;
+        --border-radius: 8px;
+        /* Facebook blue for filter, red for reset */
+        --facebook-color: #1877f2;
+        --reset-button-color: #e53e3e;
 
-    /* Toast colors */
-    --toast-bg-error: #c53030;
-    --toast-color: #fff;
+        /* Toast colors */
+        --toast-bg-error: #c53030;
+        --toast-color: #fff;
 
-    /* Font weight variables */
-    --font-weight-regular: 400;
-    --font-weight-medium: 500;
-    --font-weight-semibold: 600;
-    --font-weight-bold: 700;
+        /* Font weight variables */
+        --font-weight-regular: 400;
+        --font-weight-medium: 500;
+        --font-weight-semibold: 600;
+        --font-weight-bold: 700;
 
-    /* Status pill colors */
-    --status-default: var(--primary-color);
-    --status-success: #38a169;
-    --status-warning: #dd6b20;
-    --status-error: #c53030;
-    --status-info: #3182ce;
+        /* Status pill colors */
+        --status-default: var(--primary-color);
+        --status-success: #38a169;
+        --status-warning: #dd6b20;
+        --status-error: #c53030;
+        --status-info: #3182ce;
 
-    --btn-hover-brightness: 1.1;
-    --btn-scale-hover: 1.02;
-    --btn-transition-time: 0.10s;
-    --border-radius: 0.5rem;
-  }
+        --btn-hover-brightness: 1.1;
+        --btn-scale-hover: 1.02;
+        --btn-transition-time: 0.10s;
+        --border-radius: 0.5rem;
+    }
 
     /* Page Title & Subtitle */
     .page-title {
-        font-size: 1.4rem;        /* same as your page-header__title */
-        font-weight: 2000;          /* semi-bold */
+        font-size: 1.4rem;
+        /* same as your page-header__title */
+        font-weight: 2000;
+        /* semi-bold */
         color: var(--text-primary);
         margin: 0 0 0.5rem 0;
     }
 
-    /* same as page-header__subtitle */    
+    /* same as page-header__subtitle */
     .page-subtitle {
         font-size: 1.2rem;
         font-weight: 400;
@@ -61,310 +63,259 @@
         margin-left: 0.25rem;
     }
 
-  /* Global typography */
-  body {
-    font-family: 'Inter',
-      -apple-system,
-      BlinkMacSystemFont,
-      'Segoe UI',
-      Roboto,
-      'Helvetica Neue',
-      Arial,
-      sans-serif;
-    font-weight: var(--font-weight-regular);
-    line-height: 1.6;
-    color: #333;
-  }
-  h1, h2, h3, h4, h5, h6 {
-    font-weight: var(--font-weight-semibold);
-    margin-top: 0;
-  }
-  strong, b {
-    font-weight: var(--font-weight-bold);
-  }
+    /* Global typography */
+    body {
+        font-family: 'Inter',
+            -apple-system,
+            BlinkMacSystemFont,
+            'Segoe UI',
+            Roboto,
+            'Helvetica Neue',
+            Arial,
+            sans-serif;
+        font-weight: var(--font-weight-regular);
+        line-height: 1.6;
+        color: #333;
+    }
 
-  /* Page Header */
-  .page-header { margin-bottom: 0.5rem; }
-  .page-header__title {
-    font-size: 1.75rem;
-    color: var(--primary-color);
-    font-weight: var(--font-weight-bold);
-  }
-  .page-header__subtitle {
-    font-size: 1rem;
-    color: #666;
-    font-weight: var(--font-weight-medium);
-  }
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-weight: var(--font-weight-semibold);
+        margin-top: 0;
+    }
 
-  /* Page Title with Count */
-  .page-title {
-    display: flex;
-    align-items: baseline;
-    margin-bottom: 1rem;
-  }
-  .page-title__text {
-    font-size: 2rem;
-    color: var(--primary-color);
-    font-weight: var(--font-weight-bold);
-    margin: 0;
-  }
-  .page-title__count {
-    font-size: 1rem;
-    color: var(--secondary-color);
-    font-weight: var(--font-weight-medium);
-    margin-left: 0.5rem;
-  }
+    strong,
+    b {
+        font-weight: var(--font-weight-bold);
+    }
 
-  /* Status Pill Base */
-  .status-pill {
-    display: inline-block;
-    padding: 0.25em 0.75em;
-    border-radius: var(--border-radius);
-    font-size: 0.875rem;
-    font-weight: var(--font-weight-medium);
-    color: #fff;
-    text-transform: capitalize;
-  }
-  .status-pill--default {
-    background-color: var(--status-default);
-  }
-  .status-pill--active {
-    background-color: var(--status-default);
-  }
-  .status-pill--success {
-    background-color: var(--status-success);
-  }
-  .status-pill--warning {
-    background-color: var(--status-warning);
-    color: #1a202c;
-  }
-  .status-pill--error {
-    background-color: var(--status-error);
-  }
-  .status-pill--info {
-    background-color: var(--status-info);
-  }
+    /* Page Header */
+    .page-header {
+        margin-bottom: 0.5rem;
+    }
 
-  /* Table */
-  .table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 1.5rem;
-  }
-  .table th, .table td {
-    border: 1px solid #ddd;
-    padding: 0.75em;
-    text-align: left;
-    font-weight: var(--font-weight-regular);
-  }
-  .table th {
-    background-color: #f9f9f9;
-    font-weight: var(--font-weight-medium);
-  }
+    .page-header__title {
+        font-size: 1.75rem;
+        color: var(--primary-color);
+        font-weight: var(--font-weight-bold);
+    }
 
-  /* Pagination */
-  .pagination {
-    display: flex;
-    list-style: none;
-    padding: 0;
-  }
-  .pagination li { margin: 0 0.25em; }
-  .pagination a {
-    display: block;
-    padding: 0.5em 0.75em;
-    text-decoration: none;
-    border: 1px solid #ddd;
-    border-radius: var(--border-radius);
-    color: var(--primary-color);
-    font-weight: var(--font-weight-medium);
-  }
-  .pagination .active a {
-    background-color: var(--primary-color);
-    color: #fff;
-    border-color: var(--primary-color);
-    font-weight: var(--font-weight-semibold);
-  }
+    .page-header__subtitle {
+        font-size: 1rem;
+        color: #666;
+        font-weight: var(--font-weight-medium);
+    }
 
-  /* Toast notifications */
-  .toast-container {
-    position: fixed;
-    top: 1rem;
-    right: 1rem;
-    z-index: 1050;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  .toast {
-    position: relative;
-    min-width: 200px;
-    max-width: 400px;
-    padding: 0.75em 1em 0.75em 1.5em;
-    border-radius: var(--border-radius);
-    background-color: var(--toast-bg-error);
-    color: var(--toast-color);
-    font-size: 0.875rem;
-    font-weight: var(--font-weight-regular);
-    opacity: 0;
-    transform: translateX(100%);
-    animation: slideIn 0.3s forwards, fadeOut 0.3s forwards 4s;
-  }
-  .toast-close {
-    position: absolute;
-    top: 0.25em;
-    right: 0.5em;
-    font-size: 1.2em;
-    color: var(--toast-color);
-    cursor: pointer;
-  }
-  @keyframes slideIn { to { opacity: 1; transform: translateX(0); } }
-  @keyframes fadeOut { to { opacity: 0; transform: translateX(100%); } }
+    /* Page Title with Count */
+    .page-title {
+        display: flex;
+        align-items: baseline;
+        margin-bottom: 1rem;
+    }
 
-/* Refined Primary Button */
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #fff;
-  background-color: var(--primary-color);
-  border: none;
-  border-radius: 0.5rem;
-  text-decoration: none;
-  cursor: pointer;
-  transition: 
-    background-color 0.15s ease,
-    transform        0.15s ease,
-    box-shadow      0.15s ease;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
+    .page-title__text {
+        font-size: 2rem;
+        color: var(--primary-color);
+        font-weight: var(--font-weight-bold);
+        margin: 0;
+    }
 
-/* Hover & Focus State */
-.btn-primary:hover,
-.btn-primary:focus {
-  /* darken whatever your primary-color is */
-  filter: brightness(var(--btn-hover-brightness));
-  /* slight pop */
-  transform: scale(var(--btn-scale-hover));
-  /* deepen the shadow */
-  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-  outline: none;
-}
+    .page-title__count {
+        font-size: 1rem;
+        color: var(--secondary-color);
+        font-weight: var(--font-weight-medium);
+        margin-left: 0.5rem;
+    }
 
-/* Remove underlines on links styled as buttons */
-a.btn-primary {
-  text-decoration: none;
-}
+    /* Status Pill Base */
+    .status-pill {
+        display: inline-block;
+        padding: 0.25em 0.75em;
+        border-radius: var(--border-radius);
+        font-size: 0.875rem;
+        font-weight: var(--font-weight-medium);
+        color: #fff;
+        text-transform: capitalize;
+    }
 
-/* Base Button */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
-  border-radius: var(--border-radius);
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: background-color .2s, border-color .2s, color .2s;
-}
+    .status-pill--default {
+        background-color: var(--status-default);
+    }
 
-/* 2. Secondary */
-.btn-secondary {
-  background-color: var(--secondary-color);
-  color: #fff;
-  border-color: var(--secondary-color);
-}
+    .status-pill--active {
+        background-color: var(--status-default);
+    }
 
-/* 3. Success */
-.btn-success {
-  background-color: #38a169;
-  color: #fff;
-  border-color: #38a169;
-}
+    .status-pill--success {
+        background-color: var(--status-success);
+    }
 
-/* 4. Danger */
-.btn-danger {
-  background-color: #e53e3e;
-  color: #fff;
-  border-color: #e53e3e;
-}
+    .status-pill--warning {
+        background-color: var(--status-warning);
+        color: #1a202c;
+    }
 
-/* 5. Warning */
-.btn-warning {
-  background-color: #dd6b20;
-  color: #fff;
-  border-color: #dd6b20;
-}
+    .status-pill--error {
+        background-color: var(--status-error);
+    }
 
-/* 6. Info */
-.btn-info {
-  background-color: #3182ce;
-  color: #fff;
-  border-color: #3182ce;
-}
+    .status-pill--info {
+        background-color: var(--status-info);
+    }
 
-/* 7. Light */
-.btn-light {
-  background-color: #f7fafc;
-  color: #1a202c;
-  border-color: #e2e8f0;
-}
+    /* Table */
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1.5rem;
+    }
 
-/* 8. Dark */
-.btn-dark {
-  background-color: #1a202c;
-  color: #fff;
-  border-color: #1a202c;
-}
+    .table th,
+    .table td {
+        border: 1px solid #ddd;
+        padding: 0.75em;
+        text-align: left;
+        font-weight: var(--font-weight-regular);
+    }
 
-/* 9. Outline (uses primary) */
-.btn-outline {
-  background-color: transparent;
-  color: var(--primary-color);
-  border-color: var(--primary-color);
-}
-.btn-outline:hover {
-  background-color: var(--primary-color);
-  color: #fff;
-}
+    .table th {
+        background-color: #f9f9f9;
+        font-weight: var(--font-weight-medium);
+    }
 
-/* 10. Ghost (text-only) */
-.btn-ghost {
-  background: none;
-  color: var(--primary-color);
-  border-color: transparent;
-}
+    /* Pagination */
+    .pagination {
+        display: flex;
+        list-style: none;
+        padding: 0;
+    }
 
-/* Extras you might find useful */
+    .pagination li {
+        margin: 0 0.25em;
+    }
 
-/* 11. Pill (rounded capsules) */
-.btn-pill {
-  border-radius: 9999px;
-}
+    .pagination a {
+        display: block;
+        padding: 0.5em 0.75em;
+        text-decoration: none;
+        border: 1px solid #ddd;
+        border-radius: var(--border-radius);
+        color: var(--primary-color);
+        font-weight: var(--font-weight-medium);
+    }
 
-/* 12. Link (unstyled text link) */
-.btn-link {
-  background: none;
-  border: none;
-  color: var(--primary-color);
-  text-decoration: underline;
-  padding: 0;
-  font-weight: 500;
-}
+    .pagination .active a {
+        background-color: var(--primary-color);
+        color: #fff;
+        border-color: var(--primary-color);
+        font-weight: var(--font-weight-semibold);
+    }
 
-/* 13. Size modifiers */
-.btn-sm {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
-}
-.btn-lg {
-  padding: 0.75rem 1.5rem;
-  font-size: 1.125rem;
-}
+    /* Toast notifications */
+    .toast-container {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 1050;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
 
+    .toast {
+        position: relative;
+        min-width: 200px;
+        max-width: 400px;
+        padding: 0.75em 1em 0.75em 1.5em;
+        border-radius: var(--border-radius);
+        background-color: var(--toast-bg-error);
+        color: var(--toast-color);
+        font-size: 0.875rem;
+        font-weight: var(--font-weight-regular);
+        opacity: 0;
+        transform: translateX(100%);
+        animation: slideIn 0.3s forwards, fadeOut 0.3s forwards 4s;
+    }
+
+    .toast-close {
+        position: absolute;
+        top: 0.25em;
+        right: 0.5em;
+        font-size: 1.2em;
+        color: var(--toast-color);
+        cursor: pointer;
+    }
+
+    @keyframes slideIn {
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes fadeOut {
+        to {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+    }
+
+    /* ─── One single “themed” button block ───────────────────────── */
+
+
+    .btn {
+        /* default bg, override via variant */
+        --btn-bg: var(--primary-color);
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #fff;
+        background-color: var(--btn-bg);
+        border: none;
+        border-radius: var(--border-radius);
+        text-decoration: none;
+        cursor: pointer;
+        line-height: 1.25;
+
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+
+        transition:
+            filter var(--btn-transition-time) ease,
+            transform var(--btn-transition-time) ease,
+            box-shadow var(--btn-transition-time) ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn:hover,
+    .btn:focus {
+        filter: brightness(var(--btn-hover-brightness));
+        transform: scale(var(--btn-scale-hover));
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        outline: none;
+    }
+
+    /* ─── VARIANTS (only change the background) ─────────────── */
+    .btn-primary {
+        --btn-bg: var(--primary-color);
+    }
+
+    .btn-filter {
+        --btn-bg: var(--facebook-color);
+    }
+
+    .btn-filter-reset {
+        --btn-bg: var(--reset-button-color);
+    }
 </style>
 
 <!-- Toast container placeholder -->
@@ -373,29 +324,29 @@ a.btn-primary {
 
 <!-- Shared scripts -->
 <script>
-  /**
-   * Show an error toast with a close button.
-   * @param {string} msg  The message to display.
-   */
-  function showToast(msg) {
-    var container = document.getElementById('toastContainer');
-    if (!container) return;
-    var toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = msg;
-    // create close button
-    var closeBtn = document.createElement('span');
-    closeBtn.className = 'toast-close';
-    closeBtn.innerHTML = '&times;';
-    closeBtn.onclick = function() { container.removeChild(toast); };
-    toast.appendChild(closeBtn);
+    /**
+    * Show an error toast with a close button.
+    * @param {string} msg  The message to display.
+    */
+    function showToast(msg) {
+        var container = document.getElementById('toastContainer');
+        if (!container) return;
+        var toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = msg;
+        // create close button
+        var closeBtn = document.createElement('span');
+        closeBtn.className = 'toast-close';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.onclick = function () { container.removeChild(toast); };
+        toast.appendChild(closeBtn);
 
-    container.appendChild(toast);
-    // auto-remove after fadeOut ends
-    toast.addEventListener('animationend', function(e) {
-      if (e.animationName === 'fadeOut') {
-        if (container.contains(toast)) container.removeChild(toast);
-      }
-    });
-  }
+        container.appendChild(toast);
+        // auto-remove after fadeOut ends
+        toast.addEventListener('animationend', function (e) {
+            if (e.animationName === 'fadeOut') {
+                if (container.contains(toast)) container.removeChild(toast);
+            }
+        });
+    }
 </script>
