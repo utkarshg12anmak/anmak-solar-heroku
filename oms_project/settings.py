@@ -209,12 +209,32 @@ LOGGING = {
 if DEBUG:
     INTERNAL_IPS = ['127.0.0.1']
     DEBUG_TOOLBAR_PANELS = [
-        'debug_toolbar.panels.request.RequestPanel',
-        'debug_toolbar.panels.sql.SQLPanel',
-        # any other panels you need…
+        'debug_toolbar.panels.history.HistoryPanel',        # request history & snapshots
+        'debug_toolbar.panels.versions.VersionsPanel',      # Python, Django & app versions
+        'debug_toolbar.panels.timer.TimerPanel',            # request timing breakdown
+        'debug_toolbar.panels.settings.SettingsPanel',      # your Django settings
+        'debug_toolbar.panels.headers.HeadersPanel',        # HTTP & WSGI headers
+        'debug_toolbar.panels.request.RequestPanel',        # GET/POST/Cookie/Session
+        'debug_toolbar.panels.sql.SQLPanel',                # SQL queries + EXPLAIN links
+        'debug_toolbar.panels.staticfiles.StaticFilesPanel',# which static files were served
+        'debug_toolbar.panels.templates.TemplatesPanel',    # templates used & context
+        'debug_toolbar.panels.alerts.AlertsPanel',          # HTML form/alert warnings
+        'debug_toolbar.panels.cache.CachePanel',            # cache hits, misses & calls
+        'debug_toolbar.panels.signals.SignalsPanel',        # signals sent & receivers
+        'debug_toolbar.panels.redirects.RedirectsPanel',    # intercept & inspect redirects
+        'debug_toolbar.panels.profiling.ProfilingPanel',    # function-level profiling
     ]
+
 
 CRONJOBS = [
     # (cron-schedule, management-command, [optional args])
     ('0 4 * * *', 'django.core.management.call_command', ['clearsessions']),
 ]
+
+DEBUG_TOOLBAR_CONFIG = {
+  'SHOW_COLLAPSED': True,              # start panels collapsed
+  'ENABLE_STACKTRACES': True,          # include Python stacktraces for SQL and templates
+  'RESULTS_CACHE_SIZE': 100,           # how many requests to keep in HistoryPanel
+  'SHOW_TEMPLATE_CONTEXT': True,       # surface full template context in the TemplatesPanel
+}
+
