@@ -22,6 +22,7 @@ from customers.models import Customer
 from profiles.models import DepartmentMembership
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
+from django.contrib import messages
 
 
 from .models import (
@@ -181,10 +182,30 @@ class InterestCreateView(DepartmentAccessMixin, LoginRequiredMixin, CreateView):
     template_name = "interests/interest_form.html"
     success_url   = reverse_lazy("interests:list")
 
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+
+        # Load all three lookup tables exactly once each
+        statuses = list(InterestStatus.objects.all())
+        sources  = list(InterestSource.objects.all())
+        modes    = list(ModeOfContact.objects.all())
+
+        # Override the dropdown choices to use simple (pk, label) lists
+        form.fields['status'].choices = [(s.pk, str(s)) for s in statuses]
+        form.fields['source'].choices = [(s.pk, str(s)) for s in sources]
+        form.fields['mode'].choices   = [(m.pk, str(m)) for m in modes]
+
+        return form
+
     def form_valid(self, form):
         form.instance.created_by = self.request.user
         form.instance.updated_by = self.request.user
-        return super().form_valid(form)
+
+        response = super().form_valid(form)
+        messages.success(self.request, "✅ Interest created successfully!")
+        return response        
+
+        
 
 
 class InterestCustomerCreateView(DepartmentAccessMixin, LoginRequiredMixin, CreateView):
@@ -288,6 +309,8 @@ class InterestUpdateView(DepartmentAccessMixin, LoginRequiredMixin, UpdateView):
         if getattr(self.object, 'lead', None):
             return self.render_to_response(self.get_context_data(form=form))
         form.instance.updated_by = self.request.user
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        messages.success(self.request, "Interest updated successfully!")
+        return response
 
 

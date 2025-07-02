@@ -226,6 +226,24 @@
 
 
 
+{% if messages %}
+  <div id="toast-container">
+    {% for msg in messages %}
+      <div class="toast toast-{{ msg.tags }}">
+        {{ msg }}
+      </div>
+    {% endfor %}
+  </div>
+  <script>
+    // auto-hide toasts after 3s
+    setTimeout(() => {
+      document.querySelectorAll('#toast-container .toast').forEach(t => {
+        t.classList.add('fade-out');
+        setTimeout(() => t.remove(), 500);
+      });
+    }, 3000);
+  </script>
+{% endif %}
 
 </body>
 </html>
