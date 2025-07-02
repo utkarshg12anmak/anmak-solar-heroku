@@ -12,7 +12,7 @@
   :root {
     --primary-color: #003447;
     --secondary-color: #f5a623;
-    --border-radius: 4px;
+    --border-radius: 8px;
 
     /* Toast colors */
     --toast-bg-error: #c53030;
@@ -30,6 +30,11 @@
     --status-warning: #dd6b20;
     --status-error: #c53030;
     --status-info: #3182ce;
+
+    --btn-hover-brightness: 1.1;
+    --btn-scale-hover: 1.02;
+    --btn-transition-time: 0.10s;
+    --border-radius: 0.5rem;
   }
 
     /* Page Title & Subtitle */
@@ -79,7 +84,7 @@
   }
 
   /* Page Header */
-  .page-header { margin-bottom: 1.5rem; }
+  .page-header { margin-bottom: 0.5rem; }
   .page-header__title {
     font-size: 1.75rem;
     color: var(--primary-color);
@@ -223,21 +228,28 @@
   padding: 0.5rem 1rem;
   font-size: 1rem;
   font-weight: 600;
-  color: #ffffff;
+  color: #fff;
   background-color: var(--primary-color);
   border: none;
-  border-radius: var(--border-radius);
-  text-decoration: none;           /* no underline */
+  border-radius: 0.5rem;
+  text-decoration: none;
   cursor: pointer;
-  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  transition: 
+    background-color 0.15s ease,
+    transform        0.15s ease,
+    box-shadow      0.15s ease;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 /* Hover & Focus State */
 .btn-primary:hover,
 .btn-primary:focus {
-  background-color: var(--primary-hover);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  /* darken whatever your primary-color is */
+  filter: brightness(var(--btn-hover-brightness));
+  /* slight pop */
+  transform: scale(var(--btn-scale-hover));
+  /* deepen the shadow */
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
   outline: none;
 }
 

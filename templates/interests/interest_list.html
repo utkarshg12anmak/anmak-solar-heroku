@@ -114,7 +114,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
+    
   }
 
   .btn-new {
@@ -329,7 +329,7 @@
       <meta name="csrf-token" content="{{ csrf_token }}">
     </tbody>
   </table>
-</div>
+
 
 {% if is_paginated %}
   <div class="pagination">
@@ -342,6 +342,7 @@
     {% endfor %}
   </div>
 {% endif %}
+</div>
 
 <script>
   // AJAX for dials buttons
