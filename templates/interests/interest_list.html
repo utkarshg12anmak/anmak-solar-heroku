@@ -6,6 +6,8 @@
 {% block title %}Manage Interests{% endblock %}
 
 {% block content %}
+{% include "loader.html" %}
+<div id="page-content">
 
 <div class="page-header">
   <div class="page-title">
@@ -130,6 +132,8 @@
   {% include "includes/pagination.html" with page_obj=page_obj %}
 </div>
 
+</div>
+
 <script>
   // AJAX for dials buttons
   function getCsrfToken() {
@@ -196,4 +200,12 @@
     else qr.value = '';
   })();
 </script>
+
+<script>
+  window.addEventListener('load', function() {
+    const loader = document.getElementById('page-loader');
+    if (loader) loader.style.display = 'none';
+  });
+</script>
+
 {% endblock content %}

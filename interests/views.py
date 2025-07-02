@@ -126,20 +126,20 @@ class InterestListView(DepartmentAccessMixin, LoginRequiredMixin, ListView):
         else:
             raise PermissionDenied()
 
-        print("User:", user.id, user.get_full_name())
-        print("User Level:", user_level)
-        print("Level Map:", level_map)
-        print("All Interest creator IDs:", list(Interest.objects.values_list("created_by_id", flat=True).distinct()))
+        #print("User:", user.id, user.get_full_name())
+        #print("User Level:", user_level)
+        #print("Level Map:", level_map)
+        #print("All Interest creator IDs:", list(Interest.objects.values_list("created_by_id", flat=True).distinct()))
 
-        if user_level == 2:
-            allowed_users = set(level_map.get(2, [])) | set(level_map.get(3, [])) | {user.id}
-            print("→ L2 allowed_users:", allowed_users)
+        #if user_level == 2:
+            #allowed_users = set(level_map.get(2, [])) | set(level_map.get(3, [])) | {user.id}
+            #print("→ L2 allowed_users:", allowed_users)
 
-        elif user_level == 1:
-            all_users = {user.id}
-            for lv in (1, 2, 3):
-                all_users |= set(level_map.get(lv, []))
-            print("→ L1 all_users:", all_users)
+        #elif user_level == 1:
+            #all_users = {user.id}
+            f#or lv in (1, 2, 3):
+                #all_users |= set(level_map.get(lv, []))
+            #print("→ L1 all_users:", all_users)
 
 
         return (
