@@ -108,7 +108,9 @@ class InterestListView(DepartmentAccessMixin, LoginRequiredMixin, ListView):
                 filters &= Q(created_at__date__range=(sd, ed))
             except ValueError:
                 pass
-
+        else:
+            today = timezone.localdate()
+            filters &= Q(created_at__date=today)                        
         conn = req.GET.get('connected')
         if conn in ('0', '1'):
             filters &= Q(is_connected=(conn == '1'))

@@ -28,7 +28,7 @@
     <option value="yesterday" {% if request.GET.quick_range == 'yesterday' %}selected{% endif %}>Yesterday</option>
     <option value="last7" {% if request.GET.quick_range == 'last7' %}selected{% endif %}>Last 7 Days</option>
     <option value="thisMonth" {% if request.GET.quick_range == 'thisMonth' %}selected{% endif %}>This Month</option>
-    <option value="" {% if not request.GET.quick_range %}selected{% endif %}>All Dates</option>
+    <option value="" {% if not request.GET.quick_range %}selected{% endif %}>Select Date Range</option>
   </select>
 
   <div style="display: inline-flex; align-items: center; gap: 0.5rem;">
@@ -189,16 +189,22 @@
 
   // Initialize quick-range on load
   (function () {
-    const s = "{{ request.GET.start }}", e = "{{ request.GET.end }}";
-    if (!s || !e) return;
-    const sd = new Date(s), ed = new Date(e),
-      diff = (ed - sd) / (1000 * 60 * 60 * 24);
-    if (diff === 0) qr.value = 'today';
-    else if (diff === 1) qr.value = 'yesterday';
-    else if (diff === 6) qr.value = 'last7';
-    else if (sd.getDate() === 1 && sd.getMonth() === today.getMonth()) qr.value = 'thisMonth';
-    else qr.value = '';
+    const start = "{{ request.GET.start }}";
+    const end   = "{{ request.GET.end }}";
+    const quickRange = "{{ request.GET.quick_range }}";
+
+    if (!start && !end && !quickRange) {
+      const today = new Date();
+      const y = today.getFullYear(),
+            m = String(today.getMonth() + 1).padStart(2, '0'),
+            d = String(today.getDate()).padStart(2, '0');
+
+      document.getElementById('start').value = `${y}-${m}-${d}`;
+      document.getElementById('end').value = `${y}-${m}-${d}`;
+      document.getElementById('filter-form').submit();
+    }
   })();
+
 </script>
 
 <script>
