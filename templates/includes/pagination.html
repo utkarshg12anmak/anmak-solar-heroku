@@ -1,54 +1,42 @@
 {# templates/includes/pagination.html #}
 {% if page_obj.has_other_pages %}
-<ul class="pagination">
-  {# Previous arrow #}
-  {% if page_obj.has_previous %}
-    <li><a href="?page={{ page_obj.previous_page_number }}">&lt;</a></li>
-  {% else %}
-    <li class="disabled"><span>&lt;</span></li>
-  {% endif %}
-
-  {# Page numbers and ellipses #}
-  {% for num in page_obj.paginator.page_range %}
-    {# Show first two pages #}
-    {% if num <= 2 %}
-      {% if num == page_obj.number %}
-        <li class="active"><span>{{ num }}</span></li>
+  {% with request.GET.urlencode as qp %}
+    <ul class="pagination">
+      {# Previous #}
+      {% if page_obj.has_previous %}
+        <li><a href="?{% if qp %}{{ qp }}&{% endif %}page={{ page_obj.previous_page_number }}">&lt;</a></li>
       {% else %}
-        <li><a href="?page={{ num }}">{{ num }}</a></li>
+        <li class="disabled"><span>&lt;</span></li>
       {% endif %}
-    {% elif num > page_obj.paginator.num_pages|add:'-2' %}
-      {# Show last two pages #}
-      {% if num == page_obj.number %}
-        <li class="active"><span>{{ num }}</span></li>
+
+      {# Page nums + ellipses #}
+      {% for num in page_obj.paginator.page_range %}
+
+        {# Show first 2, last 2, current ±1 #}
+        {% if num <= 2 or num > page_obj.paginator.num_pages|add:"-2" or num == page_obj.number or num == page_obj.number|add:"-1" or num == page_obj.number|add:"1" %}
+          
+          {% if num == page_obj.number %}
+            <li class="active"><span>{{ num }}</span></li>
+          {% else %}
+            <li><a href="?{% if qp %}{{ qp }}&{% endif %}page={{ num }}">{{ num }}</a></li>
+          {% endif %}
+
+        {% elif num == 3 and page_obj.number > 4 %}
+          <li class="ellipsis"><span>&hellip;</span></li>
+
+        {% elif num == page_obj.paginator.num_pages|add:"-2" and page_obj.number < page_obj.paginator.num_pages|add:"-3" %}
+          <li class="ellipsis"><span>&hellip;</span></li>
+
+        {% endif %}
+
+      {% endfor %}
+
+      {# Next #}
+      {% if page_obj.has_next %}
+        <li><a href="?{% if qp %}{{ qp }}&{% endif %}page={{ page_obj.next_page_number }}">&gt;</a></li>
       {% else %}
-        <li><a href="?page={{ num }}">{{ num }}</a></li>
+        <li class="disabled"><span>&gt;</span></li>
       {% endif %}
-    {% elif num >= page_obj.number|add:'-1' and num <= page_obj.number|add:'1' %}
-      {# Show current ±1 #}
-      {% if num == page_obj.number %}
-        <li class="active"><span>{{ num }}</span></li>
-      {% else %}
-        <li><a href="?page={{ num }}">{{ num }}</a></li>
-      {% endif %}
-    {% endif %}
-
-    {# Ellipsis before current block #}
-    {% if num == 3 and page_obj.number > 4 %}
-      <li class="ellipsis"><span>&hellip;</span></li>
-    {% endif %}
-
-    {# Ellipsis after current block #}
-    {% if num == page_obj.paginator.num_pages|add:'-2' and page_obj.number < page_obj.paginator.num_pages|add:'-3' %}
-      <li class="ellipsis"><span>&hellip;</span></li>
-    {% endif %}
-  {% endfor %}
-
-  {# Next arrow #}
-  {% if page_obj.has_next %}
-    <li><a href="?page={{ page_obj.next_page_number }}">&gt;</a></li>
-  {% else %}
-    <li class="disabled"><span>&gt;</span></li>
-  {% endif %}
-</ul>
+    </ul>
+  {% endwith %}
 {% endif %}
