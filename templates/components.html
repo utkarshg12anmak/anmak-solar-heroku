@@ -167,19 +167,27 @@
         background-color: var(--status-info);
     }
 
-    /* Table */
+    /* ─── TABLE WRAPPER ───────────────────────────────────────── */
+    .table-responsive {
+        overflow-x: auto;
+        margin-bottom: 1.5rem;
+    }
+
+    /* ─── CENTRALIZED TABLE STYLES ───────────────────────────── */
     .table {
         width: 100%;
         border-collapse: collapse;
-        margin-bottom: 1.5rem;
+        margin: 0;
+        /* spacing now in .table-responsive */
     }
 
     .table th,
     .table td {
         border: 1px solid #ddd;
-        padding: 0.75em;
+        padding: 0.75rem;
         text-align: left;
         font-weight: var(--font-weight-regular);
+        white-space: nowrap;
     }
 
     .table th {
@@ -187,32 +195,45 @@
         font-weight: var(--font-weight-medium);
     }
 
-    /* Pagination */
+    /* ─── PAGINATION STYLES ──────────────────────────────────── */
     .pagination {
-        display: flex;
+        display: inline-flex;
         list-style: none;
         padding: 0;
+        gap: 0.25rem;
     }
 
     .pagination li {
-        margin: 0 0.25em;
+        margin: 0;
     }
 
-    .pagination a {
+    .pagination li a,
+    .pagination li span {
         display: block;
-        padding: 0.5em 0.75em;
+        padding: 0.5rem 0.75rem;
         text-decoration: none;
         border: 1px solid #ddd;
         border-radius: var(--border-radius);
-        color: var(--primary-color);
         font-weight: var(--font-weight-medium);
+        color: var(--primary-color);
     }
 
-    .pagination .active a {
+    .pagination li.active span {
         background-color: var(--primary-color);
         color: #fff;
         border-color: var(--primary-color);
-        font-weight: var(--font-weight-semibold);
+    }
+
+    .pagination li.ellipsis span {
+        pointer-events: none;
+        border-color: transparent;
+        background: transparent;
+        color: var(--text-medium);
+    }
+
+    .pagination li:first-child a,
+    .pagination li:last-child a {
+        font-weight: var(--font-weight-bold);
     }
 
     /* Toast notifications */
