@@ -1,10 +1,7 @@
-<!-- templates/components.html -->
-<!-- Preconnect for Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-<!-- Shared variables, component styles, and utilities -->
 <style>
     :root {
         /* Primary / branding */
@@ -63,6 +60,9 @@
         --btn-scale-hover: 1.02;
         --btn-transition-time: 0.10s;
         --border-radius: 0.5rem;
+
+        --edit-button-color: #f6ad55;
+
     }
 
 
@@ -194,13 +194,14 @@
         border-radius: var(--border-radius);
         margin: 0 auto 1rem;
         width: 100%;
-        
-        /* <-- your X pixels */
+        position: relative;
+        /* Ensures consistent positioning context */
     }
 
     .table {
         width: 100%;
         border-collapse: separate;
+        /* Crucial for sticky positioning */
         border-spacing: 0;
         background: #fff;
     }
@@ -210,15 +211,13 @@
         padding: 0.7rem 1rem;
         text-align: left;
         border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-        background-clip: padding-box;
         white-space: nowrap;
-        /* <-- keep content on one line */
+        /* Keep content on one line */
+        vertical-align: middle;
+        /* FIX #2: Explicitly align all cell content to prevent alignment shifts in sticky columns. */
     }
 
-
     .table th {
-        background-color: var(--dark-bg-color, #1a202c);
-        color: #fff;
         font-weight: var(--font-weight-medium);
     }
 
@@ -239,47 +238,60 @@
         border-bottom-right-radius: var(--border-radius);
     }
 
-    /* Sticky first X and last Y columns */
-    .sticky-left-1 {
+
+    /* ─── STICKY COLUMN & HEADER STYLES (REVISED) ────────────────── */
+
+    /* 1. Make the table header row sticky vertically */
+    .table thead th {
+        position: -webkit-sticky;
+        /* For Safari */
         position: sticky;
-        left: 0;
-        z-index: 3;
-        background: #fff;
+        top: 0;
+        background: var(--dark-bg-color);
+        color: #fff;
+        z-index: 10;
+        /* Ensures header is above scrolling body content */
     }
 
-    .sticky-left-2 {
+    /* 2. Base style for any cell that is part of a sticky column */
+    .sticky-col {
+        position: -webkit-sticky;
+        /* For Safari */
         position: sticky;
-        left: 120px;
+    }
+
+    /* 3. FIX #1: Apply backgrounds contextually to ensure sticky headers keep their dark background. */
+    thead .sticky-col {
+        background: var(--dark-bg-color);
+        /* Keep header background dark */
+        z-index: 11;
+        /* Elevate z-index to slide over other headers */
+    }
+
+    tbody .sticky-col {
+        background: #ffffff;
+        /* Set body cell background to white */
         z-index: 2;
-        background: #fff;
+        /* Position above non-sticky body cells */
     }
 
-    .sticky-right-1 {
-        position: sticky;
-        right: 0;
-        z-index: 3;
-        background: #fff;
+    /* 4. Style for left-sticky columns (for the border) */
+    .sticky-left {
+        border-right: 1px solid rgba(0, 0, 0, 0.15);
     }
 
-    .sticky-right-2 {
-        position: sticky;
-        right: 120px;
-        z-index: 2;
-        background: #fff;
+    /* 5. Style for right-sticky columns (for the border) */
+    .sticky-right {
+        border-left: 1px solid rgba(0, 0, 0, 0.15);
     }
 
     /* ─── PAGINATION STYLES ──────────────────────────────────── */
     .pagination {
         display: flex;
-        /* ensure it’s a flex container */
         justify-content: center;
-        /* center the <li> children */
         width: 100%;
-        /* span the full width of its parent */
         margin: 1rem auto 0;
-        /* top margin, auto horiz to reaffirm centering */
         gap: 0.5rem;
-        /* space between buttons */
         list-style: none;
         padding: 0;
     }
@@ -367,8 +379,6 @@
     }
 
     /* ─── One single “themed” button block ───────────────────────── */
-
-
     .btn {
         --btn-bg: var(--primary-color);
         display: inline-flex;
@@ -380,7 +390,6 @@
         color: #fff;
         background-color: var(--btn-bg);
         border: none;
-        /* Squary-squircle corners */
         border-radius: 0.5rem;
         text-decoration: none;
         cursor: pointer;
@@ -416,23 +425,36 @@
         --btn-bg: var(--success-color);
     }
 
+    .btn-edit {
+        --btn-bg: var(--edit-button-color);
+        padding: 0.35rem 0.75rem;
+        font-size: 0.875rem;
+    }
+
 
     /* Card container with squircle corners */
     .card {
         background-color: #ffffff;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        /* Squircle-style corners */
         border-radius: 1rem;
         padding: 1rem 1rem;
         overflow-x: auto;
     }
+
+    thead th.sticky-col {
+        z-index: 12;
+        /* Slightly higher than normal header z-index */
+    }
+
+    tbody td.sticky-col {
+        z-index: 1;
+    }
 </style>
 
-<!-- Toast container placeholder -->
+
 <div class="toast-container" id="toastContainer"></div>
 
 
-<!-- Shared scripts -->
 <script>
     /**
     * Show an error toast with a close button.
@@ -459,4 +481,57 @@
             }
         });
     }
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Find all tables that have a data-sticky-left or data-sticky-right attribute
+        document.querySelectorAll("table[data-sticky-left], table[data-sticky-right]").forEach(table => {
+            const leftCount = parseInt(table.dataset.stickyLeft, 10) || 0;
+            const rightCount = parseInt(table.dataset.stickyRight, 10) || 0;
+
+            if (leftCount === 0 && rightCount === 0) return;
+
+            const headers = Array.from(table.querySelectorAll("thead th"));
+            const bodyRows = table.querySelectorAll("tbody tr");
+
+            // Calculate and apply positions for left-sticky columns
+            let leftOffset = 0;
+            for (let i = 0; i < leftCount; i++) {
+                const headerCell = headers[i];
+                const currentLeft = leftOffset + "px";
+
+                // Style the header cell
+                headerCell.classList.add("sticky-col", "sticky-left");
+                headerCell.style.left = currentLeft;
+
+                // Style all body cells in this column
+                bodyRows.forEach(row => {
+                    row.children[i].classList.add("sticky-col", "sticky-left");
+                    row.children[i].style.left = currentLeft;
+                });
+
+                leftOffset += headerCell.offsetWidth;
+            }
+
+            // Calculate and apply positions for right-sticky columns
+            let rightOffset = 0;
+            for (let i = headers.length - 1; i >= headers.length - rightCount; i--) {
+                const headerCell = headers[i];
+                const currentRight = rightOffset + "px";
+
+                // Style the header cell
+                headerCell.classList.add("sticky-col", "sticky-right");
+                headerCell.style.right = currentRight;
+
+                // Style all body cells in this column
+                bodyRows.forEach(row => {
+                    row.children[i].classList.add("sticky-col", "sticky-right");
+                    row.children[i].style.right = currentRight;
+                });
+
+                rightOffset += headerCell.offsetWidth;
+            }
+        });
+    });
 </script>
