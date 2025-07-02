@@ -281,19 +281,19 @@
 
   <!-- Quick-range dropdown -->
   <select id="quick-range" name="quick_range" class="filter-input">
-    <option value="today" {% if request.GET.quick_range=='today' %}selected{% endif %}>Today</option>
-    <option value="yesterday" {% if request.GET.quick_range=='yesterday' %}selected{% endif %}>Yesterday</option>
-    <option value="last7" {% if request.GET.quick_range=='last7' %}selected{% endif %}>Last 7 Days</option>
-    <option value="thisMonth" {% if request.GET.quick_range=='thisMonth' %}selected{% endif %}>This Month</option>
+    <option value="today" {% if request.GET.quick_range == 'today' %}selected{% endif %}>Today</option>
+    <option value="yesterday" {% if request.GET.quick_range == 'yesterday' %}selected{% endif %}>Yesterday</option>
+    <option value="last7" {% if request.GET.quick_range == 'last7' %}selected{% endif %}>Last 7 Days</option>
+    <option value="thisMonth" {% if request.GET.quick_range == 'thisMonth' %}selected{% endif %}>This Month</option>
     <option value="" {% if not request.GET.quick_range %}selected{% endif %}>All Dates</option>
   </select>
 
   <div style="display: inline-flex; align-items: center; gap: 0.5rem;">
     <label for="id_connected" style="margin: 0;">Connected?</label>
     <select id="id_connected" name="connected" class="filter-input">
-      <option value="" {% if request.GET.connected=='' %}selected{% endif %}>All</option>
-      <option value="1" {% if request.GET.connected=='1' %}selected{% endif %}>Yes</option>
-      <option value="0" {% if request.GET.connected=='0' %}selected{% endif %}>No</option>
+      <option value="" {% if request.GET.connected == '' %}selected{% endif %}>All</option>
+      <option value="1" {% if request.GET.connected == '1' %}selected{% endif %}>Yes</option>
+      <option value="0" {% if request.GET.connected == '0' %}selected{% endif %}>No</option>
     </select>
 
     <button type="submit" class="btn btn-filter">Filter</button>
@@ -301,6 +301,7 @@
     <button type="button" class="btn btn-filter-reset" onclick="window.location.href='{% url 'interests:list' %}'">
       Reset
     </button>
+
   </div>
  ̰
 
