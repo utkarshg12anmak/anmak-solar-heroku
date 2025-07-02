@@ -217,21 +217,31 @@
       {% endfor %}
     </div>
      <script>
-      window.addEventListener('load', () => {
-        // now that everything is in the DOM, we can see the toasts:
-        console.log(
-          "TOASTS:",
-          [...document.querySelectorAll('#toast-container .toast')].map(t => t.textContent)
-        );
+document.addEventListener('DOMContentLoaded', function() {
+  // This will show a fake notification for testing, even if Django didn't send one.
+  // Remove this after testing!
+  let forceTest = true;
+  if (forceTest && !document.querySelector('#toast-container .toast')) {
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+      toastContainer = document.createElement('div');
+      toastContainer.id = 'toast-container';
+      document.body.appendChild(toastContainer);
+    }
+    let toast = document.createElement('div');
+    toast.className = 'toast toast-success';
+    toast.textContent = 'Test Notification: Toast system is working!';
+    toastContainer.appendChild(toast);
 
-        setTimeout(() => {
-          document.querySelectorAll('#toast-container .toast').forEach(t => {
-            t.classList.add('fade-out');
-            setTimeout(() => t.remove(), 500);
-          });
-        }, 3000);
-      });
-    </script>
+    // Animate and auto-hide like real toasts
+    setTimeout(() => {
+      toast.classList.add('fade-out');
+      setTimeout(() => toast.remove(), 500);
+    }, 3000);
+  }
+});
+</script>
+
   
   {% endif %}
   </main>

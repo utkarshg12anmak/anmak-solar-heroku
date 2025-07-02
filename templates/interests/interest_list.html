@@ -169,7 +169,7 @@
 <script>
   // Only auto-submit **once**, on the very first visit (no filters at all),
   // and only if there’s no toast to show.
-  window.addEventListener('load', function() {
+  document.addEventListener('DOMContentLoaded', function() {
     // 1) if a toast is present, bail
     if (document.querySelector('#toast-container .toast')) {
       return;
@@ -201,10 +201,19 @@
 {% endif %}
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log("DOM READY, toasts:", document.querySelectorAll('#toast-container .toast').length);
+});
+</script>
+
+<script>
   window.addEventListener('load', function() {
     const loader = document.getElementById('page-loader');
     if (loader) loader.style.display = 'none';
   });
 </script>
+
+
+
 
 {% endblock content %}
