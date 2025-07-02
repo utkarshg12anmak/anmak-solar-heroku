@@ -21,6 +21,7 @@ from customers.forms import CustomerForm
 from customers.models import Customer
 from profiles.models import DepartmentMembership
 from django.core.exceptions import PermissionDenied
+from django.db.models import Count, Q
 
 
 from .models import (
@@ -154,6 +155,24 @@ class InterestListView(DepartmentAccessMixin, LoginRequiredMixin, ListView):
             )
             .order_by(*self.ordering)
         )
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Reconstruct the *un‐paginated* filtered queryset:
+        qs = self.get_queryset().order_by()  # drop ordering if you like
+
+        # Use a single aggregate call for all three counts
+        counts = qs.aggregate(
+            total=Count('pk'),
+            connected=Count('pk', filter=Q(is_connected=True)),
+            interested=Count('pk', filter=Q(status__name='Interested')),
+        )
+
+        context['total_records']   = counts['total']
+        context['connected_count'] = counts['connected']
+        context['interested_count']= counts['interested']
+        return context
 
 
 class InterestCreateView(DepartmentAccessMixin, LoginRequiredMixin, CreateView):

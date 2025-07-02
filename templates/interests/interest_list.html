@@ -13,7 +13,7 @@
   <div class="page-title">
     Manage Interests &nbsp;
     <span class="page-subtitle">
-       ({{ page_obj.paginator.count }} total)
+       ( {{ total_records }} Records &bull; {{ connected_count }} Connected &bull; {{ interested_count }} Interested )
     </span>
   </div>
   <a href="{% url 'interests:add' %}" class="btn btn-submit">+ New Interest</a>
