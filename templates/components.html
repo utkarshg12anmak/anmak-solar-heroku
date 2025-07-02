@@ -32,6 +32,30 @@
     --status-info: #3182ce;
   }
 
+    /* Page Title & Subtitle */
+    .page-title {
+        font-size: 1.4rem;        /* same as your page-header__title */
+        font-weight: 2000;          /* semi-bold */
+        color: var(--text-primary);
+        margin: 0 0 0.5rem 0;
+    }
+
+    /* same as page-header__subtitle */    
+    .page-subtitle {
+        font-size: 1.2rem;
+        font-weight: 400;
+        color: var(--text-medium);
+        margin: 0 0 1rem 0;
+        opacity: 80%;
+
+    }
+
+    /* Optional helper if you wrap counts in a span */
+    .page-subtitle .count {
+        font-weight: 500;
+        margin-left: 0.25rem;
+    }
+
   /* Global typography */
   body {
     font-family: 'Inter',
@@ -52,17 +76,6 @@
   }
   strong, b {
     font-weight: var(--font-weight-bold);
-  }
-
-  /* Buttons */
-  .btn-primary {
-    background-color: var(--primary-color);
-    color: #fff;
-    border: none;
-    border-radius: var(--border-radius);
-    padding: 0.5em 1em;
-    cursor: pointer;
-    font-weight: var(--font-weight-medium);
   }
 
   /* Page Header */
@@ -201,6 +214,145 @@
   }
   @keyframes slideIn { to { opacity: 1; transform: translateX(0); } }
   @keyframes fadeOut { to { opacity: 0; transform: translateX(100%); } }
+
+/* Refined Primary Button */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: var(--primary-color);
+  border: none;
+  border-radius: var(--border-radius);
+  text-decoration: none;           /* no underline */
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Hover & Focus State */
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--primary-hover);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  outline: none;
+}
+
+/* Remove underlines on links styled as buttons */
+a.btn-primary {
+  text-decoration: none;
+}
+
+/* Base Button */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border-radius: var(--border-radius);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color .2s, border-color .2s, color .2s;
+}
+
+/* 2. Secondary */
+.btn-secondary {
+  background-color: var(--secondary-color);
+  color: #fff;
+  border-color: var(--secondary-color);
+}
+
+/* 3. Success */
+.btn-success {
+  background-color: #38a169;
+  color: #fff;
+  border-color: #38a169;
+}
+
+/* 4. Danger */
+.btn-danger {
+  background-color: #e53e3e;
+  color: #fff;
+  border-color: #e53e3e;
+}
+
+/* 5. Warning */
+.btn-warning {
+  background-color: #dd6b20;
+  color: #fff;
+  border-color: #dd6b20;
+}
+
+/* 6. Info */
+.btn-info {
+  background-color: #3182ce;
+  color: #fff;
+  border-color: #3182ce;
+}
+
+/* 7. Light */
+.btn-light {
+  background-color: #f7fafc;
+  color: #1a202c;
+  border-color: #e2e8f0;
+}
+
+/* 8. Dark */
+.btn-dark {
+  background-color: #1a202c;
+  color: #fff;
+  border-color: #1a202c;
+}
+
+/* 9. Outline (uses primary) */
+.btn-outline {
+  background-color: transparent;
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+.btn-outline:hover {
+  background-color: var(--primary-color);
+  color: #fff;
+}
+
+/* 10. Ghost (text-only) */
+.btn-ghost {
+  background: none;
+  color: var(--primary-color);
+  border-color: transparent;
+}
+
+/* Extras you might find useful */
+
+/* 11. Pill (rounded capsules) */
+.btn-pill {
+  border-radius: 9999px;
+}
+
+/* 12. Link (unstyled text link) */
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  text-decoration: underline;
+  padding: 0;
+  font-weight: 500;
+}
+
+/* 13. Size modifiers */
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+.btn-lg {
+  padding: 0.75rem 1.5rem;
+  font-size: 1.125rem;
+}
+
 </style>
 
 <!-- Toast container placeholder -->

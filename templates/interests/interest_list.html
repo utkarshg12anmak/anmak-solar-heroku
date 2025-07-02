@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% load static tz %}
 
+{% include "components.html" %}
+
 {% block title %}Manage Interests{% endblock %}
 
 {% block content %}
@@ -114,10 +116,7 @@
     align-items: center;
     margin-bottom: 1.5rem;
   }
-  .page-header h1 {
-    font-size: 1.75rem;
-    color: var(--text-primary);
-  }
+
   .btn-new {
     background-color: var(--primary-color);
     color: #fff;
@@ -127,6 +126,7 @@
     font-weight: 500;
     transition: background 0.2s;
   }
+
   .btn-new:hover { background-color: #2F855A; }
 
   .card {
@@ -212,12 +212,12 @@
 
 <div class="page-header">
   <h1>
-    Interests
-    <small style="color: var(--text-muted); font-weight: normal; margin-left: 0.5rem;">
+    Manage Interests
+    <span class="page-subtitle">
       ({{ page_obj.paginator.count }} total)
-    </small>
+    </span>
   </h1>
-  <a href="{% url 'interests:add' %}" class="btn-new">+ New Interest</a>
+  <a href="{% url 'interests:add' %}" class="btn-primary">+ New Interest</a>
 </div>
 
 <form id="filter-form" method="get" class="filter-bar">
