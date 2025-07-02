@@ -24,6 +24,10 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
 from django.contrib import messages
 
+from django.contrib.messages.views import SuccessMessageMixin
+
+
+
 
 from .models import (
     Interest,
@@ -76,7 +80,7 @@ def adjust_dials(request, pk):
     return JsonResponse({'dials': new_count})
 
 
-class InterestListView(DepartmentAccessMixin, LoginRequiredMixin, ListView):
+class InterestListView( DepartmentAccessMixin, LoginRequiredMixin, ListView):
     model         = Interest
     template_name = "interests/interest_list.html"
     paginate_by   = 10
@@ -176,11 +180,12 @@ class InterestListView(DepartmentAccessMixin, LoginRequiredMixin, ListView):
         return context
 
 
-class InterestCreateView(DepartmentAccessMixin, LoginRequiredMixin, CreateView):
+class InterestCreateView(SuccessMessageMixin, DepartmentAccessMixin, LoginRequiredMixin, CreateView):
     model         = Interest
     form_class    = InterestForm
     template_name = "interests/interest_form.html"
     success_url   = reverse_lazy("interests:list")
+    success_message = "Interest created successfully!"
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
@@ -202,8 +207,9 @@ class InterestCreateView(DepartmentAccessMixin, LoginRequiredMixin, CreateView):
         form.instance.updated_by = self.request.user
 
         response = super().form_valid(form)
-        messages.success(self.request, "✅ Interest created successfully!")
-        return response        
+        #messages.success(self.request, "Interest created successfully!")
+        logger.debug("After form_valid(): messages queue = %r", list(self.request._messages))
+        return response       
 
         
 
@@ -239,11 +245,12 @@ class InterestCustomerCreateView(DepartmentAccessMixin, LoginRequiredMixin, Crea
         return reverse_lazy("interests:edit", args=[interest_pk])
 
 
-class InterestUpdateView(DepartmentAccessMixin, LoginRequiredMixin, UpdateView):
+class InterestUpdateView(SuccessMessageMixin, DepartmentAccessMixin, LoginRequiredMixin, UpdateView):
     model         = Interest
     form_class    = InterestForm
     template_name = "interests/interest_form.html"
     success_url   = reverse_lazy("interests:list")
+    success_message = "Interest updated successfully!"
 
     def get_queryset(self):
         # Join in every FK your template touches in one SQL
@@ -309,8 +316,9 @@ class InterestUpdateView(DepartmentAccessMixin, LoginRequiredMixin, UpdateView):
         if getattr(self.object, 'lead', None):
             return self.render_to_response(self.get_context_data(form=form))
         form.instance.updated_by = self.request.user
-        response = super().form_valid(form)
-        messages.success(self.request, "Interest updated successfully!")
-        return response
 
+        response = super().form_valid(form)
+        #messages.success(self.request, "Interest updated successfully!")
+        logger.debug("After form_valid(): messages queue = %r", list(self.request._messages))
+        return response
 

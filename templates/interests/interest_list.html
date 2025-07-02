@@ -135,77 +135,70 @@
 </div>
 
 <script>
-  // AJAX for dials buttons
-  function getCsrfToken() {
-    return document.querySelector('meta[name="csrf-token"]').content;
-  }
-  document.querySelectorAll('.dial-btn').forEach(btn => {
-    btn.addEventListener('click', async e => {
-      e.preventDefault();
-      const pk = btn.dataset.pk, delta = Number(btn.dataset.delta);
-      try {
-        const res = await fetch("{% url 'interests:adjust_dials' 0 %}".replace('/0/', '/' + pk + '/'), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCsrfToken()
-          },
-          body: JSON.stringify({ delta })
-        });
-        if (!res.ok) throw 0;
-        const data = await res.json();
-        document.getElementById(`dials-count-${pk}`).textContent = data.dials;
-      } catch {
-        alert('Failed to update dials');
-      }
-    });
-  });
-
-  // Quick-range logic
+  // Quick-range dropdown handler (unchanged)
   function fmt(d) {
-    let y = d.getFullYear(), m = (d.getMonth() + 1).toString().padStart(2, '0'),
-      dd = d.getDate().toString().padStart(2, '0');
+    let y = d.getFullYear(),
+        m = String(d.getMonth() + 1).padStart(2, '0'),
+        dd = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${dd}`;
   }
-  const qr = document.getElementById('quick-range'),
-    today = new Date();
-
+  const qr = document.getElementById('quick-range');
   qr.addEventListener('change', () => {
-    let s, e;
+    let s, e, today = new Date();
     switch (qr.value) {
-      case 'today': s = e = new Date(); break;
-      case 'yesterday': s = e = new Date(new Date().setDate(today.getDate() - 1)); break;
-      case 'last7': e = new Date(); s = new Date(new Date().setDate(e.getDate() - 6)); break;
-      case 'thisMonth': e = new Date(); s = new Date(e.getFullYear(), e.getMonth(), 1); break;
+      case 'today':
+        s = e = today; break;
+      case 'yesterday':
+        s = e = new Date(today.setDate(today.getDate() - 1)); break;
+      case 'last7':
+        e = new Date(); s = new Date(e.setDate(e.getDate() - 6)); break;
+      case 'thisMonth':
+        e = new Date(); s = new Date(e.getFullYear(), e.getMonth(), 1); break;
       default:
         document.getElementById('start').value = '';
         document.getElementById('end').value = '';
         return document.getElementById('filter-form').submit();
     }
     document.getElementById('start').value = fmt(s);
-    document.getElementById('end').value = fmt(e);
+    document.getElementById('end').value   = fmt(e);
     document.getElementById('filter-form').submit();
   });
-
-  // Initialize quick-range on load
-  (function () {
-    const start = "{{ request.GET.start }}";
-    const end   = "{{ request.GET.end }}";
-    const quickRange = "{{ request.GET.quick_range }}";
-
-    if (!start && !end && !quickRange) {
-      const today = new Date();
-      const y = today.getFullYear(),
-            m = String(today.getMonth() + 1).padStart(2, '0'),
-            d = String(today.getDate()).padStart(2, '0');
-
-      document.getElementById('start').value = `${y}-${m}-${d}`;
-      document.getElementById('end').value = `${y}-${m}-${d}`;
-      document.getElementById('filter-form').submit();
-    }
-  })();
-
 </script>
+
+{% if not messages %}
+<script>
+  // Only auto-submit **once**, on the very first visit (no filters at all),
+  // and only if there’s no toast to show.
+  window.addEventListener('load', function() {
+    // 1) if a toast is present, bail
+    if (document.querySelector('#toast-container .toast')) {
+      return;
+    }
+
+    // 2) if ANY filter param is already in the URL, bail
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('start')   ||
+        params.has('end')     ||
+        params.has('quick_range') ||
+        params.has('q')       ||
+        params.has('connected')) {
+      return;
+    }
+
+    // 3) otherwise, default to today’s date and submit
+    const today = new Date(),
+          y     = today.getFullYear(),
+          m     = String(today.getMonth()+1).padStart(2,'0'),
+          d     = String(today.getDate()).padStart(2,'0'),
+          start = `${y}-${m}-${d}`,
+          end   = start;
+
+    document.getElementById('start').value = start;
+    document.getElementById('end').value   = end;
+    document.getElementById('filter-form').submit();
+  });
+</script>
+{% endif %}
 
 <script>
   window.addEventListener('load', function() {
