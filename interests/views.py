@@ -81,59 +81,77 @@ class InterestListView(DepartmentAccessMixin, LoginRequiredMixin, ListView):
     ordering      = ['-updated_at']
 
     def get_queryset(self):
-        qs   = Interest.objects.select_related(
-            'created_by','updated_by','lead','status','source','mode'
-        )
-        req  = self.request
+        req = self.request
         user = req.user
-        dept = self.department
-        lvl  = self.user_level
+
+        membership = req.session.get("active_membership")
+        if not membership:
+            raise PermissionDenied()
+
+        dept_id     = membership['department_id']
+        user_level  = membership['level']
+        dept_map    = req.session.get("department_user_map", {})
+         # Normalize level_map keys to strings early
+        level_map = {str(k): v for k, v in dept_map.get(str(dept_id), {}).items()}
 
         filters = Q()
-
-        # 1️⃣ Phone search always applies
         q = req.GET.get('q','').strip()
         if q:
             filters &= Q(phone_number__icontains=q)
 
-        # 2️⃣ Date filtering ONLY if start+end are provided
         start_str = req.GET.get('start')
         end_str   = req.GET.get('end')
         if start_str and end_str:
             try:
                 sd = date.fromisoformat(start_str)
                 ed = date.fromisoformat(end_str)
+                filters &= Q(created_at__date__range=(sd, ed))
             except ValueError:
-                sd = ed = timezone.localdate()
-            filters &= Q(created_at__date__range=(sd, ed))
-        # else: no date filter → show all
+                pass
 
-        # 3️⃣ Connected filter
         conn = req.GET.get('connected')
-        if conn in ('0','1'):
-            filters &= Q(is_connected=(conn=='1'))
+        if conn in ('0', '1'):
+            filters &= Q(is_connected=(conn == '1'))
 
-        # 4️⃣ Dept-level access
-        if lvl == 3:
+        if user_level == 3:
             filters &= Q(created_by_id=user.id)
-        elif lvl == 2:
-            subq = Subquery(
-                DepartmentMembership.objects
-                  .filter(department=dept, level=3)
-                  .values('user_id')
-            )
-            filters &= Q(created_by_id__in=subq) | Q(created_by_id=user.id)
-        elif lvl == 1:
-            subq = Subquery(
-                DepartmentMembership.objects
-                  .filter(department=dept, level__in=[2,3])
-                  .values('user_id')
-            )
-            filters &= Q(created_by_id__in=subq)
+        elif user_level == 2:
+            allowed_users = set(level_map.get('2', [])) | set(level_map.get('3', []))
+            filters &= Q(created_by_id__in=allowed_users)        
+        elif user_level == 1:
+            all_users = set()
+            for lv in ('1', '2', '3'):
+                all_users |= set(level_map.get(lv, []))
+            filters &= Q(created_by_id__in=all_users)
         else:
             raise PermissionDenied()
 
-        return qs.filter(filters).order_by(*self.ordering)
+        print("User:", user.id, user.get_full_name())
+        print("User Level:", user_level)
+        print("Level Map:", level_map)
+        print("All Interest creator IDs:", list(Interest.objects.values_list("created_by_id", flat=True).distinct()))
+
+        if user_level == 2:
+            allowed_users = set(level_map.get(2, [])) | set(level_map.get(3, [])) | {user.id}
+            print("→ L2 allowed_users:", allowed_users)
+
+        elif user_level == 1:
+            all_users = {user.id}
+            for lv in (1, 2, 3):
+                all_users |= set(level_map.get(lv, []))
+            print("→ L1 all_users:", all_users)
+
+
+        return (
+            Interest.objects
+            .filter(filters)
+            .select_related(
+                'created_by', 'updated_by',
+                'lead', 'lead__customer', 'lead__customer__city',
+                'status', 'source', 'mode',
+            )
+            .order_by(*self.ordering)
+        )
 
 
 class InterestCreateView(DepartmentAccessMixin, LoginRequiredMixin, CreateView):
