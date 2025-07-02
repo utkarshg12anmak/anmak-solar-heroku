@@ -291,7 +291,7 @@
         display: flex;
         justify-content: center;
         width: 100%;
-        margin: 1rem auto 0;
+        margin: 0.5rem auto 0;
         gap: 0.5rem;
         list-style: none;
         padding: 0;
@@ -304,18 +304,20 @@
     .pagination li a,
     .pagination li span {
         display: block;
-        padding: 0.5rem 0.75rem;
+        
         text-decoration: none;
         border: 1px solid #ddd;
         border-radius: var(--border-radius);
         font-weight: var(--font-weight-medium);
         color: var(--primary-color);
+        padding: 0.25rem 0.75rem;
     }
 
     .pagination li.active span {
         background-color: var(--primary-color);
         color: #fff;
         border-color: var(--primary-color);
+        padding: 0.25rem 0.75rem;
     }
 
     .pagination li.ellipsis span {
@@ -323,11 +325,13 @@
         border-color: transparent;
         background: transparent;
         color: var(--text-medium);
+        padding: 0.25rem 0.75rem;
     }
 
     .pagination li:first-child a,
     .pagination li:last-child a {
         font-weight: var(--font-weight-bold);
+        padding: 0.25rem 0.75rem;
     }
 
     /* Toast notifications */
