@@ -263,19 +263,18 @@
               </thead>
               <tbody>
               {% for it in q.items.all %}
-                <tr>
-                  <td>{{ forloop.counter }}</td> {# NEW: Display row number #}
-                  <td>{{ it.price_rule.item.product_name }}</td>
-                  <td class="text-right">{{ it.quantity|floatformat:2 }}</td>
-                  <td class="text-right">
-                      {% if it.quantity and it.quantity != 0 %}
-                        ₹{{ it.price_per_item|floatformat:2|intcomma }}
-                      {% else %}
-                        ₹0.00
-                      {% endif %}
-                    </td>
-                  <td class="text-right">₹{{ it.calculated_price|floatformat:2|intcomma }}</td>
-                </tr>
+           <tr
+            data-quantity="{{ it.quantity }}"
+            data-line-total="{{ it.calculated_price }}"
+          >
+            <td>{{ forloop.counter }}</td>
+            <td>{{ it.price_rule.item.product_name }}</td>
+            <td class="text-right">{{ it.quantity|floatformat:2 }}</td>
+            <td class="text-right price-cell"></td>                  {# empty cell for JS to fill #}
+            <td class="text-right">
+              ₹{{ it.calculated_price|floatformat:2|intcomma }}
+            </td>
+          </tr>
               {% endfor %}
               </tbody>
             </table>
@@ -316,15 +315,37 @@
   const quoteModalClose = document.getElementById('quote-modal-close');
 
   document.querySelectorAll('.view-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.id;
-      const tmpl = document.getElementById(`detail-${id}`);
-      if (tmpl) {
-        quoteModalBody.innerHTML = tmpl.innerHTML;
-        quoteModal.classList.add('open'); // Add 'open' class to show modal
-      }
-    });
+  btn.addEventListener('click', () => {
+    const id   = btn.dataset.id;
+    const tmpl = document.getElementById(`detail-${id}`);
+    if (!tmpl) return;
+
+    quoteModalBody.innerHTML = tmpl.innerHTML;
+
+    // --- debug and compute per-item ---
+    quoteModalBody
+      .querySelectorAll('.modal-table tbody tr')
+      .forEach(tr => {
+        const qty   = parseFloat(tr.dataset.quantity)  || 0;
+        const total = parseFloat(tr.dataset.lineTotal) || 0;
+        //console.log("RAW:", { qty, total });           // should show real values
+
+        let per = 0;
+        if (qty > 0) per = total / qty;
+
+        //console.log("DIVIDE:", total, "/", qty, "=", per);
+
+        const cellText = '₹' + Number(per).toLocaleString('en-IN', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+        const cell = tr.querySelector('.price-cell');
+        if (cell) cell.textContent = cellText;
+      });
+
+    quoteModal.classList.add('open');
   });
+});
 
   quoteModalClose.addEventListener('click', () => {
     quoteModal.classList.remove('open'); // Remove 'open' class to hide modal
@@ -348,7 +369,7 @@
 <script>
 document.addEventListener("DOMContentLoaded", function() {
   document.querySelectorAll(".quote-row").forEach(function(row) {
-    console.log(
+    //console.log(
       `Quote ${row.dataset.quoteId}:`,
       {
         selling_price: row.dataset.sellingPrice,
@@ -358,8 +379,7 @@ document.addEventListener("DOMContentLoaded", function() {
         can_approve: row.dataset.canApprove
       }
     );
-  });
-});
+  });//
 </script>
 </div>
 {% endblock %}
