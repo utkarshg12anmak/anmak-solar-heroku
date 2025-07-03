@@ -570,41 +570,99 @@
         background-color: #F56565;
     }
 
-/* container */
-.filter-bar {
-  display: flex;          
-  align-items: center;
-  gap: 1rem;
-  width: 100%;
+    /* container */
+    .filter-bar {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        width: 100%;
+    }
+
+    /* new */
+    .filter-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex: 0 1 auto;
+        /* ← no more grow, only shrink/auto width */
+        min-width: 0;
+        overflow-x: auto;
+    }
+
+
+    /* optional: style or hide the scrollbar */
+    .filter-controls::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .filter-controls::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 3px;
+    }
+
+    /* right side: never scroll, always pinned */
+    .filter-actions {
+        flex: 0 0 auto;
+        /* don’t grow or shrink */
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* focus state */
+.filter-input[type="text"]:focus {
+  outline: none;
+  border-color: #007BFF;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
-/* new */
-.filter-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex: 0 1 auto;   /* ← no more grow, only shrink/auto width */
-  min-width: 0;
-  overflow-x: auto;
+/* placeholder color */
+.filter-input[type="text"]::placeholder {
+  color: #999;
+}
+
+    /* Container: one control with rounded corners */
+.segmented-button {
+  display: inline-flex;
+  border: 1px solid #007bff;
+  border-radius: 6px;
+  overflow: hidden;
+  font-family: sans-serif;
+}
+
+/* Each “button” is really an anchor */
+.segmented-button .seg-btn {
+  display: block;
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  color: #007bff;
+  background: #fff;
+  flex: 1 1 auto;
+  text-align: center;
+  transition: background 0.2s, color 0.2s;
+  border: none;
+  cursor: pointer;    
+  line-height: 1rem;     /* vertically center text */
+}
+
+/* Divider between segments */
+.segmented-button .seg-btn + .seg-btn {
+  border-left: 1px solid #007bff;
+}
+
+/* Hover state (only on non-active) */
+.segmented-button .seg-btn:hover:not(.active) {
+  background: #e6f0ff;
+}
+
+/* Active segment */
+.segmented-button .seg-btn.active {
+  background: #007bff;
+  color: #fff;
+  cursor: default;
 }
 
 
-/* optional: style or hide the scrollbar */
-.filter-controls::-webkit-scrollbar {
-  height: 6px;
-}
-.filter-controls::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 3px;
-}
-
-/* right side: never scroll, always pinned */
-.filter-actions {
-  flex: 0 0 auto;          /* don’t grow or shrink */
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
 
 </style>
 
