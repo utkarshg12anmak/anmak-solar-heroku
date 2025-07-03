@@ -1,24 +1,12 @@
 {% extends "base.html" %}
+{% load static tz %}
+{% load profile_extras %}
 {% load tz %}
 
 {% block content %}
-
+{% include "loader.html" %}
 <style>
-      /* === Page Header === */
-      .page-header {
-        display: flex;
-        align-items: baseline;
-        margin-bottom: 1rem;
-      }
-      .page-title {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin-right: 1rem;
-      }
-      .total-count {
-        font-size: 0.9rem;
-        color: #555;
-      }
+
 
       /* === “Add/Edit Brands” button (blue) === */
       #openBrandModal {
@@ -104,64 +92,6 @@
         vertical-align: middle;
       }
 
-      /* === Table Card (unchanged) === */
-      .table-card {
-        background-color: #fff;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        padding: 1rem;
-        overflow-x: auto;
-        margin-bottom: 2rem;
-      }
-      .items-table {
-        width: 100%;
-        table-layout: auto;
-        border-collapse: collapse;
-      }
-      .items-table th,
-      .items-table td {
-        padding: 0.75rem 1rem;
-        font-size: 0.9rem;
-        color: #333;
-        border-bottom: 1px solid #e5e7eb;
-        text-align: left;
-        vertical-align: middle;
-        white-space: nowrap;
-      }
-      .items-table th {
-        background-color: transparent;
-        font-weight: 600;
-      }
-      .items-table tr:hover td {
-        background-color: #f3f4f6;
-      }
-      .items-table tr:first-child th:first-child {
-        border-top-left-radius: 8px;
-      }
-      .items-table tr:first-child th:last-child {
-        border-top-right-radius: 8px;
-      }
-      .items-table tr:last-child td:first-child {
-        border-bottom-left-radius: 8px;
-      }
-      .items-table tr:last-child td:last-child {
-        border-bottom-right-radius: 8px;
-      }
-      .small-cell {
-        white-space: nowrap;
-        font-size: 0.85rem;
-        color: #555;
-      }
-      .action-btn {
-        margin-right: 0.5rem;
-        font-size: 0.85rem;
-        color: #1d4ed8;
-        text-decoration: none;
-        white-space: nowrap;
-      }
-      .action-btn:hover {
-        text-decoration: underline;
-      }
 
       /* === Overlay for all four modals (hidden by default) === */
       #brandModal,
@@ -323,27 +253,6 @@
         max-width: 95%;    /* ensure it’s still responsive on small screens */
       }
 
-      .btn-edit {
-        background-color: #fbbf24;  /* Tailwind yellow-400 */
-        color: #fff;
-        padding: 0.35rem 0.75rem;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 0.85rem;
-        font-weight: 500;
-        display: inline-flex;
-        align-items: center;
-        transition: background-color 0.2s ease;
-      }
-      .btn-edit:hover {
-        background-color: #f59e0b; /* darker yellow-500 on hover */
-      }
-      .btn-edit svg {
-        margin-right: 0.4rem;
-        vertical-align: middle;
-      }
-
       /* ------------------------------- */
       /* OPTIONAL: Increase width only for Edit‐Item modal (if needed) */
       /* ------------------------------- */
@@ -408,30 +317,6 @@
       cursor: not-allowed;         /* show “not allowed” cursor */
     }
 
-    /* ------------------------------ */
-    /* “+ Item” button – new color    */
-    /* ------------------------------ */
-    .btn-add {
-      background-color: #06b6d4;   /* cyan‐500 */
-      color: #fff;
-      padding: 0.5rem 1.25rem;
-      border: none;
-      border-radius: 9999px;
-      cursor: pointer;
-      font-size: 0.9rem;
-      font-weight: 500;
-      margin-left: 1rem;           /* space after L2 button */
-      transition: background-color 0.2s ease;
-    }
-    .btn-add:hover {
-      background-color: #0891b2;   /* darker cyan‐600 */
-    }
-    .btn-add svg {
-      margin-right: 0.4rem;
-      vertical-align: middle;
-    }
-
-    /* -------------------------------------------------------- */
     /* Grey‐out any <input disabled> or <input readonly> in modal */
     /* -------------------------------------------------------- */
     .modal-content input[disabled],
@@ -541,64 +426,17 @@
       background-color: #d1d5db; /* gray-300 on hover */
     }
 
-        /* Pagination container */
-    .pagination {
-      display: flex;
-      justify-content: center;
-      gap: 0.5rem;
-      margin-top: 1rem;
-      padding: 0;
-      list-style: none;
-    }
-
-    /* Each page item */
-    .pagination li {
-      display: inline;
-    }
-
-    /* Links & spans */
-    .pagination a,
-    .pagination span {
-      display: inline-block;
-      padding: 0.5rem 0.75rem;
-      border-radius: 0.375rem;
-      text-decoration: none;
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: var(--text-primary);
-      background-color: var(--card-bg);
-      border: 1px solid var(--bg-light);
-      transition: background 0.2s, color 0.2s;
-    }
-
-    /* Hover on links */
-    .pagination a:hover {
-      background-color: var(--bg-light);
-    }
-
-    /* Current page */
-    .pagination .active span {
-      background-color: var(--primary-color);
-      color: #fff;
-      border-color: var(--primary-color);
-    }
-
-    /* Disabled prev/next */
-    .pagination .disabled span {
-      opacity: 0.5;
-      cursor: not-allowed;
-      background-color: var(--bg-light);
-    }
-
 </style>
+
+{% include "components.html" %}
+
 
 <!-- ===== Page Header ===== -->
 <div class="page-header">
-  <h1 class="page-title">Items</h1>
-  <p class="total-count">
+  <div class="page-title">Items &nbsp;</div>
+  <div class="page-subtitle">
     {% if total_count == 1 %}(1 Record Found){% else %}({{ total_count }} Records Found){% endif %}
-  </p>
-
+  </div>
 
   {% if can_edit %}
 
@@ -631,12 +469,9 @@
 
   <!-- + Item button (NEW) -->
   {% if can_edit %}
-  <button id="openAddItemModal" class="btn-add">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-    width="16" height="16" fill="#fff" aria-hidden="true" focusable="false">
-    <path d="M12 5a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H6a1 1 0 1 1 0-2h5V6a1 1 0 0 1 1-1z"/>
-  </svg>
-  Item
+  <button id="openAddItemModal" class="btn btn-submit">
+    
+  + Item
 </button>
 {% endif %}
 </div>
@@ -654,11 +489,10 @@
 </form>
 
 <!-- ===== Items Table ===== -->
-<div class="table-card">
+ <div class="card">
+<div class="table-responsive">
 
-
-
-  <table class="items-table">
+  <table class="table" data-sticky-left="2" data-sticky-right="1">
     <thead>
       <tr>
         <th>#</th>
@@ -710,7 +544,7 @@
           {% if can_edit %}
 
           <button
-          class="btn-edit"
+          class="btn btn-edit"
           data-item-id="{{ item.id }}"
           data-item-sku="{{ item.sku }}"
           data-item-name="{{ item.product_name|escape }}"
@@ -725,9 +559,6 @@
           data-item-upcs="{% for u in item.upcs.all %}{{ u.id }}:{{ u.code }}{% if not forloop.last %},{% endif %}{% endfor %}"
           >
           <!-- White pencil icon -->
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="#fff" aria-hidden="true" focusable="false">
-            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/>
-          </svg>
           Edit
         </button>
 
@@ -744,6 +575,8 @@
     {% endfor %}
   </tbody>
 </table>
+</div>
+{% include "includes/pagination.html" with page_obj=page_obj %}
 </div>
 
 <!-- ===== Brand Management Modal (unchanged) ===== -->
@@ -1628,24 +1461,5 @@
   });
 
 </script>
-
-{% if is_paginated %}
-    <div class="pagination">
-      {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}">« Prev</a>
-      {% endif %}
-      {% for num in page_obj.paginator.page_range %}
-        {% if page_obj.number == num %}
-          <span class="current">{{ num }}</span>
-        {% else %}
-          <a href="?page={{ num }}">{{ num }}</a>
-        {% endif %}
-      {% endfor %}
-      {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}">Next »</a>
-      {% endif %}
-    </div>
-  {% endif %}
-
 
 {% endblock %}
