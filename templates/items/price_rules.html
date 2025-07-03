@@ -97,12 +97,12 @@
           
           <td>{% include "components/status_pill.html" with label=rule.get_unit_type_display %}</td>
           
-          <td>{% include "components/profile_pill.html" with name=rule.item.created_by.get_full_name %}</td>
+          <td>{% include "components/profile_pill.html" with name=rule.created_by.get_full_name %}</td>
 
 
           <td>{{ rule.item.created_at|timezone:"Asia/Kolkata"|date:"Y-m-d H:i" }}</td>
           
-          <td>{% include "components/profile_pill.html" with name=rule.item.updated_by.get_full_name %}</td>
+          <td>{% include "components/profile_pill.html" with name=rule.updated_by.get_full_name %}</td>
           <td>{{ rule.item.updated_at|timezone:"Asia/Kolkata"|date:"Y-m-d H:i" }}</td>
           
           

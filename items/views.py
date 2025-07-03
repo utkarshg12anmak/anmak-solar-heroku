@@ -735,5 +735,7 @@ def toggle_price_rule_availability(request, pk):
     payload = json.loads(request.body.decode('utf-8'))
     rule = get_object_or_404(PriceRule, pk=pk)
     rule.available = bool(payload.get('available'))
-    rule.save(update_fields=['available'])
+    rule.updated_by = request.user
+    # 👇 INCLUDE "updated_at" 👇
+    rule.save(update_fields=['available', 'updated_by', 'updated_at'])
     return JsonResponse({'success': True, 'available': rule.available})
