@@ -28,7 +28,7 @@ from django.core.exceptions import PermissionDenied
 
 class CustomerListView(LoginRequiredMixin, ListView):
     model = Customer
-    paginate_by = 15
+    paginate_by = 10
     ordering = ['-updated_at']
 
     def dispatch(self, request, *args, **kwargs):
