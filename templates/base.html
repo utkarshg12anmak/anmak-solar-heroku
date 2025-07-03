@@ -110,6 +110,39 @@
       font-size: 1rem; color: #4a5568;
       margin-bottom: 24px;
     }
+
+    /* 1. Ensure link uses flex alignment */
+    .nav-link {
+      display: inline-flex;       /* or just “flex” if block-level */
+      align-items: center;        /* vertical-center icon + text */
+    }
+
+    /* 2. Make the SVG (via <img>) render white */
+    .nav-icon img {
+      width: 10px;  /* or whatever size you prefer */
+      height: 10px;
+      display: block;             /* kill inline whitespace */
+      /* invert a black SVG to white */
+      filter: brightness(0) invert(1);
+    }
+
+    /* 1. Turn all sidebar links into flex containers */
+    nav a.nav-link {
+      display: flex;            /* block‐level flex so width:100% */
+      align-items: center;      /* vertical center icon + text */
+      gap: 0.75rem;             /* consistent space between icon & label */
+    }
+
+    /* 2. Size and color the icon */
+    nav a.nav-link .nav-icon img {
+      width: 1.15rem;           /* ~20px at base font-size */
+      height: auto;             /* keep aspect ratio */
+      filter: brightness(0) invert(1);  /* turn any dark SVG to white */
+      vertical-align: middle;   /* fallback centering */
+      display: block;           /* remove inline whitespace */
+    }
+
+
   </style>
 </head>
 <body>
@@ -122,8 +155,13 @@
       <ul>
         <li>
           <a href="{% url 'dashboard' %}"
-             class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-            Dashboard
+            class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            <span class="nav-icon">
+              <img src="{% static 'icons/Dashboard.svg' %}"
+                  alt="Dashboard"
+                  aria-hidden="true">
+            </span>
+            <span class="nav-label">Dashboard</span>
           </a>
         </li>
         <li class="has-submenu">

@@ -1,0 +1,14 @@
+{# components/nav_item.html #}
+{% load static %}
+
+<li>
+  <a href="{% url url_name %}"
+     class="nav-link{% if active %} active{% endif %}">
+    <span class="nav-icon">
+      <img src="{% static 'icons/'|add:icon_name|add:'.svg' %}"
+           alt="{{ label }} icon"
+           aria-hidden="true">
+    </span>
+    <span class="nav-label">{{ label }}</span>
+  </a>
+</li>
