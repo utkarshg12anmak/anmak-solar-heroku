@@ -112,29 +112,23 @@
                 {{ interest.mode.name }}
               </span>
             </td>                    
-            <td>
-  <span class="profile-pill">
-    <span class="profile-pill__icon">
-      <!-- SVG code above -->
-       <img src="{% static 'user.svg' %}" alt="User" width="15" height="15" />
+            <td>{% include "components/profile_pill.html" with name=interest.created_by.get_full_name %}</td>
 
-    </span>
-    <span class="profile-pill__name">
-      {{ interest.created_by.get_full_name|short_name }}
-    </span>
-  </span>
-</td>
-
-            <td>{{ interest.created_at|timezone:"Asia/Kolkata"|date:"Y-m-d H:i" }}</td>
-            <td>{{ interest.updated_by.get_full_name }}</td>
+            <td>{{ interest.created_at|timezone:"Asia/Kolkata"|date:"Y-m-d H:i" }}</td>            
+            <td>{% include "components/profile_pill.html" with name=interest.updated_by.get_full_name %}</td>
             <td>{{ interest.updated_at|timezone:"Asia/Kolkata"|date:"Y-m-d H:i" }}</td>
             <td>{{ interest.remarks }}</td>
             <td>
               {% if interest.lead %}{{ interest.lead.pk }}{% else %}&mdash;{% endif %}
             </td>
             <td>
-              {% if interest.lead %}{{ interest.lead.lead_manager.get_full_name }}{% else %}&mdash;{% endif %}
+              {% if interest.lead %}
+              {% include "components/profile_pill.html" with name=interest.lead.lead_manager.get_full_name %}
+              
+              
+              {% else %}&mdash;{% endif %}
             </td>
+            
 
             <td class="dials-cell">
               <button class="dial-btn" data-pk="{{ interest.pk }}" data-delta="-1">−</button>
