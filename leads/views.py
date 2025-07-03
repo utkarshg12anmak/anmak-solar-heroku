@@ -181,7 +181,22 @@ class LeadListView(LoginRequiredMixin, SalesDepartmentAccessMixin, ListView):
             if val:
                 qs = qs.filter(**{field: val})
 
-        return qs
+        # --- now apply the “last‐stage gets only this month” rule ---
+        last_stage = LeadStage.objects.order_by('order').last()
+        if last_stage:
+            today         = timezone.localdate()
+            first_of_month = today.replace(day=1)
+
+            # keep:
+            #  • all leads *not* in last_stage, and
+            #  • only those in last_stage with created_at ≥ first_of_month
+            qs = qs.filter(
+                Q(stage=last_stage, created_at__date__gte=first_of_month)
+                | ~Q(stage=last_stage)
+            )
+
+
+        return qs.order_by(*self.ordering)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
