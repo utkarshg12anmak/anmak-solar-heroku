@@ -476,16 +476,20 @@
 {% endif %}
 </div>
 
-  <form method="get" style="display:flex; gap:.5rem; margin-bottom:1rem;">
-  <input
+  <form class="filter-bar" method="get" style="display:flex; gap:.5rem; margin-bottom:1rem;">
+  <div class="filter-controls">
+    <input
     type="text"
     name="q"
     value="{{ search_query }}"
     placeholder="Search SKU, name, brand, L1 or L2…"
     style="flex:1;max-width:300px;padding:.5rem .75rem;border:1px solid #ccc;border-radius:.375rem;"
   />
-  <button type="submit" style="background:#3182ce;color:#fff;border:none;padding:.5rem 1rem;border-radius:.375rem;">Search</button>
-  <a href="{% url 'items:list' %}" style="background:#e53e3e;color:#fff;padding:.5rem 1rem;border-radius:.375rem;text-decoration:none;">Reset</a>
+  </div>
+  <div class="filter-actions">
+  <button type="submit" class="btn btn-filter">Filter</button>
+  <a href="{% url 'items:list' %}" class="btn btn-filter-reset">Reset</a>
+    </div>
 </form>
 
 <!-- ===== Items Table ===== -->
