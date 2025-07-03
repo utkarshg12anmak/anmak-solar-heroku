@@ -524,7 +524,7 @@
         </td>
         <td class="small-cell">
           {% if item.created_by %}
-          {{ item.created_by.get_full_name|default:item.created_by.username }}
+          {% include "components/profile_pill.html" with name=item.created_by.get_full_name %}</td>
           {% else %}
           &mdash;
           {% endif %}
@@ -534,7 +534,10 @@
         </td>
         <td class="small-cell">
           {% if item.updated_by %}
-          {{ item.updated_by.get_full_name|default:item.updated_by.username }}
+          
+          {% include "components/profile_pill.html" with name=item.updated_by.get_full_name %}</td>
+ 
+          
           {% else %}
           &mdash;
           {% endif %}
