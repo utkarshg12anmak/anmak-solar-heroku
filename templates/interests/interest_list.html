@@ -21,44 +21,47 @@
 
 <form id="filter-form" method="get" class="filter-bar">
   <div class="filter-controls">
-    <input 
-      type="text" name="q" 
-      class="filter-input" 
-      placeholder="Search phone…" 
-      value="{{ request.GET.q }}" />
+    <input
+      type="text"
+      name="q"
+      class="filter-input"
+      placeholder="Search phone…"
+      value="{{ request.GET.q }}"
+    />
 
+    <!-- Quick-range dropdown -->
     <select id="quick-range" name="quick_range" class="filter-input">
-      <option value="today"       {% if request.GET.quick_range == 'today' %}selected{% endif %}>Today</option>
-      <option value="yesterday"   {% if request.GET.quick_range == 'yesterday' %}selected{% endif %}>Yesterday</option>
-      <option value="last7"       {% if request.GET.quick_range == 'last7' %}selected{% endif %}>Last 7 Days</option>
-      <option value="thisMonth"   {% if request.GET.quick_range == 'thisMonth' %}selected{% endif %}>This Month</option>
-      <option value=""            {% if not request.GET.quick_range %}selected{% endif %}>Select Date Range</option>
+      <option value="today"    {% if request.GET.quick_range == 'today'    %}selected{% endif %}>Today</option>
+      <option value="yesterday"{% if request.GET.quick_range == 'yesterday'%}selected{% endif %}>Yesterday</option>
+      <option value="last7"    {% if request.GET.quick_range == 'last7'    %}selected{% endif %}>Last 7 Days</option>
+      <option value="thisMonth"{% if request.GET.quick_range == 'thisMonth'%}selected{% endif %}>This Month</option>
+      <option value=""         {% if not request.GET.quick_range           %}selected{% endif %}>Select Date Range</option>
     </select>
 
-    <label for="id_connected" class="filter-input-label">Connected?</label>
+    <label for="id_connected" class="filter-label">Connected?</label>
     <select id="id_connected" name="connected" class="filter-input">
-      <option value=""  {% if request.GET.connected == '' %}selected{% endif %}>All</option>
-      <option value="1" {% if request.GET.connected == '1' %}selected{% endif %}>Yes</option>
-      <option value="0" {% if request.GET.connected == '0' %}selected{% endif %}>No</option>
+      <option value="" {% if request.GET.connected == '' %}selected{% endif %}>All</option>
+      <option value="1"{% if request.GET.connected == '1' %}selected{% endif %}>Yes</option>
+      <option value="0"{% if request.GET.connected == '0' %}selected{% endif %}>No</option>
     </select>
 
-    {# put any other filters here #}
+    <!-- hidden date-range inputs -->
+    <input type="hidden" name="start" id="start" value="{{ request.GET.start }}">
+    <input type="hidden" name="end"   id="end"   value="{{ request.GET.end }}">
   </div>
 
   <div class="filter-actions">
     <button type="submit" class="btn btn-filter">Filter</button>
-    <button 
-      type="button" 
-      class="btn btn-filter-reset" 
-      onclick="window.location.href='{% url 'interests:list' %}'">
+    <button
+      type="button"
+      class="btn btn-filter-reset"
+      onclick="window.location.href='{% url 'interests:list' %}'"
+    >
       Reset
     </button>
   </div>
-
-  {# hidden date inputs #}
-  <input type="hidden" name="start" id="start" value="{{ request.GET.start }}">
-  <input type="hidden" name="end"   id="end"   value="{{ request.GET.end }}">
 </form>
+
 
 
 

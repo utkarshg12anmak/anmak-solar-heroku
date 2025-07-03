@@ -570,9 +570,10 @@
         background-color: #F56565;
     }
 
-  /* container */
+/* container */
 .filter-bar {
   display: flex;
+  flex-wrap: wrap;         /* allow wrapping onto next line if needed */
   align-items: center;
   gap: 1rem;
   width: 100%;
@@ -583,28 +584,27 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex: 1 1 0;       /* grow, shrink, base=0 so it can overflow */
-  min-width: 0;      /* allows shrink & overflow-x to work */
-  overflow-x: auto;  /* scroll when needed */
+  flex: 1 1 0;             /* grow, shrink, base=0 so it can overflow */
+  min-width: 0;            /* enables shrinking below content size */
+  overflow-x: auto;        /* horizontal scroll when needed */
 }
 
-/* hide scrollbar if you like, or style it */
+/* optional: style or hide the scrollbar */
 .filter-controls::-webkit-scrollbar {
   height: 6px;
 }
 .filter-controls::-webkit-scrollbar-thumb {
-  background: rgba(0,0,0,0.2);
+  background: rgba(0, 0, 0, 0.2);
   border-radius: 3px;
 }
 
 /* right side: never scroll, always pinned */
 .filter-actions {
-  flex: 0 0 auto;  /* don't grow/shrink */
+  flex: 0 0 auto;          /* don’t grow or shrink */
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
-
 </style>
 
 
