@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load tz %}
 {% load profile_extras %}
+{% load inr_filters %}
 
 {% block content %}
 {% include "loader.html" %}
@@ -93,7 +94,8 @@
           <td>{{ rule.item.product_name }}</td>
           
           <td>{% include "components/status_pill.html" with label=rule.price_book %}</td>
-          <td>{{ rule.base_price }}</td>
+          
+          <td>{{ rule.base_price|inr }}</td>
           
           <td>{% include "components/status_pill.html" with label=rule.get_unit_type_display %}</td>
           
