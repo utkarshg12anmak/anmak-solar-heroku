@@ -53,6 +53,8 @@ from .models import Quote, QuoteItem
 from .mixins import LeadAccessMixin
 from profiles.models import DepartmentMembership
 
+from django.db.models import Prefetch
+
 
 
 @login_required
@@ -166,85 +168,120 @@ def soft_delete_quote(request, lead_id, quote_id):
     return JsonResponse({"success": True})
 
 class QuoteApprovalListView(LeadAccessMixin, ListView):
-    template_name = "quotes/approval_list.html"
-    context_object_name = "quotes"
-    paginate_by = 10
+    template_name        = "quotes/approval_list.html"
+    context_object_name  = "quotes"
+    paginate_by          = 10
 
     def dispatch(self, request, *args, **kwargs):
-        # only allow if user is in a Sales or Finance department
+        user = request.user
+
+        # 1) only Sales/Finance may even GET this page:
         if not DepartmentMembership.objects.filter(
-            user=request.user,
+            user=user,
             department__dept_type__name__in=["Sales", "Finance"]
         ).exists():
-            raise PermissionDenied("You do not have permission to view quote approvals.")
+            raise PermissionDenied
+
+        # 2) stash your active_membership (dept_id, level) in session
+        if "active_membership" not in request.session:
+            mem = DepartmentMembership.objects.filter(
+                user=user,
+                department__dept_type__name__in=["Sales", "Finance"]
+            ).first()
+            request.session["active_membership"] = {
+                "department_id":  mem.department_id,
+                "level":          mem.level,
+            }
+
+        # 3) stash all approval limits (per dept, per level) in session
+        if "approval_limit_map" not in request.session:
+            raw = ApprovalLimit.objects.values(
+                "department_id", "level", "max_amount"
+            )
+            limit_map = {}
+            for row in raw:
+                dept = str(row["department_id"])
+                lvl  = str(row["level"])
+                amt  = str(row["max_amount"])   # store as string
+                limit_map.setdefault(dept, {})[lvl] = amt
+            request.session["approval_limit_map"] = limit_map
+
         return super().dispatch(request, *args, **kwargs)
 
-
     def get_queryset(self):
+        # 1) which tab?
         tab = self.request.GET.get("tab", "pending")
 
-        # start from all Quotes on leads this user may access:
-        allowed_leads = self.get_allowed_leads().values_list("pk", flat=True)
-
-        base = (
+        # 2) build your “base” Quote qs with all the joins
+        #    – select_related for every FK you touch in template
+        #    – prefetch_related for the items → price_rule → item chain
+        base_qs = (
             Quote.objects
-                 .select_related("lead", "created_by", "approved_by", "updated_by")
-                 .filter(lead_id__in=allowed_leads)
+                 .select_related(
+                     "lead__lead_manager",
+                     "lead__customer__city",
+                     "created_by",
+                     "approved_by",
+                     "updated_by",
+                 )
+                 .prefetch_related(
+                     Prefetch(
+                         "items",  # `related_name` on QuoteItem
+                         queryset=(
+                             QuoteItem.objects
+                                      .select_related("price_rule__item")
+                         )
+                     )
+                 )
                  .order_by("-updated_at")
         )
 
+        # 3) filter to only the leads this user may access
+        allowed_lead_ids = list(self.get_allowed_leads().values_list("pk", flat=True))
+        qs = base_qs.filter(lead_id__in=allowed_lead_ids)
+
+        # 4) finally, status‐branch by “pending” vs “completed”
         if tab == "completed":
-            return base.filter(status__in=[
+            return qs.filter(status__in=[
                 Quote.STATUS_APPROVED,
                 Quote.STATUS_DECLINED,
                 Quote.STATUS_DELETED,
             ])
-        return base.filter(status=Quote.STATUS_PENDING)
+        return qs.filter(status=Quote.STATUS_PENDING)
+
 
     def get_context_data(self, **kwargs):
         ctx  = super().get_context_data(**kwargs)
         user = self.request.user
         tab  = self.request.GET.get("tab", "pending")
+
         ctx["tab"] = tab
 
+        # grab them out of the session
+        mem     = self.request.session["active_membership"]
+        dept_id = str(mem["department_id"])
+        lvl     = str(mem["level"])
+        limits  = self.request.session["approval_limit_map"]
+
         for quote in ctx["quotes"]:
-            # Re‐compute price_per_item
+            # recompute per-item on the fly
             for item in quote.items.all():
-                cp = item.calculated_price or Decimal("0.00")
-                qty = item.quantity or Decimal("0.00")
-                item.price_per_item = (cp / qty) if qty != 0 else Decimal("0.00")
+                cp  = item.calculated_price or Decimal("0")
+                qty = item.quantity         or Decimal("0")
+                item.price_per_item = (cp / qty) if qty else Decimal("0")
 
-            # Pull membership & init limit
-            membership = DepartmentMembership.objects.filter(
-                user=user,
-                department=quote.lead.department
-            ).first()
-            limit = None
+            # decide if this user may approve/decline
+            allowed = False
 
-            # 1) Under-minimum rule: ONLY L1 may approve if selling < minimum
+            # 1) under-minimum → only L1 may
             if quote.selling_price < quote.minimum_price:
-                allowed = bool(membership and membership.level == 1)
-
-            # 2) Otherwise, normal ApprovalLimit logic
-            elif membership:
-                try:
-                    limit = ApprovalLimit.objects.get(
-                        department=quote.lead.department,
-                        level=membership.level
-                    )
-                except ApprovalLimit.DoesNotExist:
-                    limit = None
-
-                allowed = bool(
-                    limit and
-                    quote.selling_price <= Decimal(limit.max_amount)
-                )
-
-            # 3) Everyone else cannot approve
+                allowed = (lvl == "1")
             else:
-                allowed = False
+                # 2) otherwise check your session-cached limit
+                max_amt = limits.get(dept_id, {}).get(lvl)
+                if max_amt is not None:
+                    allowed = (quote.selling_price <= Decimal(max_amt))
 
-            # Attach flags for template
             quote.can_approve = allowed
             quote.can_decline = allowed
 
