@@ -515,10 +515,13 @@
         <td>{{ forloop.counter }}</td>
         <td>{{ item.sku }}</td>
         <td>{{ item.product_name }}</td>
-        <td>{{ item.brand.name }}</td>
-        <td>{{ item.l1_category.name }}</td>
-        <td>{{ item.l2_category.name }}</td>
-        <td>{{ item.uom.unit_name }}</td>
+        
+        <td>{% include "components/status_pill.html" with label=item.brand%}</td>
+        <td>{% include "components/status_pill.html" with label=item.l1_category%}</td>
+        <td>{% include "components/status_pill.html" with label=item.l2_category%}</td>
+        <td>{% include "components/status_pill.html" with label=item.uom.unit_name%}</td>
+
+        
         <td class="small-cell">
           {% timezone "Asia/Kolkata" %}{{ item.created_at|date:"Y-m-d H:i" }}{% endtimezone %}
         </td>
@@ -1464,5 +1467,5 @@
   });
 
 </script>
-
+{% include "pills.html" %}
 {% endblock %}
