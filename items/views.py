@@ -456,7 +456,7 @@ class PriceRuleListView(ListView):
     model = PriceRule
     template_name = "items/price_rules.html"
     context_object_name = "rules"
-    paginate_by = 25
+    paginate_by = 10
 
     def get_queryset(self):
         qs = super().get_queryset().select_related("item", "price_book")
@@ -550,7 +550,7 @@ class PriceRuleListView(ListView):
     model = PriceRule
     template_name = "items/price_rules.html"
     context_object_name = "rules"
-    paginate_by = 25
+    paginate_by = 10
 
     def get_queryset(self):
         qs = super().get_queryset().select_related("item", "price_book")
