@@ -1,7 +1,8 @@
 {# templates/leads/_lead_table.html #}
 
 <div class="card">
-  <table class="leads-table">
+  <div class="table-responsive">
+  <table class="table" data-sticky-left="2" data-sticky-right="1">
     <thead>
       <tr>
         <th>Lead ID</th>
@@ -45,7 +46,7 @@
         <td>{{ lead.created_by.get_full_name }}</td>
         <td>{{ lead.updated_by.get_full_name }}</td>
         <td>
-          <a href="{% url 'leads:edit' lead.pk %}" class="btn-edit">Edit</a>
+          <a href="{% url 'leads:edit' lead.pk %}" class="btn btn-edit">Edit</a>
         </td>
       </tr>
       {% empty %}
@@ -58,27 +59,8 @@
     </tbody>
   </table>
 
-  {% if is_paginated %}
-  <div class="pagination">
-    {% if page_obj.has_previous %}
-      <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if view_mode %}&view={{ view_mode }}{% endif %}">‹ Prev</a>
-    {% endif %}
 
-    {% for num in page_obj.paginator.page_range %}
-      {% if page_obj.number == num %}
-        <span class="current">{{ num }}</span>
-      {% else %}
-        <a href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if view_mode %}&view={{ view_mode }}{% endif %}">
-          {{ num }}
-        </a>
-      {% endif %}
-    {% endfor %}
-
-    {% if page_obj.has_next %}
-      <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if view_mode %}&view={{ view_mode }}{% endif %}">
-        Next ›
-      </a>
-    {% endif %}
-  </div>
-  {% endif %}
+</div>
+{% include "includes/pagination.html" with page_obj=page_obj %}
+</div>
 </div>
