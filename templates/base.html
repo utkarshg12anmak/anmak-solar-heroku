@@ -221,8 +221,15 @@
         </li>
         <li>
           <a href="{% url 'expenses:list' %}"
-             class="{% if request.resolver_match.namespace == 'expenses' %}active{% endif %}">
-            Expenses
+             class="nav-link {% if request.resolver_match.namespace == 'expenses' %}active{% endif %}">
+             <span class="nav-icon">
+             <img src="{% static 'icons/Expenses.svg' %}"
+                  alt="Expenses"
+                  aria-hidden="true">
+                  </span>
+                  <span class="nav-label">
+            Expenses 
+            </span> 
           </a>
         </li>
       </ul>
