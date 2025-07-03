@@ -20,11 +20,13 @@ from leads.utils import allocate_lead_to_user
 
 logger = logging.getLogger(__name__)
 
-from django.db.models import Q,Sum
+from django.contrib.auth import get_user_model
+from django.db.models import Q, Sum, Prefetch
 from .models import Customer, City
 
 from django.core.exceptions import PermissionDenied
 
+User = get_user_model()
 
 class CustomerListView(LoginRequiredMixin, ListView):
     model = Customer
@@ -32,37 +34,36 @@ class CustomerListView(LoginRequiredMixin, ListView):
     ordering = ['-updated_at']
 
     def dispatch(self, request, *args, **kwargs):
-        user = request.user
-        # Make sure they’re in at least one of the city M2Ms
-        allowed = City.objects.filter(
-            Q(view_only_users=user) | Q(view_edit_users=user)
-        ).exists()
+        allowed = request.session.get('viewable_city_ids')
         if not allowed:
-            raise PermissionDenied
+            # one-time check
+            if not City.objects.filter(
+                Q(view_only_users=request.user) |
+                Q(view_edit_users=request.user)
+            ).exists():
+                raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         user = self.request.user
-
-        # Restrict to only cities they belong to:
-        allowed_cities = City.objects.filter(
-            Q(view_only_users=user) | Q(view_edit_users=user)
-        ).values_list('pk', flat=True)
-
-        qs = super().get_queryset().select_related(
-            'city', 'source', 'created_by', 'updated_by'
-        ).filter(city_id__in=allowed_cities)
-
-        # quick‐search
-        q = self.request.GET.get('q', '').strip()
-        if q:
-            qs = qs.filter(
-                Q(first_name__icontains=q) |
-                Q(last_name__icontains=q) |
-                Q(primary_phone__icontains=q)
+        allowed = self.request.session.get('viewable_city_ids')
+        if not allowed:
+            allowed = list(
+                City.objects
+                    .filter(Q(view_only_users=user) | Q(view_edit_users=user))
+                    .values_list('pk', flat=True)
             )
-        return qs
+            self.request.session['viewable_city_ids'] = allowed
 
+        return (
+            Customer.objects
+            .filter(city_id__in=allowed)
+            .select_related('city', 'source', 'created_by', 'updated_by')
+            .prefetch_related(
+                'city__view_edit_users',
+                'city__view_only_users',
+            )
+        )
 
 class CustomerCreateView(LoginRequiredMixin, CreateView):
     model = Customer
