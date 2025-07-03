@@ -15,6 +15,8 @@ from django.http import JsonResponse
 from profiles.models import DepartmentMembership
 from django.utils import timezone
 
+from .models import PriceRule
+
 
 
 
@@ -461,7 +463,17 @@ class PriceRuleListView(ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        qs = super().get_queryset().select_related("item", "price_book")
+        qs = super().get_queryset() \
+            .select_related(
+                "item",
+                "price_book",
+                "created_by",
+                "updated_by",
+                "item__brand",
+                "item__l1_category",
+                "item__l2_category",
+                "item__uom"
+            )
         q = self.request.GET.get("q", "").strip()
         if q:
             from django.db.models import Q
@@ -474,11 +486,11 @@ class PriceRuleListView(ListView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        # total_count if you like:
-        ctx["total_count"] = self.get_queryset().count()
-        # echo back our search string
+        ctx["total_count"] = ctx["paginator"].count if "paginator" in ctx else self.get_queryset().count()
         ctx["search_query"] = self.request.GET.get("q", "")
         return ctx
+
+
 
 
 class PriceRuleCreateView(CreateView):

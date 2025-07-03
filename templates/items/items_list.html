@@ -7,92 +7,6 @@
 {% include "loader.html" %}
 <style>
 
-
-      /* === “Add/Edit Brands” button (blue) === */
-      #openBrandModal {
-        margin-left: auto;
-        background-color: #2563eb;
-        color: #fff;
-        padding: 0.5rem 1.25rem;
-        border: none;
-        border-radius: 9999px;
-        cursor: pointer;
-        font-size: 0.9rem;
-        font-weight: 500;
-        transition: background-color 0.2s ease;
-      }
-      #openBrandModal:hover {
-        background-color: #1e40af;
-      }
-      #openBrandModal svg {
-        margin-right: 0.5rem;
-        vertical-align: middle;
-      }
-
-      /* === “Add/Edit UOMs” button (green) === */
-      #openUOMModal {
-        background-color: #10b981;
-        color: #fff;
-        padding: 0.5rem 1.25rem;
-        border: none;
-        border-radius: 9999px;
-        cursor: pointer;
-        font-size: 0.9rem;
-        font-weight: 500;
-        margin-left: 1rem;
-        transition: background-color 0.2s ease;
-      }
-      #openUOMModal:hover {
-        background-color: #047857;
-      }
-      #openUOMModal svg {
-        margin-right: 0.5rem;
-        vertical-align: middle;
-      }
-
-      /* === “Add/Edit L1 Categories” button (purple) === */
-      #openL1Modal {
-        background-color: #8b5cf6;
-        color: #fff;
-        padding: 0.5rem 1.25rem;
-        border: none;
-        border-radius: 9999px;
-        cursor: pointer;
-        font-size: 0.9rem;
-        font-weight: 500;
-        margin-left: 1rem;
-        transition: background-color 0.2s ease;
-      }
-      #openL1Modal:hover {
-        background-color: #7c3aed;
-      }
-      #openL1Modal svg {
-        margin-right: 0.5rem;
-        vertical-align: middle;
-      }
-
-      /* === “Add/Edit L2 Categories” button (orange) === */
-      #openL2Modal {
-        background-color: #f97316;  /* Tailwind orange-500 */
-        color: #fff;
-        padding: 0.5rem 1.25rem;
-        border: none;
-        border-radius: 9999px;
-        cursor: pointer;
-        font-size: 0.9rem;
-        font-weight: 500;
-        margin-left: 1rem;
-        transition: background-color 0.2s ease;
-      }
-      #openL2Modal:hover {
-        background-color: #ea580c;  /* Tailwind orange-600 */
-      }
-      #openL2Modal svg {
-        margin-right: 0.5rem;
-        vertical-align: middle;
-      }
-
-
       /* === Overlay for all four modals (hidden by default) === */
       #brandModal,
       #uomModal,
@@ -433,33 +347,35 @@
 
 <!-- ===== Page Header ===== -->
 <div class="page-header">
-  <div class="page-title">Items &nbsp;</div>
+  <div class="page-title">Items &nbsp;
   <div class="page-subtitle">
     {% if total_count == 1 %}(1 Record Found){% else %}({{ total_count }} Records Found){% endif %}
+  </div>
   </div>
 
   {% if can_edit %}
 
+  <div class = "action-cell">
   <!-- Brand, UOM, L1, and L2 buttons -->
-  <button id="openBrandModal" class="btn-primary">
+  <button id="openBrandModal" class="btn btn-indigo">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="#fff" aria-hidden="true" focusable="false">
       <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/>
     </svg>
     Brands
   </button>
-  <button id="openUOMModal">
+  <button id="openUOMModal" class="btn btn-rose">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="#fff" aria-hidden="true" focusable="false">
       <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/>
     </svg>
-    UOMs
+     UOMs
   </button>
-  <button id="openL1Modal">
+  <button id="openL1Modal" class="btn btn-yellow">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="#fff" aria-hidden="true" focusable="false">
       <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/>
     </svg>
     L1 Categories
   </button>
-  <button id="openL2Modal">
+  <button id="openL2Modal" class="btn btn-slate">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="#fff" aria-hidden="true" focusable="false">
       <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/>
     </svg>
@@ -469,12 +385,15 @@
 
   <!-- + Item button (NEW) -->
   {% if can_edit %}
-  <button id="openAddItemModal" class="btn btn-submit">
-    
+  <button id="openAddItemModal" class="btn btn-submit">    
   + Item
 </button>
 {% endif %}
+
 </div>
+</div>
+
+
 
   <form class="filter-bar" method="get" style="display:flex; gap:.5rem; margin-bottom:1rem;">
   <div class="filter-controls">
@@ -522,7 +441,7 @@
         
         <td>{% include "components/status_pill.html" with label=item.brand%}</td>
         <td>{% include "components/status_pill.html" with label=item.l1_category%}</td>
-        <td>{% include "components/status_pill.html" with label=item.l2_category%}</td>
+        <td>{% include "components/status_pill.html" with label=item.l2_category.name%}</td>
         <td>{% include "components/status_pill.html" with label=item.uom.unit_name%}</td>
 
         
