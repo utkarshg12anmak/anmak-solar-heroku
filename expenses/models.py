@@ -3,6 +3,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
+from oms_project.storage_backends import MediaStorage  # import custom S3 storage
 
 class ExpenseRole(models.Model):
     class Role(models.TextChoices):
@@ -127,10 +128,11 @@ class Expense(models.Model):
 
     attachment = models.FileField(
         upload_to="expenses/%Y/%m/%d/",
+        storage=MediaStorage(),    # ← THIS sends uploads to S3, just like your working example!
         null=True,
         blank=True,
         help_text="Upload a PDF/PNG/JPG (max 10 MB)."
-    )
+    )    
 
     def clean(self):
         from django.core.exceptions import ValidationError
