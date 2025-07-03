@@ -100,10 +100,10 @@
           <td>{% include "components/profile_pill.html" with name=rule.created_by.get_full_name %}</td>
 
 
-          <td>{{ rule.item.created_at|timezone:"Asia/Kolkata"|date:"Y-m-d H:i" }}</td>
+          <td>{{ rule.created_at|timezone:"Asia/Kolkata"|date:"Y-m-d H:i" }}</td>
           
           <td>{% include "components/profile_pill.html" with name=rule.updated_by.get_full_name %}</td>
-          <td>{{ rule.item.updated_at|timezone:"Asia/Kolkata"|date:"Y-m-d H:i" }}</td>
+          <td>{{ rule.updated_at|timezone:"Asia/Kolkata"|date:"Y-m-d H:i" }}</td>
           
           
           <td style="text-align: center;">

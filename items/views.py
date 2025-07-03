@@ -13,6 +13,8 @@ from django.views.decorators.http import require_POST
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.http import JsonResponse
 from profiles.models import DepartmentMembership
+from django.utils import timezone
+
 
 
 
@@ -736,6 +738,6 @@ def toggle_price_rule_availability(request, pk):
     rule = get_object_or_404(PriceRule, pk=pk)
     rule.available = bool(payload.get('available'))
     rule.updated_by = request.user
-    # 👇 INCLUDE "updated_at" 👇
+    rule.updated_at = timezone.now()  # 👈 Add this line!
     rule.save(update_fields=['available', 'updated_by', 'updated_at'])
     return JsonResponse({'success': True, 'available': rule.available})
