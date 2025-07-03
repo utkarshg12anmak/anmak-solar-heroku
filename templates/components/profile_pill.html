@@ -2,6 +2,8 @@
 
 {% load static %}
 
+
+{% if name %}
 <span class="profile-pill">
   <span class="profile-pill__icon">
     <img src="{% static 'user.svg' %}" alt="User" width="15" height="15" />
@@ -10,3 +12,4 @@
     {{ name }}
   </span>
 </span>
+{% endif %}
