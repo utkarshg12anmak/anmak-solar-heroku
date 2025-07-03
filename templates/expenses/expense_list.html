@@ -35,8 +35,8 @@
           <th>Updated By</th>
           <th>Updated At</th>
           <th>Remarks</th>
-          <th>Actions</th>
           <th>Attachment</th>
+          <th>Actions</th>          
         </tr>
       </thead>
       <tbody>
@@ -74,16 +74,17 @@
           </td>
           <td>{{ e.remarks|truncatechars:20 }}</td>
           <td>
-            <a href="{% url 'expenses:detail' e.pk %}" class="btn btn-view">View</a>
-            <a href="{% url 'expenses:edit' e.pk %}"  class="btn btn-edit">Edit</a>
-          </td>
-          <td>
             {% if e.attachment %}
               <a href="{{ e.attachment.url }}" class='btn btn-decline' target="_blank">Download</a>
             {% else %}
               
             {% endif %}
           </td>
+          <td>
+            <a href="{% url 'expenses:detail' e.pk %}" class="btn btn-view">View</a>
+            <a href="{% url 'expenses:edit' e.pk %}"  class="btn btn-edit">Edit</a>
+          </td>
+
         </tr>
         {% empty %}
         <tr>
