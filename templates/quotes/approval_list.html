@@ -142,7 +142,7 @@
           <tr>
             <th>Quote&nbsp;ID</th>
             <th>Status</th>
-            <th>Lead</th>
+            <th>Lead Details</th>
             <th class="text-right">Amount&nbsp;(₹)</th>
             <th>Created&nbsp;By</th>
             <th>Created&nbsp;At</th>
@@ -152,7 +152,7 @@
           <tr>
             <th>Quote&nbsp;ID</th>
             <th>Status</th>
-            <th>Lead</th>
+            <th>Lead Detail</th>
             <th class="text-right">Amount&nbsp;(₹)</th>
             <th>Created&nbsp;By</th>
             <th>Created&nbsp;At</th>
@@ -181,10 +181,23 @@
           <td>{{ q.get_status_display }}</td>
 
           <td>
-            <a href="{% url 'leads:edit' q.lead.pk %}" target="_blank" class="table-link">
-              #{{ q.lead.pk }}
-            </a>
-          </td>
+  <div class="lead-summary">
+        
+    <span>{{ q.lead.lead_manager.get_full_name }}</span>
+    <span class="bullet"></span>
+    <span>{{ q.lead.system_size }} kW</span>
+    <span class="bullet"></span>
+    <span>{{ q.lead.get_grid_type_display }}</span>
+    <span class="bullet"></span>
+    <span>{{ q.lead.get_system_type_display }}</span>
+    <span class="bullet"></span>
+    <span>{{ q.lead.customer.city.name }}</span>
+    <a href="{% url 'leads:edit' q.lead.pk %}" target="_blank">
+      (#{{ q.lead.id }})
+    </a>
+  </div>
+</td>
+
 
           <td class="text-right">₹{{ q.selling_price|floatformat:2|intcomma }}</td>
           <td>{{ q.created_by.get_full_name }}</td>
