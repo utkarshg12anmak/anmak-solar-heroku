@@ -572,22 +572,22 @@
 
 /* container */
 .filter-bar {
-  display: flex;
-  flex-wrap: wrap;         /* allow wrapping onto next line if needed */
+  display: flex;          
   align-items: center;
   gap: 1rem;
   width: 100%;
 }
 
-/* left side: scrollable if too wide */
+/* new */
 .filter-controls {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex: 1 1 0;             /* grow, shrink, base=0 so it can overflow */
-  min-width: 0;            /* enables shrinking below content size */
-  overflow-x: auto;        /* horizontal scroll when needed */
+  flex: 0 1 auto;   /* ← no more grow, only shrink/auto width */
+  min-width: 0;
+  overflow-x: auto;
 }
+
 
 /* optional: style or hide the scrollbar */
 .filter-controls::-webkit-scrollbar {
@@ -605,6 +605,7 @@
   align-items: center;
   gap: 0.5rem;
 }
+
 </style>
 
 
