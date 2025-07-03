@@ -72,6 +72,26 @@
       transform: rotate(90deg);
     }
 
+    /* 2) Remove any old float/transform on the ::after */
+.has-submenu > a::after {
+  content: none;
+}
+
+/* 3) Re-define the arrow as a flex item that auto-margins itself right */
+.has-submenu > a.nav-link::after {
+  content: '▸';
+  margin-left: auto;     /* pushes the arrow to the far right */
+  padding-left: 0.5rem;  /* gap between label and arrow */
+  color: currentColor;   /* inherit the link’s color */
+  transition: transform 0.2s;
+}
+
+/* 4) Rotate on open/hover */
+.has-submenu.open > a.nav-link::after,
+.has-submenu:hover > a.nav-link::after {
+  transform: rotate(90deg);
+}
+
     .bottom-group { margin-top: auto; }
     .profile { display: flex; align-items: center; gap: 12px; }
     .avatar {
@@ -135,8 +155,8 @@
 
     /* 2. Size and color the icon */
     nav a.nav-link .nav-icon img {
-      width: 1.15rem;           /* ~20px at base font-size */
-      height: auto;             /* keep aspect ratio */
+      width: 1.25rem;              /* exactly the img’s width */
+      height: 1.25rem;             /* match width for a square flex-box */
       filter: brightness(0) invert(1);  /* turn any dark SVG to white */
       vertical-align: middle;   /* fallback centering */
       display: block;           /* remove inline whitespace */
@@ -203,7 +223,15 @@
           </ul>
         </li>
         <li class="has-submenu">
-          <a href="javascript:void(0);">Inventory</a>
+          <a href="javascript:void(0);"
+            class="nav-link">  
+            <span class="nav-icon">
+              <img src="{% static 'icons/Inventory.svg' %}"
+                  alt="Inventory"
+                  aria-hidden="true">
+            </span>
+            <span class="nav-label">Inventory</span>
+          </a>
           <ul class="submenu">
             <li>
               <a href="{% url 'items:list' %}"
