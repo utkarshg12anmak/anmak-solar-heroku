@@ -305,7 +305,7 @@
     .pagination li a,
     .pagination li span {
         display: block;
-        
+
         text-decoration: none;
         border: 1px solid #ddd;
         border-radius: var(--border-radius);
@@ -457,21 +457,21 @@
         z-index: 1;
     }
 
-.dial-btn {
-    width: 28px;
-    height: 28px;
-    border: none;
-    border-radius: 4px;
-    background: #edf2f7;
-    color: #2d3748;
-    font-size: 1rem;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s;
-    line-height: 1;
-}
+    .dial-btn {
+        width: 28px;
+        height: 28px;
+        border: none;
+        border-radius: 4px;
+        background: #edf2f7;
+        color: #2d3748;
+        font-size: 1rem;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+        line-height: 1;
+    }
 
 
     .status-pill {
@@ -487,18 +487,19 @@
         background-color: #2563eb;
     }
 
-.dials-cell {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+    .dials-cell {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
 
-  /* ↑ HORIZONTAL (left/right) padding stays the same, bump the vertical: */
-  padding: 10rem 10rem;      /* 1rem top/bottom, 0.75rem left/right */
-  background: #f7fafc;
-  border-radius: 6px;
-  border: none !important;
-}
+        /* ↑ HORIZONTAL (left/right) padding stays the same, bump the vertical: */
+        padding: 10rem 10rem;
+        /* 1rem top/bottom, 0.75rem left/right */
+        background: #f7fafc;
+        border-radius: 6px;
+        border: none !important;
+    }
 
 
 
@@ -526,48 +527,83 @@
         cursor: not-allowed;
     }
 
-.dial-count {
-    min-width: 1.5ch;
-    text-align: center;
-    font-weight: 600;
-    color: #2d3748;
-    font-size: 0.9rem;
+    .dial-count {
+        min-width: 1.5ch;
+        text-align: center;
+        font-weight: 600;
+        color: #2d3748;
+        font-size: 0.9rem;
+    }
+
+    .filter-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 1rem;
+        margin-bottom: 1rem;
+        align-items: center;
+    }
+
+    .filter-input {
+        flex: 0 0 300px;
+        max-width: 220px;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #cbd5e0;
+        border-radius: 0.375rem;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+        font-size: 1rem;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #fff;
+    }
+
+    .status-badge.connected {
+        background-color: #48BB78;
+    }
+
+    .status-badge.disconnected {
+        background-color: #F56565;
+    }
+
+  /* container */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
 }
 
- .filter-bar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1rem;
-    margin-bottom: 1rem;
-    align-items: center;
-  }
+/* left side: scrollable if too wide */
+.filter-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 0;       /* grow, shrink, base=0 so it can overflow */
+  min-width: 0;      /* allows shrink & overflow-x to work */
+  overflow-x: auto;  /* scroll when needed */
+}
 
-  .filter-input {
-    flex: 0 0 300px;
-    max-width: 220px;
-    padding: 0.5rem 0.75rem;
-    border: 1px solid #cbd5e0;
-    border-radius: 0.375rem;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
-    font-size: 1rem;
-  }
+/* hide scrollbar if you like, or style it */
+.filter-controls::-webkit-scrollbar {
+  height: 6px;
+}
+.filter-controls::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.2);
+  border-radius: 3px;
+}
 
-  .status-badge {
-    display: inline-block;
-    padding: 0.25rem 0.5rem;
-    border-radius: 9999px;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #fff;
-  }
-
-  .status-badge.connected {
-    background-color: #48BB78;
-  }
-
-  .status-badge.disconnected {
-    background-color: #F56565;
-  }
+/* right side: never scroll, always pinned */
+.filter-actions {
+  flex: 0 0 auto;  /* don't grow/shrink */
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
 
 </style>
 
