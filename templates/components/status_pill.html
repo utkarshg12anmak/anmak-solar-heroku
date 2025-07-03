@@ -1,0 +1,12 @@
+{# components/status_pill.html #}
+{# <pre>DEBUG label="{{ label|default:'<empty>' }}"</pre> #}
+{% if label %}
+  <span class="status-pill"
+        data-status="{{ label|slugify }}">
+    {{ label }}
+  </span>
+  {# SPP: status pill include #}
+
+
+
+{% endif %}

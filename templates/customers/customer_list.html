@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static tz %}
+{% load profile_extras %}
 
 {% include "components.html" %}
 
@@ -92,14 +93,21 @@
         <td>{{ customer.first_name }}{% if customer.last_name %}&nbsp;{{ customer.last_name }}{% endif %}</td>
         <td>{{ customer.primary_phone }}</td>
         <td>{{ customer.secondary_phone|default:"—" }}</td>
-        <td>{{ customer.city.name }}</td>
-        <td>{{ customer.source.name }}</td>
+        
+
+        <td>{% include "components/status_pill.html" with label=customer.city %}</td>        
+        <td>{% include "components/status_pill.html" with label=customer.source %}</td>
         
         <!-- audit -->
         <td>{{ customer.created_at|date:"Y-m-d H:i" }}</td>
-        <td>{{ customer.created_by.get_full_name }}</td>
+        
+
+        <td>{% include "components/profile_pill.html" with name=customer.created_by.get_full_name %}</td>
+
         <td>{{ customer.updated_at|date:"Y-m-d H:i" }}</td>
-        <td>{{ customer.updated_by.get_full_name }}</td>
+
+        <td>{% include "components/profile_pill.html" with name=customer.updated_by.get_full_name %}</td>
+        
 
         <td>
           {% if request.user in customer.city.view_edit_users.all %}
@@ -125,4 +133,6 @@
 </div>
 
 </div>
+
+{% include "pills.html" %}
 {% endblock %}
