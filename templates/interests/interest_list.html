@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 {% load static tz %}
+{% load profile_extras %}
+
 
 {% include "components.html" %}
 
@@ -105,8 +107,24 @@
                 {{ interest.source.name}}
               </span>
             </td>
-            <td>{{ interest.mode.name }}</td>
-            <td>{{ interest.created_by.get_full_name }}</td>
+            <td>
+              <span class="status-pill" data-status="{{ interest.mode.name |slugify }}">
+                {{ interest.mode.name }}
+              </span>
+            </td>                    
+            <td>
+  <span class="profile-pill">
+    <span class="profile-pill__icon">
+      <!-- SVG code above -->
+       <img src="{% static 'user.svg' %}" alt="User" width="15" height="15" />
+
+    </span>
+    <span class="profile-pill__name">
+      {{ interest.created_by.get_full_name|short_name }}
+    </span>
+  </span>
+</td>
+
             <td>{{ interest.created_at|timezone:"Asia/Kolkata"|date:"Y-m-d H:i" }}</td>
             <td>{{ interest.updated_by.get_full_name }}</td>
             <td>{{ interest.updated_at|timezone:"Asia/Kolkata"|date:"Y-m-d H:i" }}</td>
