@@ -438,6 +438,35 @@
         font-size: 0.875rem;
     }
 
+    .btn-approve {
+        --btn-bg: var(--success-color);
+        padding: 0.35rem 0.75rem;
+        font-size: 0.875rem;
+    }
+
+    .btn-decline {
+        --btn-bg: var(--danger-color);
+        padding: 0.35rem 0.75rem;
+        font-size: 0.875rem;
+    }
+
+    .btn-group {
+        display: inline-flex;
+        /* lay children out in a row */
+        align-items: center;
+        /* vertical-center them */
+        gap: 0.5rem;
+        /* space between buttons */
+        white-space: nowrap;
+        /* prevent wrapping to next line */
+        margin-left: auto;  /* ← this moves it to the far right */
+        float: right;
+    }
+
+    .btn-group .btn {
+        margin: 0;
+        /* reset any default margins */
+    }
 
     /* Card container with squircle corners */
     .card {
@@ -610,60 +639,142 @@
     }
 
     /* focus state */
-.filter-input[type="text"]:focus {
-  outline: none;
-  border-color: #007BFF;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-}
+    .filter-input[type="text"]:focus {
+        outline: none;
+        border-color: #007BFF;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    }
 
-/* placeholder color */
-.filter-input[type="text"]::placeholder {
-  color: #999;
-}
+    /* placeholder color */
+    .filter-input[type="text"]::placeholder {
+        color: #999;
+    }
 
     /* Container: one control with rounded corners */
-.segmented-button {
-  display: inline-flex;
-  border: 1px solid #007bff;
-  border-radius: 6px;
-  overflow: hidden;
-  font-family: sans-serif;
-}
+    .segmented-button {
+        display: inline-flex;
+        border: 1px solid #007bff;
+        border-radius: 6px;
+        overflow: hidden;
+        font-family: sans-serif;
+    }
 
-/* Each “button” is really an anchor */
-.segmented-button .seg-btn {
-  display: block;
-  padding: 0.5rem 1rem;
-  text-decoration: none;
-  color: #007bff;
-  background: #fff;
-  flex: 1 1 auto;
-  text-align: center;
-  transition: background 0.2s, color 0.2s;
-  border: none;
-  cursor: pointer;    
-  line-height: 1rem;     /* vertically center text */
-}
+    /* Each “button” is really an anchor */
+    .segmented-button .seg-btn {
+        display: block;
+        padding: 0.5rem 1rem;
+        text-decoration: none;
+        color: #007bff;
+        background: #fff;
+        flex: 1 1 auto;
+        text-align: center;
+        transition: background 0.2s, color 0.2s;
+        border: none;
+        cursor: pointer;
+        line-height: 1rem;
+        /* vertically center text */
+    }
 
-/* Divider between segments */
-.segmented-button .seg-btn + .seg-btn {
-  border-left: 1px solid #007bff;
-}
+    /* Divider between segments */
+    .segmented-button .seg-btn+.seg-btn {
+        border-left: 1px solid #007bff;
+    }
 
-/* Hover state (only on non-active) */
-.segmented-button .seg-btn:hover:not(.active) {
-  background: #e6f0ff;
-}
+    /* Hover state (only on non-active) */
+    .segmented-button .seg-btn:hover:not(.active) {
+        background: #e6f0ff;
+    }
 
-/* Active segment */
-.segmented-button .seg-btn.active {
-  background: #007bff;
-  color: #fff;
-  cursor: default;
-}
+    /* Active segment */
+    .segmented-button .seg-btn.active {
+        background: #007bff;
+        color: #fff;
+        cursor: default;
+    }
 
 
+    /* --- Tab Switcher (Pill-Shaped Segmented Buttons - FINAL REVISION FOR CLARITY) --- */
+    .tab-switcher {
+        display: inline-flex;
+        background: #f0f4f8;
+        /* A very light, subtle base color for the pill container */
+        border-radius: 9999px;
+        /* Pill shape */
+        padding: 3px;
+        /* Reduced padding for a tighter pill appearance */
+        margin-bottom: 2rem;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+        /* Subtle inner shadow */
+        border: 1px solid #e2e8f0;
+        /* Light border for the whole pill */
+    }
 
+    /* Hide the actual radio inputs visually */
+    .tab-switcher input[type="radio"] {
+        display: none;
+    }
+
+    .tab-switcher label {
+        padding: 7px 20px;
+        /* Adjusted padding for segments for sleekness */
+        font-weight: 500;
+        /* Less bold for unselected state */
+        font-size: 0.95rem;
+        border-radius: 9999px;
+        /* Make each label segment pill-shaped */
+        cursor: pointer;
+        transition: all 0.3s ease;
+        /* Smooth transitions */
+        color: #64748b;
+        /* Muted gray for inactive text */
+        user-select: none;
+        /* Prevent text selection on click */
+        display: flex;
+        /* To align text and counter */
+        align-items: center;
+        gap: 8px;
+        /* Space between text and counter */
+        background: transparent;
+        /* Make inactive labels transparent to show parent background */
+    }
+
+    /* Styles for the CURRENTLY SELECTED tab */
+    .tab-switcher input[type="radio"]:checked+label {
+        background: var(--link-color);
+        /* PRIMARY BRAND COLOR for active segment for high contrast */
+        color: white;
+        /* Text becomes white for contrast */
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.25);
+        /* Stronger shadow for "pop" effect */
+        font-weight: 600;
+        /* Bolder for selected state */
+        position: relative;
+        z-index: 1;
+        /* Bring active segment slightly forward */
+    }
+
+    /* Counter styling */
+    .tab-counter {
+        background-color: var(--link-color);
+        /* Default counter background */
+        color: white;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 9999px;
+        min-width: 20px;
+        text-align: center;
+        line-height: 1;
+        /* For better vertical alignment */
+    }
+
+    /* Counter styling when its tab is active */
+    .tab-switcher input[type="radio"]:checked+label .tab-counter {
+        background-color: white;
+        /* White counter background when tab is active */
+        color: var(--primary-color);
+        /* Counter text color matches active tab background */
+    }
 </style>
 
 

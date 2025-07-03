@@ -1,212 +1,14 @@
 {% extends "base.html" %}
 {% load humanize tz %}
 
+{% include "components.html" %}
 {% block content %}
 
+{% include "loader.html" %}
+
+<div id="page-content">
 <style>
-  /* Base styles for a clean slate */
-  body {
-    font-family: 'Inter', sans-serif; /* A modern, clean sans-serif font */
-    background-color: #f8fafc; /* Light background for the whole page */
-    color: #334155; /* Default text color */
-  }
-
-  /* Card styling */
-  .card {
-    background-color: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    padding: 2rem;
-    margin: 0rem auto; /* Center the card and add some margin */
-    max-width: 1500px; /* Max width for better readability */
-    box-sizing: border-box; /* Include padding in width calculation */
-  }
-
-  .card-title {
-    font-size: 1.8rem; /* Slightly larger title */
-    font-weight: 700; /* Bolder */
-    color: #1e293b; /* Darker title color */
-    margin-bottom: 1.8rem; /* More space below title */
-    text-align: center; /* Center the title */
-  }
-
-  /* --- Tab Switcher (Pill-Shaped Segmented Buttons - FINAL REVISION FOR CLARITY) --- */
-  .tab-switcher {
-    display: inline-flex;
-    background: #f0f4f8; /* A very light, subtle base color for the pill container */
-    border-radius: 9999px; /* Pill shape */
-    padding: 3px; /* Reduced padding for a tighter pill appearance */
-    margin-bottom: 2rem;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.08); /* Subtle inner shadow */
-    border: 1px solid #e2e8f0; /* Light border for the whole pill */
-  }
-
-  /* Hide the actual radio inputs visually */
-  .tab-switcher input[type="radio"] {
-    display: none;
-  }
-
-  .tab-switcher label {
-    padding: 7px 20px; /* Adjusted padding for segments for sleekness */
-    font-weight: 500; /* Less bold for unselected state */
-    font-size: 0.95rem;
-    border-radius: 9999px; /* Make each label segment pill-shaped */
-    cursor: pointer;
-    transition: all 0.3s ease; /* Smooth transitions */
-    color: #64748b; /* Muted gray for inactive text */
-    user-select: none; /* Prevent text selection on click */
-    display: flex; /* To align text and counter */
-    align-items: center;
-    gap: 8px; /* Space between text and counter */
-    background: transparent; /* Make inactive labels transparent to show parent background */
-  }
-
-  /* Styles for the CURRENTLY SELECTED tab */
-  .tab-switcher input[type="radio"]:checked + label {
-    background: #4f46e5; /* PRIMARY BRAND COLOR for active segment for high contrast */
-    color: white; /* Text becomes white for contrast */
-    box-shadow: 0 5px 15px rgba(0,0,0,0.25); /* Stronger shadow for "pop" effect */
-    font-weight: 600; /* Bolder for selected state */
-    position: relative;
-    z-index: 1; /* Bring active segment slightly forward */
-  }
-
-  /* Counter styling */
-  .tab-counter {
-    background-color: #6366f1; /* Default counter background */
-    color: white;
-    font-size: 0.75rem;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 9999px;
-    min-width: 20px;
-    text-align: center;
-    line-height: 1; /* For better vertical alignment */
-  }
-
-  /* Counter styling when its tab is active */
-  .tab-switcher input[type="radio"]:checked + label .tab-counter {
-    background-color: white; /* White counter background when tab is active */
-    color: #4f46e5; /* Counter text color matches active tab background */
-  }
-
-  /* --- Table Styling --- */
-  .data-table {
-    width: 100%;
-    border-collapse: separate; /* Use separate to control border-spacing if needed */
-    border-spacing: 0;
-    font-size: 0.9rem;
-    background-color: #ffffff; /* Ensure table background is white */
-    border-radius: 8px; /* Rounded corners for the table */
-    overflow: hidden; /* Ensures rounded corners apply to content */
-  }
-
-  .data-table th,
-  .data-table td {
-    padding: 1rem 1.25rem; /* More padding for spaciousness */
-    border-bottom: 1px solid #e2e8f0; /* Lighter border */
-    text-align: left;
-    white-space: nowrap; /* Prevent wrapping in table cells */
-  }
-
-  .data-table th {
-    background-color: #f8fafc; /* Light header background */
-    color: #475569; /* Darker header text */
-    font-weight: 700; /* Bolder header font */
-    text-transform: uppercase; /* Uppercase headers */
-    letter-spacing: 0.05em; /* Slight letter spacing */
-    font-size: 0.8rem;
-  }
-
-  .data-table tbody tr:last-child td {
-    border-bottom: none; /* No border on the last row */
-  }
-
-  .data-table tbody tr:hover {
-    background-color: #f0f8ff; /* Subtle hover effect for rows */
-  }
-
-  .data-table .text-right {
-    text-align: right;
-  }
-
-  /* --- Buttons --- */
-  .btn {
-    padding: 0.6rem 1.2rem; /* More padding */
-    border-radius: 8px; /* More rounded corners */
-    font-size: 0.9rem;
-    font-weight: 600; /* Bolder text */
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s ease; /* Smooth transitions */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Subtle shadow */
-  }
-
-  .btn:hover {
-    filter: brightness(0.95); /* Slightly darken on hover */
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* More prominent shadow on hover */
-  }
-
-  .btn-primary {
-    background: #4f46e5; /* Primary brand color */
-    color: white;
-  }
-
-  .btn-success {
-    background: #10b981; /* Green for success */
-    color: white;
-  }
-
-  .btn-danger {
-    background: #ef4444; /* Red for danger */
-    color: white;
-  }
-
-  .btn-secondary {
-    background: #e2e8f0; /* Light gray for secondary actions */
-    color: #334155;
-  }
-
-  .btn + .btn {
-    margin-left: 0.75rem; /* More space between buttons */
-  }
-
-  /* Link styling within table */
-  .table-link {
-    color: #2563eb; /* Blue for links */
-    text-decoration: none;
-    font-weight: 500;
-  }
-
-  .table-link:hover {
-    text-decoration: underline;
-  }
-
-  /* Pagination */
-  .pagination {
-    margin-top: 2rem;
-    text-align: center;
-    font-size: 1rem;
-    font-weight: 500;
-  }
-
-  .pagination a {
-    color: #2563eb;
-    text-decoration: none;
-    padding: 0.5rem 0.75rem;
-    border-radius: 6px;
-    transition: background-color 0.2s ease;
-  }
-
-  .pagination a:hover {
-    background-color: #e0f2fe;
-  }
-
-  .pagination span {
-    padding: 0.5rem 0.75rem;
-    color: #64748b;
-  }
-
+  
   /* --- Modal Styling --- */
   .modal-overlay {
     position: fixed;
@@ -304,96 +106,11 @@
   .modal-table td:last-child {
     text-align: right; /* Align line total to right */
   }
-
-  /* Responsive adjustments */
-  @media (max-width: 768px) {
-    .card {
-      padding: 1.2rem;
-      margin: 1rem;
-    }
-
-    .card-title {
-      font-size: 1.5rem;
-    }
-
-    .tab-switcher label {
-      padding: 6px 18px;
-      font-size: 0.85rem;
-    }
-
-    .data-table th,
-    .data-table td {
-      padding: 0.8rem 1rem;
-      font-size: 0.85rem;
-    }
-
-    .btn {
-      padding: 0.5rem 1rem;
-      font-size: 0.85rem;
-    }
-
-    .btn + .btn {
-      margin-left: 0.5rem;
-    }
-
-    .modal-wrapper {
-      width: 95%;
-      padding: 1.5rem;
-    }
-
-    .modal-close-btn {
-      font-size: 1.8rem;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .tab-switcher {
-      display: flex;
-      flex-direction: column;
-      padding: 4px;
-    }
-    .tab-switcher label {
-      width: 100%;
-      text-align: center;
-      margin-bottom: 4px;
-    }
-    .tab-switcher label:last-child {
-      margin-bottom: 0;
-    }
-    .data-table {
-      font-size: 0.8rem;
-    }
-    .data-table th,
-    .data-table td {
-      padding: 0.6rem 0.8rem;
-    }
-    .btn {
-      padding: 0.4rem 0.8rem;
-      font-size: 0.8rem;
-    }
-    .btn-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    .btn + .btn {
-      margin-left: 0;
-    }
-  }
-
-    .btn-group {
-    display: inline-flex;
-    gap: 0.5rem;              /* space between buttons */
-    align-items: center;      /* vertical align if needed */
-  }
-  .btn-group form {
-    margin: 0;                /* remove default block spacing */
-  }
   
 </style>
 
-<section class="card">
-  <h2 class="card-title">Quotation Approvals</h2>
+<div class="page-header">
+  <h2 class="page-title">Quotation Approvals</h2>
 
   <form id="tab-form" class="tab-switcher">
     <input type="radio" id="tab-pending" name="tab" value="pending" {% if tab != "completed" %}checked{% endif %}>
@@ -415,9 +132,11 @@
       <span>Completed</span>
     </label>
   </form>
+  </div>
 
-  <div style="overflow-x:auto;">
-    <table class="data-table">
+  <div class="card">
+    <div class="table-responsive">
+    <table class="table" data-sticky-left="1" data-sticky-right="1">
       <thead>
         {% if tab == "pending" %}
           <tr>
@@ -427,8 +146,7 @@
             <th class="text-right">Amount&nbsp;(₹)</th>
             <th>Created&nbsp;By</th>
             <th>Created&nbsp;At</th>
-            <th></th> {# View #}
-            <th></th> {# Approve/Decline #}
+            <th>Actions</th>             
           </tr>
         {% else %}
           <tr>
@@ -439,10 +157,10 @@
             <th>Created&nbsp;By</th>
             <th>Created&nbsp;At</th>
             <th>Approved&nbsp;By</th>
-            <th>Approved&nbsp;At</th>
-            <th></th> {# View #}
+            <th>Approved&nbsp;At</th>            
             <th>Updated&nbsp;By</th>
             <th>Updated&nbsp;At</th>
+            <th>Actions</th>
           </tr>
         {% endif %}
       </thead>
@@ -474,19 +192,19 @@
 
           {% if tab == "pending" %}
             <td class="text-center">
-              <button class="btn btn-secondary view-btn" data-id="{{ q.pk }}">View Details</button>
-            </td>
-              <td>
+              <div class="btn-group">
+              <button class="btn btn-edit view-btn" data-id="{{ q.pk }}">View Details</button>
+            
                 {% if q.status == q.STATUS_PENDING %}
                   {% if q.can_approve %}
-                    <div class="btn-group">
+                    
                       <form method="post" action="{% url 'quotes:approve_quote' q.pk %}">
                         {% csrf_token %}
-                        <button class="btn btn-success">Approve</button>
+                        <button class="btn btn-approve">Approve</button>
                       </form>
                       <form method="post" action="{% url 'quotes:decline_quote' q.pk %}">
                         {% csrf_token %}
-                        <button class="btn btn-danger">Decline</button>
+                        <button class="btn btn-decline">Decline</button>
                       </form>
                     </div>
                   {% else %}
@@ -503,11 +221,12 @@
                 {{ q.approved_at|timezone:"Asia/Kolkata"|date:"d-M-Y H:i" }}
               {% else %}—{% endif %}
             </td>
-            <td class="text-center">
-              <button class="btn btn-secondary view-btn" data-id="{{ q.pk }}">View Details</button>
-            </td>
+
             <td>{{ q.updated_by.get_full_name|default:"—" }}</td>
             <td>{{ q.updated_at|timezone:"Asia/Kolkata"|date:"d-M-Y H:i" }}</td>
+                        <td class="text-center">
+              <button class="btn btn-edit view-btn" data-id="{{ q.pk }}">View Details</button>
+            </td>
           {% endif %}
         </tr>
 
@@ -555,18 +274,10 @@
       </tbody>
     </table>
   </div>
+  </div>
+  </div>
 
-  {% if is_paginated %}
-    <div class="pagination">
-      {% if page_obj.has_previous %}
-        <a href="?tab={{ tab }}&page={{ page_obj.previous_page_number }}">← Previous&nbsp;</a>
-      {% endif %}
-      <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-      {% if page_obj.has_next %}
-        <a href="?tab={{ tab }}&page={{ page_obj.next_page_number }}">&nbsp;Next →</a>
-      {% endif %}
-    </div>
-  {% endif %}
+  {% include "includes/pagination.html" with page_obj=page_obj %}
 </section>
 
 <div id="quote-modal" class="modal-overlay">
@@ -637,5 +348,5 @@ document.addEventListener("DOMContentLoaded", function() {
   });
 });
 </script>
-
+</div>
 {% endblock %}
