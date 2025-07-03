@@ -9,138 +9,133 @@
 {% include "loader.html" %}
 <div id="page-content">
 
-<div class="page-header">
-  <div class="page-title">
-    Manage Interests &nbsp;
-    <span class="page-subtitle">
-       ( {{ total_records }} Records &bull; {{ connected_count }} Connected &bull; {{ interested_count }} Interested )
-    </span>
-  </div>
-  <a href="{% url 'interests:add' %}" class="btn btn-submit">+ New Interest</a>
-</div>
-
-<form id="filter-form" method="get" class="filter-bar">
-  <div class="filter-controls">
-    <input
-      type="text"
-      name="q"
-      class="filter-input"
-      placeholder="Search phone…"
-      value="{{ request.GET.q }}"
-    />
-
-    <!-- Quick-range dropdown -->
-    <select id="quick-range" name="quick_range" class="filter-input">
-      <option value="today"    {% if request.GET.quick_range == 'today'    %}selected{% endif %}>Today</option>
-      <option value="yesterday"{% if request.GET.quick_range == 'yesterday'%}selected{% endif %}>Yesterday</option>
-      <option value="last7"    {% if request.GET.quick_range == 'last7'    %}selected{% endif %}>Last 7 Days</option>
-      <option value="thisMonth"{% if request.GET.quick_range == 'thisMonth'%}selected{% endif %}>This Month</option>
-      <option value=""         {% if not request.GET.quick_range           %}selected{% endif %}>Select Date Range</option>
-    </select>
-
-    <label for="id_connected" class="filter-label">Connected?</label>
-    <select id="id_connected" name="connected" class="filter-input">
-      <option value="" {% if request.GET.connected == '' %}selected{% endif %}>All</option>
-      <option value="1"{% if request.GET.connected == '1' %}selected{% endif %}>Yes</option>
-      <option value="0"{% if request.GET.connected == '0' %}selected{% endif %}>No</option>
-    </select>
-
-    <!-- hidden date-range inputs -->
-    <input type="hidden" name="start" id="start" value="{{ request.GET.start }}">
-    <input type="hidden" name="end"   id="end"   value="{{ request.GET.end }}">
+  <div class="page-header">
+    <div class="page-title">
+      Manage Interests &nbsp;
+      <span class="page-subtitle">
+        ( {{ total_records }} Records &bull; {{ connected_count }} Connected &bull; {{ interested_count }} Interested )
+      </span>
+    </div>
+    <a href="{% url 'interests:add' %}" class="btn btn-submit">+ New Interest</a>
   </div>
 
-  <div class="filter-actions">
-    <button type="submit" class="btn btn-filter">Filter</button>
-    <button
-      type="button"
-      class="btn btn-filter-reset"
-      onclick="window.location.href='{% url 'interests:list' %}'"
-    >
-      Reset
-    </button>
+  <form id="filter-form" method="get" class="filter-bar">
+    <div class="filter-controls">
+      <input type="text" name="q" class="filter-input" placeholder="Search phone…" value="{{ request.GET.q }}" />
+
+      <!-- Quick-range dropdown -->
+      <select id="quick-range" name="quick_range" class="filter-input">
+        <option value="today" {% if request.GET.quick_range == 'today' %}selected{% endif %}>Today</option>
+        <option value="yesterday" {% if request.GET.quick_range == 'yesterday' %}selected{% endif %}>Yesterday</option>
+        <option value="last7" {% if request.GET.quick_range == 'last7' %}selected{% endif %}>Last 7 Days</option>
+        <option value="thisMonth" {% if request.GET.quick_range == 'thisMonth' %}selected{% endif %}>This Month</option>
+        <option value="" {% if not request.GET.quick_range %}selected{% endif %}>Select Date Range</option>
+      </select>
+
+      <label for="id_connected" class="filter-label">Connected?</label>
+      <select id="id_connected" name="connected" class="filter-input">
+        <option value="" {% if request.GET.connected == '' %}selected{% endif %}>All</option>
+        <option value="1" {% if request.GET.connected == '1' %}selected{% endif %}>Yes</option>
+        <option value="0" {% if request.GET.connected == '0' %}selected{% endif %}>No</option>
+      </select>
+
+      <!-- hidden date-range inputs -->
+      <input type="hidden" name="start" id="start" value="{{ request.GET.start }}">
+      <input type="hidden" name="end" id="end" value="{{ request.GET.end }}">
+    </div>
+
+    <div class="filter-actions">
+      <button type="submit" class="btn btn-filter">Filter</button>
+      <button type="button" class="btn btn-filter-reset" onclick="window.location.href='{% url 'interests:list' %}'">
+        Reset
+      </button>
+    </div>
+  </form>
+
+
+
+
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table" data-sticky-left="2" data-sticky-right="2">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Phone</th>
+            <th>Attempts</th>
+            <th>Connected?</th>
+            <th>Status</th>
+            <th>Source</th>
+            <th>Mode</th>
+            <th>Created By</th>
+            <th>Created At</th>
+            <th>Updated By</th>
+            <th>Updated At</th>
+            <th>Remarks</th>
+            <th>Lead ID</th>
+            <th>Lead Manager</th>
+            <th>Dials</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for interest in object_list %}
+          <tr>
+            <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
+            <td>{{ interest.phone_number }}</td>
+
+            <td>{{ interest.attempted_times }}</td>
+            <td>
+              {% if interest.is_connected %}
+              <span class="status-badge connected">Yes</span>
+              {% else %}
+              <span class="status-badge disconnected">No</span>
+              {% endif %}
+            </td>
+
+            <td>
+              {% if interest.status %}
+              <span class="status-pill" data-status="{{ interest.status.name|slugify }}">
+                {{ interest.status.name }}
+              </span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="status-pill" data-status="{{ interest.source.name|slugify }}">
+                {{ interest.source.name}}
+              </span>
+            </td>
+            <td>{{ interest.mode.name }}</td>
+            <td>{{ interest.created_by.get_full_name }}</td>
+            <td>{{ interest.created_at|timezone:"Asia/Kolkata"|date:"Y-m-d H:i" }}</td>
+            <td>{{ interest.updated_by.get_full_name }}</td>
+            <td>{{ interest.updated_at|timezone:"Asia/Kolkata"|date:"Y-m-d H:i" }}</td>
+            <td>{{ interest.remarks }}</td>
+            <td>
+              {% if interest.lead %}{{ interest.lead.pk }}{% else %}&mdash;{% endif %}
+            </td>
+            <td>
+              {% if interest.lead %}{{ interest.lead.lead_manager.get_full_name }}{% else %}&mdash;{% endif %}
+            </td>
+
+            <td class="dials-cell">
+              <button class="dial-btn" data-pk="{{ interest.pk }}" data-delta="-1">−</button>
+              <span class="dial-count" id="dials-count-{{ interest.pk }}">{{ interest.dials }}</span>
+              <button class="dial-btn" data-pk="{{ interest.pk }}" data-delta="1">＋</button>
+            </td>
+            <td><a href="{% url 'interests:edit' interest.pk %}" class="btn btn-edit">Edit</a></td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="17" class="text-center text-muted">No interests found.</td>
+          </tr>
+          {% endfor %}
+          <meta name="csrf-token" content="{{ csrf_token }}">
+        </tbody>
+      </table>
+    </div>
+    {% include "includes/pagination.html" with page_obj=page_obj %}
   </div>
-</form>
-
-
-
-
-<div class="card">
-  <div class="table-responsive">
-    <table class="table" data-sticky-left="2" data-sticky-right="2">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Phone</th>
-          <th>Attempts</th>
-          <th>Connected?</th>
-          <th>Status</th>
-          <th>Source</th>
-          <th>Mode</th>
-          <th>Created By</th>
-          <th>Created At</th>
-          <th>Updated By</th>
-          <th>Updated At</th>
-          <th>Remarks</th>
-          <th>Lead ID</th>
-          <th>Lead Manager</th>
-          <th>Dials</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for interest in object_list %}
-        <tr>
-          <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
-          <td>{{ interest.phone_number }}</td>
-
-          <td>{{ interest.attempted_times }}</td>
-          <td>
-            {% if interest.is_connected %}
-            <span class="status-badge connected">Yes</span>
-            {% else %}
-            <span class="status-badge disconnected">No</span>
-            {% endif %}
-          </td>
-          <td>
-            {% if interest.status.name == "Interested" %}
-            <span class="status-pill status-interested">Interested</span>
-            {% else %}
-            {{ interest.status.name }}
-            {% endif %}
-          </td>
-          <td>{{ interest.source.name }}</td>
-          <td>{{ interest.mode.name }}</td>
-          <td>{{ interest.created_by.get_full_name }}</td>
-          <td>{{ interest.created_at|timezone:"Asia/Kolkata"|date:"Y-m-d H:i" }}</td>
-          <td>{{ interest.updated_by.get_full_name }}</td>
-          <td>{{ interest.updated_at|timezone:"Asia/Kolkata"|date:"Y-m-d H:i" }}</td>
-          <td>{{ interest.remarks }}</td>
-          <td>
-            {% if interest.lead %}{{ interest.lead.pk }}{% else %}&mdash;{% endif %}
-          </td>
-          <td>
-            {% if interest.lead %}{{ interest.lead.lead_manager.get_full_name }}{% else %}&mdash;{% endif %}
-          </td>
-
-          <td class="dials-cell">
-            <button class="dial-btn" data-pk="{{ interest.pk }}" data-delta="-1">−</button>
-            <span class="dial-count" id="dials-count-{{ interest.pk }}">{{ interest.dials }}</span>
-            <button class="dial-btn" data-pk="{{ interest.pk }}" data-delta="1">＋</button>
-          </td>
-          <td><a href="{% url 'interests:edit' interest.pk %}" class="btn btn-edit">Edit</a></td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="17" class="text-center text-muted">No interests found.</td>
-        </tr>
-        {% endfor %}
-        <meta name="csrf-token" content="{{ csrf_token }}">
-      </tbody>
-    </table>
-  </div>
-  {% include "includes/pagination.html" with page_obj=page_obj %}
-</div>
 
 </div>
 
@@ -148,8 +143,8 @@
   // Quick-range dropdown handler (unchanged)
   function fmt(d) {
     let y = d.getFullYear(),
-        m = String(d.getMonth() + 1).padStart(2, '0'),
-        dd = String(d.getDate()).padStart(2, '0');
+      m = String(d.getMonth() + 1).padStart(2, '0'),
+      dd = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${dd}`;
   }
   const qr = document.getElementById('quick-range');
@@ -170,7 +165,7 @@
         return document.getElementById('filter-form').submit();
     }
     document.getElementById('start').value = fmt(s);
-    document.getElementById('end').value   = fmt(e);
+    document.getElementById('end').value = fmt(e);
     document.getElementById('filter-form').submit();
   });
 </script>
@@ -179,7 +174,7 @@
 <script>
   // Only auto-submit **once**, on the very first visit (no filters at all),
   // and only if there’s no toast to show.
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     // 1) if a toast is present, bail
     if (document.querySelector('#toast-container .toast')) {
       return;
@@ -187,43 +182,43 @@
 
     // 2) if ANY filter param is already in the URL, bail
     const params = new URLSearchParams(window.location.search);
-    if (params.has('start')   ||
-        params.has('end')     ||
-        params.has('quick_range') ||
-        params.has('q')       ||
-        params.has('connected')) {
+    if (params.has('start') ||
+      params.has('end') ||
+      params.has('quick_range') ||
+      params.has('q') ||
+      params.has('connected')) {
       return;
     }
 
     // 3) otherwise, default to today’s date and submit
     const today = new Date(),
-          y     = today.getFullYear(),
-          m     = String(today.getMonth()+1).padStart(2,'0'),
-          d     = String(today.getDate()).padStart(2,'0'),
-          start = `${y}-${m}-${d}`,
-          end   = start;
+      y = today.getFullYear(),
+      m = String(today.getMonth() + 1).padStart(2, '0'),
+      d = String(today.getDate()).padStart(2, '0'),
+      start = `${y}-${m}-${d}`,
+      end = start;
 
     document.getElementById('start').value = start;
-    document.getElementById('end').value   = end;
+    document.getElementById('end').value = end;
     document.getElementById('filter-form').submit();
   });
 </script>
 {% endif %}
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  console.log("DOM READY, toasts:", document.querySelectorAll('#toast-container .toast').length);
-});
+  document.addEventListener('DOMContentLoaded', function () {
+    console.log("DOM READY, toasts:", document.querySelectorAll('#toast-container .toast').length);
+  });
 </script>
 
 <script>
-  window.addEventListener('load', function() {
+  window.addEventListener('load', function () {
     const loader = document.getElementById('page-loader');
     if (loader) loader.style.display = 'none';
   });
 </script>
 
 
-
+{% include "pills.html" %}
 
 {% endblock content %}

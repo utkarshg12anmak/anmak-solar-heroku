@@ -1,0 +1,68 @@
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const buckets = {
+    positive: [ 'completed','done','shipped','interested' ],
+    negative: [ 'declined','deleted','failed','not-interested' ],
+    neutral:  [ 'pending','approval-pending','on-hold' ]
+  };
+
+  const palette = {
+    positive: [
+      { bg: 'hsl(120,60%,92%)', fg: 'hsl(120,60%,20%)' },
+      { bg: 'hsl(140,50%,92%)', fg: 'hsl(140,50%,20%)' },
+      { bg: 'hsl(160,50%,92%)', fg: 'hsl(160,50%,20%)' },
+      { bg: 'hsl(100,60%,92%)', fg: 'hsl(100,60%,20%)' }
+    ],
+    negative: [
+      { bg: 'hsl(0,60%,92%)',   fg: 'hsl(0,60%,20%)' },
+      { bg: 'hsl(0,50%,95%)',   fg: 'hsl(0,50%,30%)' },
+      { bg: 'hsl(0,70%,90%)',   fg: 'hsl(0,70%,20%)' },
+      { bg: 'hsl(350,60%,92%)', fg: 'hsl(350,60%,20%)' }
+    ],
+    neutral: [
+      { bg: 'hsl(60,70%,92%)',  fg: 'hsl(60,70%,20%)' },
+      { bg: 'hsl(50,60%,92%)',  fg: 'hsl(50,60%,20%)' },
+      { bg: 'hsl(45,60%,92%)',  fg: 'hsl(45,60%,20%)' },
+      { bg: 'hsl(30,60%,92%)',  fg: 'hsl(30,60%,20%)' }
+    ]
+  };
+
+  // a small palette of “other” hues (teal, purple, pink, orange, cyan…)
+  const fallbackHues = [180,210,240,270,300,330,15,45,75,135];
+
+  document.querySelectorAll('.status-pill').forEach(el => {
+    const key = (el.dataset.status||'').toLowerCase();
+    let bucket = 'default', idx = -1;
+
+    for (let b of ['positive','negative','neutral']) {
+      idx = buckets[b].indexOf(key);
+      if (idx > -1) { bucket = b; break; }
+    }
+
+    let colors;
+    if (bucket !== 'default') {
+      // wrap idx if palette array is shorter
+      const arr = palette[bucket];
+      colors = arr[idx % arr.length];
+    } else {
+      // hash string to an integer
+      let hash = 0;
+      for (let c of key) hash = ((hash<<5)-hash) + c.charCodeAt(0);
+      hash = Math.abs(hash);
+
+      // pick one of our safe fallback hues
+      const hue = fallbackHues[hash % fallbackHues.length];
+      colors = {
+       bg: `hsla(${hue}, 40%, 80%, 0.4)`,  // 40% sat, 80% light, 40% alpha
+       fg: `hsl(${hue}, 60%, 20%)`         // darker text for contrast
+     };
+    }
+
+    el.style.backgroundColor = colors.bg;
+    el.style.color           = colors.fg;
+  });
+});
+
+</script>
