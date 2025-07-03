@@ -6,6 +6,7 @@ from django.utils import timezone
 from datetime import timedelta
 from zoneinfo import ZoneInfo
 
+from django.core.exceptions import PermissionDenied
 from django.urls import reverse_lazy
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -28,6 +29,9 @@ from profiles.mixins import SalesDepartmentRequiredMixin
 from items.models import PriceRule
 from visit_details.models import VisitDetail
 from reminders.models import Reminder
+
+from collections import defaultdict
+
 
 
 
@@ -91,72 +95,79 @@ class LeadCreateWithCustomer(View):
                 'lead_form': lead,
             })
 
-class LeadListView(LoginRequiredMixin,
-                   SalesDepartmentRequiredMixin,
-                   ListView):
-    model = Lead
-    template_name = "leads/lead_list.html"
+class SalesDepartmentAccessMixin:
+    """
+    Grabs your Sales-dept membership out of session['memberships'] and
+    enforces a 403 if you’re not in Sales.
+    """
+    def dispatch(self, request, *args, **kwargs):
+        mems = request.session.get('memberships', [])
+        # pick only the Sales ones
+        sales = [m for m in mems if m.get('dept_type') == 'Sales']
+        if not sales:
+            raise PermissionDenied()
+        # if you have multiple Sales depts, you could pick one by name or id;
+        # here we just take the first
+        sel = sales[0]
+        self.department_id = sel['department_id']
+        self.user_level    = sel['level']
+
+        # pull your pre‐built map of dept→{ level→[user_ids] }
+        self.department_user_map = request.session.get('department_user_map', {})
+
+        return super().dispatch(request, *args, **kwargs)
+
+class LeadListView(LoginRequiredMixin, SalesDepartmentAccessMixin, ListView):
+    model               = Lead
+    template_name       = "leads/lead_list.html"
     context_object_name = "leads"
-    paginate_by = 200
-    ordering = ["-updated_at"]
+    paginate_by         = 200
+    ordering            = ["-updated_at"]
 
     def get_base_qs(self):
-        """
-        Build (once) and cache the “allowed” Lead queryset with all needed joins.
-        """
-        if not hasattr(self, "_base_qs"):
-            me = self.request.user
-
-            # 1) grab your Sales-dept memberships
-            my_mems = DepartmentMembership.objects.filter(
-                user=me,
-                department__dept_type__name="Sales"
-            ).values("department_id", "level")
-
-            lvl1 = [m["department_id"] for m in my_mems if m["level"] == 1]
-            lvl2 = [m["department_id"] for m in my_mems if m["level"] == 2]
-
-            # 2) build the security Q
-            allowed = Q(lead_manager=me)
-            if lvl1 or lvl2:
-                mgr_ids = DepartmentMembership.objects.filter(
-                    Q(department_id__in=lvl1, level__in=[2,3]) |
-                    Q(department_id__in=lvl2, level=3)
-                ).values_list("user_id", flat=True)
-
-                allowed |= (
-                    Q(department_id__in=(lvl1 + lvl2)) &
-                    Q(lead_manager_id__in=mgr_ids)
+        # start with all Leads in your Sales dept:
+        qs = (
+            Lead.objects
+                .select_related(
+                    "customer__city",
+                    "customer__source",
+                    "stage",
+                    "lead_manager",
+                    "department",
                 )
+                .filter(department_id=self.department_id)
+        )
 
-            # 3) select_related all FKs, including customer__source
-            self._base_qs = (
-                Lead.objects
-                    .select_related(
-                        "customer__city",
-                        "customer__source",
-                        "stage",
-                        "lead_manager",
-                        "department",
-                    )
-                    .filter(allowed)
-            )
+        lvl_map = self.department_user_map.get(str(self.department_id), {})
 
-        return self._base_qs
+        if self.user_level == 1:
+            # see _all_ leads in this department
+            return qs
+
+        if self.user_level == 2:
+            # see only those whose lead_manager is level 2 or 3
+            mgr_ids = lvl_map.get("2", []) + lvl_map.get("3", [])
+            return qs.filter(lead_manager_id__in=mgr_ids)
+
+        if self.user_level == 3:
+            # see only your own
+            return qs.filter(lead_manager=self.request.user)
+
+        raise PermissionDenied()
 
     def get_queryset(self):
-        qs = self.get_base_qs()
+        qs = self.get_base_qs().order_by(*self.ordering)
 
-        # — search —
+        # quick search:
         q = self.request.GET.get("q", "").strip()
         if q:
-            search_q = Q(pk=q) if q.isdigit() else Q()
-            search_q |= Q(customer__primary_phone__icontains=q)
-            search_q |= Q(customer__first_name__icontains=q)
-            search_q |= Q(customer__last_name__icontains=q)
-            qs = qs.filter(search_q)
+            sq = Q(pk=q) if q.isdigit() else Q()
+            sq |= Q(customer__primary_phone__icontains=q)
+            sq |= Q(customer__first_name__icontains=q)
+            sq |= Q(customer__last_name__icontains=q)
+            qs = qs.filter(sq)
 
-        # — dropdown filters —
+        # dropdown filters:
         mapping = {
             "city":         "customer__city_id",
             "system_type":  "system_type",
@@ -174,7 +185,7 @@ class LeadListView(LoginRequiredMixin,
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        page_leads = ctx["leads"]  # paginated page
+        page_leads = ctx["leads"]
 
         # — total_amount across ALL filtered leads (one more query) —
         agg = self.get_base_qs().aggregate(sum=Sum("total_amount"))
@@ -185,7 +196,7 @@ class LeadListView(LoginRequiredMixin,
             "cities":         City.objects.all(),
             "system_types":   SYSTEM_TYPE_CHOICES,
             "grid_types":     GRID_TYPE_CHOICES,
-            "lead_qualities": LEAD_QUALITY_CHOICES,
+            "lead_qualities": LEAD_QUALITY_CHOICES,            
             "lead_managers":  User.objects.filter(leads_owned__isnull=False).distinct(),
             "departments":    Department.objects.filter(dept_type__name="Sales"),
 
@@ -197,29 +208,32 @@ class LeadListView(LoginRequiredMixin,
             "selected_department": self.request.GET.get("department", ""),
         })
 
-        # — view & stages —
+        # — view mode & stages —
         ctx["view_mode"]       = self.request.GET.get("view", "grid")
         ctx["lead_stage_list"] = list(LeadStage.objects.order_by("order"))
 
-        # — compute created_str & age_display on just the 15 leads —
+        # — compute created_str & age_display on just the paginated leads —
         now_ist = timezone.now().astimezone(IST)
         for lead in page_leads:
             if lead.created_at:
                 ci = lead.created_at.astimezone(IST)
                 lead.created_str = ci.strftime("%d-%b-%Y %I:%M %p")
-                diff = now_ist - ci
-                hrs  = diff.total_seconds() // 3600
-                if hrs < 24:
-                    lead.age_display = f"{int(hrs)} hr{'s' if hrs != 1 else ''}"
-                else:
-                    lead.age_display = f"{diff.days} day{'s' if diff.days != 1 else ''}"
+                diff  = now_ist - ci
+                hrs   = diff.total_seconds() // 3600
+                lead.age_display = (
+                    f"{int(hrs)} hr{'s' if hrs != 1 else ''}"
+                    if hrs < 24
+                    else f"{diff.days} day{'s' if diff.days != 1 else ''}"
+                )
             else:
                 lead.created_str = ""
                 lead.age_display = ""
 
-        # — per-stage summary over the current page —
-        summaries = {s.id: {"count":0, "kw_sum":0, "amt_sum":0}
-                     for s in ctx["lead_stage_list"]}
+        # — per-stage summary over just this page —
+        summaries = {
+            s.id: {"count": 0, "kw_sum": 0, "amt_sum": 0}
+            for s in ctx["lead_stage_list"]
+        }
         for lead in page_leads:
             summ = summaries[lead.stage_id]
             summ["count"] += 1
