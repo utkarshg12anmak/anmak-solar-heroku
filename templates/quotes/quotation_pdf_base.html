@@ -122,9 +122,9 @@
 
         .summary-table .total-row td {
             font-size: 20px;
-            font-weight: bold;
-            border-top: 2px solid #003347;
-            padding-top: 10px;
+            font-weight: 400;
+             border-top: 1px solid rgba(21, 96, 126, 0.3);  
+            padding-top: 5px;
         }
 
         /* --- Other Sections --- */
@@ -337,14 +337,16 @@
             line-height: 1.4;
         }
 
-        /* put a light line under the discount row */
+        /* soften the little rule under the discount row */
         .summary-table .discount-row td {
-            border-bottom: 1px solid #ddd;
+        
+        padding-bottom: 8px;                          /* give it a little breathing room */
         }
 
         /* keep your green color for discount */
         .summary-table .discount {
             color: #28a745;
+            font-weight: 800;
         }
 
         /* tighten up padding on the summary rows */
@@ -352,6 +354,8 @@
             padding: 6px 12px;
             font-size: 14px;
         }
+
+        
     </style>
 </head>
 
