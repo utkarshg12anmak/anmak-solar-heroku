@@ -27,7 +27,11 @@ urlpatterns = [
       views.download_department_draft_pdf,
       name='download_department_draft_pdf'
     ),    
-    path("quotation/<int:pk>/", quotation_view, name="quotation_view"),
-    path("preview-quote/", quotation_preview, name="quotation_preview"),
+    path("quotation/<int:pk>/", quotation_view, name="quotation_view"),    
+    path(
+        "preview-quote/<int:quote_pk>/",
+        views.quotation_view,
+        name="quotation_preview"
+    ),
 ]
 

@@ -3,6 +3,8 @@
 
 <head>
     {% load static %}
+    {% load humanize %}
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quotation for A4 Print</title>
@@ -371,8 +373,8 @@
             </div>
             <div class="quote-details">
                 <h1>QUOTATION</h1>
-                <p><strong>Quotation # :</strong> {{quote.id}}</p>
-                <p><strong>Quotation Date :</strong> {{quote.Date}}</p>
+                <p><strong>Quotation# :</strong> AMKSLR-{{ quote.pk|stringformat:"03d" }}</p>
+                <p><strong>Quotation Date :</strong> {{ quote.created_at|date:"d-M-Y" }}</p>
             </div>
         </header>
 
@@ -388,16 +390,17 @@
             </div>
             <div class="address-block">
                 <h3>Quotation To</h3>
-                <p>{{quote.customer.name}}</p>
+                <p>{{ quote.lead.customer.first_name }} {{ quote.lead.customer.last_name }}</p>
                 <span class="details">
-                    {{quote.customer.address}}<br>
-                    {{quote.customer.city}}
+                    {{quote.lead.customer.address}}<br>
+                    {{quote.lead.customer.city}} <br>
                 </span>
                 <!-- ←– NEW: system spec badge –→ -->
                 <div class="system-spec">
                     {{ quote.lead.system_size }} kW
                     &bull; {{ quote.lead.get_grid_type_display }}
                     &bull; {{ quote.lead.get_system_type_display }}
+                    Solar System
                 </div>
             </div>
         </section>
@@ -413,27 +416,27 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for line in quotation.items.all %}
-                    <tr>
-                        <td>
-                            {{ forloop.counter }}.
-                            {{ line.price_rule.item.product_name }}
-                        </td>
-                        <td class="align-centre">
-                            {{ line.quantity }}
-                        </td>
-                        <td class="align-centre">
-                            {{ line.price_rule.item.brand.name }}
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="3" class="align-centre">
-                            No items found
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
+  {% for line in quotation.items.all %}
+    <tr>
+      <td>
+        {{ forloop.counter }}. {{ line.price_rule.item.product_name }}
+      </td>
+      <td class="align-centre">
+        {{ line.quantity }}
+      </td>
+      <td class="align-centre">
+        {{ line.price_rule.item.brand.name }}
+      </td>
+    </tr>
+  {% empty %}
+    <tr>
+      <td colspan="3" class="align-centre">
+        No items found
+      </td>
+    </tr>
+  {% endfor %}
+</tbody>
+
             </table>
         </div>
 
@@ -443,19 +446,21 @@
                 <tbody>
                     <tr>
                         <td class="label">Sub Total</td>
-                        <td class="value">₹101,000</td>
+                         <td class="value">
+                            ₹{{ quote.selling_price|add:quote.discount|floatformat:2|intcomma }}
+                        </td>
                     </tr>
 
                     <!-- Discount row -->
                     <tr class="discount-row">
                         <td class="label discount">Discount</td>
-                        <td class="value discount">– ₹5,050</td>
+                        <td class="value discount">– ₹{{quote.discount}}</td>
                     </tr>
 
                     <!-- Total row -->
                     <tr class="total-row">
                         <td class="label">Total</td>
-                        <td class="value">₹95,950</td>
+                        <td class="value">₹{{quote.selling_price|floatformat:2|intcomma}}</td>
                     </tr>
                 </tbody>
             </table>

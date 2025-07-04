@@ -7,6 +7,8 @@ from django.core.validators import FileExtensionValidator
 from profiles.models import validate_file_size
 from oms_project.storage_backends import MediaStorage  # import custom S3 storage
 from decimal import Decimal
+from django.db import models
+from decimal import Decimal
 
 
 

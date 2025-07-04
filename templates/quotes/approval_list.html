@@ -181,9 +181,16 @@
 
           <tr class="quote-row" data-quote-id="{{ q.pk }}" data-selling-price="{{ q.selling_price }}"
             data-membership-level="{{ q.membership_level }}" data-max-amount="{{ q.limit_amount }}"
-            data-minimum-price="{{ q.minimum_price }}" data-can-approve="{{ q.can_approve|yesno:" true,false" }}">
-            <td>#{{ q.pk }}</td>
+            data-minimum-price="{{ q.minimum_price }}" data-can-approve="{{ q.can_approve|yesno:" true,false" }}">            
             
+            <td>
+              <div class="lead-summary">
+              <a href="{% url 'quotes:quotation_preview' q.pk %}" target="_blank">
+                #{{ q.pk }}
+              </a>
+              </div>
+            </td>
+                      
             <td>{% include "components/status_pill.html" with label=q.get_status_display %}</td> 
 
             <td>

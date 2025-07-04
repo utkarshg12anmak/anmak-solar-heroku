@@ -454,16 +454,23 @@ def download_department_draft_pdf(request, quote_pk):
             filename=f"{raw['Quote_Number']}.pdf"
         )
     
-def quotation_view(request, pk):
-    quote = get_object_or_404(Quote, pk=pk)
+@login_required
+def quotation_view(request, quote_pk):
+    # 1) Fetch the quote (only approved ones? add filter if you like)
+    quote = get_object_or_404(Quote, pk=quote_pk)
+
+    # 2) Grab its items and any related data
+    items = (
+        QuoteItem.objects
+                 .filter(quote=quote)
+                 .select_related("price_rule__item")
+    )
+
+    # 3) Build whatever extra context you need
     context = {
-        "quotation": quote,
-        "company": {
-            "place_of_supply": request.user.profile.department.place_of_supply,
-            "country": request.user.profile.department.country,
-        },
-        "customer": quote.lead.customer,
-        # any other bits your template references…
+        "quote": quote,
+        "items": items,
+        # add customer, totals, etc. if your template expects them
     }
     return render(request, "quotes/quotation_pdf_base.html", context)
 
