@@ -123,7 +123,7 @@
         .summary-table .total-row td {
             font-size: 20px;
             font-weight: 400;
-             border-top: 1px solid rgba(21, 96, 126, 0.3);  
+            border-top: 1px solid rgba(21, 96, 126, 0.3);
             padding-top: 5px;
         }
 
@@ -232,6 +232,7 @@
 
         .signature-area p {
             margin-top: 0;
+            margin-bottom: 0;
         }
 
         /* ################################### */
@@ -254,13 +255,13 @@
                 /* Remove shadow for print */
             }
 
-                .table-container {
-                    border: 1px solid #ccc;
-                    border-radius: 12px !important;
-                    /* force browser to render BG & borders as-is */
-                    -webkit-print-color-adjust: exact;
-                    color-adjust: exact;
-                }
+            .table-container {
+                border: 1px solid #ccc;
+                border-radius: 12px !important;
+                /* force browser to render BG & borders as-is */
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+            }
 
             /* Force browser to print background colors */
             .logo-box,
@@ -289,7 +290,7 @@
                 page-break-inside: avoid;
             }
 
-            
+
         }
 
         .logo img {
@@ -337,10 +338,12 @@
             line-height: 1.4;
         }
 
+
         /* soften the little rule under the discount row */
         .summary-table .discount-row td {
-        
-        padding-bottom: 8px;                          /* give it a little breathing room */
+
+            padding-bottom: 8px;
+            /* give it a little breathing room */
         }
 
         /* keep your green color for discount */
@@ -354,8 +357,6 @@
             padding: 6px 12px;
             font-size: 14px;
         }
-
-        
     </style>
 </head>
 
@@ -370,8 +371,8 @@
             </div>
             <div class="quote-details">
                 <h1>QUOTATION</h1>
-                <p><strong>Quotation # :</strong> 004</p>
-                <p><strong>Quotation Date :</strong> JUN 19, 2019</p>
+                <p><strong>Quotation # :</strong> {{quote.id}}</p>
+                <p><strong>Quotation Date :</strong> {{quote.Date}}</p>
             </div>
         </header>
 
@@ -387,14 +388,16 @@
             </div>
             <div class="address-block">
                 <h3>Quotation To</h3>
-                <p>Studio Den</p>
+                <p>{{quote.customer.name}}</p>
                 <span class="details">
-                    305, 3rd Floor Orion mall, Bengaluru,<br>
-                    Karnataka, India - 560055
+                    {{quote.customer.address}}<br>
+                    {{quote.customer.city}}
                 </span>
                 <!-- ←– NEW: system spec badge –→ -->
                 <div class="system-spec">
-                    5 kW • ON-GRID • Residential Solar System
+                    {{ quote.lead.system_size }} kW
+                    &bull; {{ quote.lead.get_grid_type_display }}
+                    &bull; {{ quote.lead.get_system_type_display }}
                 </div>
             </div>
         </section>
@@ -404,37 +407,36 @@
             <table class="items-table">
                 <thead>
                     <tr>
-                        <th>Items </th>
+                        <th>Items</th>
                         <th class="align-centre">Qty</th>
                         <th class="align-centre">Brand/Make</th>
                     </tr>
                 </thead>
                 <tbody>
+                    {% for line in quotation.items.all %}
                     <tr>
-                        <td>1. Basic Web Development</td>
-                        <td class="align-centre">1</td>
-                        <td class="align-centre">Havells</td>
-
+                        <td>
+                            {{ forloop.counter }}.
+                            {{ line.price_rule.item.product_name }}
+                        </td>
+                        <td class="align-centre">
+                            {{ line.quantity }}
+                        </td>
+                        <td class="align-centre">
+                            {{ line.price_rule.item.brand.name }}
+                        </td>
                     </tr>
+                    {% empty %}
                     <tr>
-                        <td>2. Logo Design</td>
-                        <td class="align-centre">1</td>
-                        <td class="align-centre">Adani</td>
-
+                        <td colspan="3" class="align-centre">
+                            No items found
+                        </td>
                     </tr>
-                    <tr>
-                        <td>3. Web Design</td>
-                        <td class="align-centre">1</td>
-                        <td class="align-centre">Statcon</td>
-                    </tr>
-                    <tr>
-                        <td>4. Full Stack Web development</td>
-                        <td class="align-centre">1</td>
-                        <td class="align-centre"></td>
-                    </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
+
 
         <section class="summary-section">
             <table class="summary-table">
@@ -488,7 +490,7 @@
         <footer class="footer">
             <div>
                 For any enquiries, email us on <strong>sales@anmaksolar.com</strong> or <br> call us on <strong>+91
-                    9412211346</strong>
+                    94122-11346</strong>
             </div>
             <div class="signature-area">
                 <img src="https://i.ibb.co/b3b64k7/stamp.png" alt="Authorized Signature Stamp">
