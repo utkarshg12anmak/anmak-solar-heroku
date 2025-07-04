@@ -2,8 +2,11 @@
 <html lang="en">
 
 <head>
+    
     {% load static %}
     {% load humanize %}
+
+    <link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -416,26 +419,30 @@
                     </tr>
                 </thead>
                 <tbody>
-  {% for line in quotation.items.all %}
-    <tr>
-      <td>
-        {{ forloop.counter }}. {{ line.price_rule.item.product_name }}
-      </td>
-      <td class="align-centre">
-        {{ line.quantity }}
-      </td>
-      <td class="align-centre">
-        {{ line.price_rule.item.brand.name }}
-      </td>
-    </tr>
-  {% empty %}
-    <tr>
-      <td colspan="3" class="align-centre">
-        No items found
-      </td>
-    </tr>
-  {% endfor %}
-</tbody>
+                    {% for line in quote.items.all %}
+                    <tr>
+                        <td>
+                            {{ forloop.counter }}. {{ line.price_rule.item.product_name }}
+                        </td>
+                        <td class="align-centre">
+                            {{ line.quantity }}
+                        </td>
+                        <td class="align-centre">
+  {% if line.price_rule.item.brand.name != "Unbranded" %}
+    {{ line.price_rule.item.brand.name }}
+  {% endif %}
+</td>
+
+
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="align-centre">
+                            No items found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
 
             </table>
         </div>
@@ -446,17 +453,18 @@
                 <tbody>
                     <tr>
                         <td class="label">Sub Total</td>
-                         <td class="value">
+                        <td class="value">
                             ₹{{ quote.selling_price|add:quote.discount|floatformat:2|intcomma }}
                         </td>
                     </tr>
 
                     <!-- Discount row -->
+                    {% if quote.discount > 0 %}
                     <tr class="discount-row">
                         <td class="label discount">Discount</td>
                         <td class="value discount">– ₹{{quote.discount}}</td>
                     </tr>
-
+                    {% endif %}
                     <!-- Total row -->
                     <tr class="total-row">
                         <td class="label">Total</td>
@@ -487,7 +495,7 @@
                 </div>
                 <div style="width: 48%;">
                     <h4>Account Details</h4>
-                    <p>BANK OF BARODA, VALLEY BAZAR, MEERUT <br>A/C: 14740400000223 , IFSC: BARB0VALLEY</p>
+                    <p>BANK OF BARODA, VALLEY BAZAR, MEERUT <br>A/C: 14740400000223 , IFSC: BARB0VALLEY <br>UPI ID: kamna79061@barodampay</p>
                 </div>
             </div>
         </section>
