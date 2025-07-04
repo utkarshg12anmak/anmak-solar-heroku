@@ -29,7 +29,7 @@
         .address-section {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 40px;
+            margin-bottom: 20px;
             gap: 20px;
         }
 
@@ -42,8 +42,9 @@
         }
         
         .address-block h3 {
-            font-size: 12px;
-            color: #888;
+            font-size: 14px;
+            font-weight: 600;
+            color: #675d5d;
             margin-top: 0;
             margin-bottom: 5px;
             font-weight: normal;
@@ -110,9 +111,9 @@
         }
 
         /* --- Other Sections --- */
-        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
         .logo-container { display: flex; align-items: center; }
-        .logo-box { width: 50px; height: 50px; background-color: #000; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; margin-right: 10px; }
+        .logo-box { width: 75px; height: 75px; background-color: #000; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; margin-right: 10px; }
         .logo-text { font-size: 20px; font-weight: bold; color: #000; }
         .quote-details { text-align: right; }
         .quote-details h1 { margin: 0; font-size: 36px; color: #003347; font-weight: 300; }
@@ -122,7 +123,7 @@
         .invoice-total-words { margin-top: 10px; text-align: right; font-size: 14px; font-weight: bold; text-transform: uppercase; }
         .additional-info { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; }
         .additional-info h4 { margin-top: 0; margin-bottom: 10px; font-size: 14px; }
-        .additional-info p { font-size: 12px; color: #555; margin: 0 0 15px 0; }
+        .additional-info p { font-size: 12px; color: #555; margin: 0 0 2px 0; }
         .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #555; display: flex; justify-content: space-between; align-items: flex-end; }
         .signature-area { text-align: center; }
         .signature-area img { height: 40px; }
@@ -181,6 +182,8 @@
                 page-break-before: auto;
             }
         }
+
+        .logo img { width: 200px; display: block; margin: 0 auto; }
     </style>
 </head>
 <body>
@@ -188,7 +191,9 @@
     <div class="invoice-box">
         <header class="header">
             <div class="logo-container">
-                <img src="{% static 'logo_dark.svg' %}" alt="Anmak Solar Logo"/>                
+                    <div class="logo">
+      <img src="{% static 'logo_dark.svg' %}" alt="Anmak Solar Logo"/>
+    </div>
             </div>
             <div class="quote-details">
                 <h1>QUOTATION</h1>
@@ -199,22 +204,21 @@
 
         <section class="address-section">
             <div class="address-block">
-                <h3>Quotation by</h3>
-                <p>Foobar Labs</p>
+                <h3>Quotation By</h3>
+                <p>KAMNA TRADERS</p>
                 <span class="details">
-                    52-59, HSR Layout, 3rd Floor Orion mall,<br>
-                    Bengaluru, Karnataka, India - 560055
+                    72, Budh Vihar, Meerut<br>
+                    Uttar Pradesh, India - 250002
                 </span>
-                <p style="margin-top:10px;">PAN: <span class="details">ABCED1234F</span></p>
+                <p style="margin-top:10px;">GST : <span class="details">09ADUPG9238P1ZG</span></p>
             </div>
             <div class="address-block">
-                <h3>Quotation to</h3>
+                <h3>Quotation To</h3>
                 <p>Studio Den</p>
                 <span class="details">
                     305, 3rd Floor Orion mall, Bengaluru,<br>
                     Karnataka, India - 560055
-                </span>
-                <p style="margin-top:10px;">PAN: <span class="details">ABCED1234F</span></p>
+                </span>                
             </div>
         </section>
 
@@ -280,22 +284,26 @@
 
 
         <section class="additional-info">
-            <div style="display: flex; justify-content: space-between; gap: 20px;">
-                <div style="width: 48%;">
+            <div style="display: flex; gap: 20px;">
+                  <div style="flex: 0 0 60%;">
                     <h4>Terms and Conditions</h4>
-                    <p>1. Please pay within 15 days from the date of invoice, overdue interest @ 14% will be charged on delayed payments.</p>
-                    <p>2. Please quote invoice number when remitting funds.</p>
+<p>1. PAYMENT 100 % ADVANCE AGAINST ORDER</p>
+<p>2. DELIVERY CHARGES EXTRA AS APPLICABLE*</p>
+<p>3. THIS QUOTATION IS VALID FOR 7 DAYS FROM THE DATE OF ISSUE</p>
+<p>4. PANEL CAPACITY MAY VARY BY ±2%.</p>
+<p>5. IF ANY TAMPERING OCCURS WITHIN 5 YEARS OF THE INSTALLATION  DATE OR IF ANY EXTERNAL MODULE IS INSTALLED, THE WARRANTY WILL  BE VOID.</p>
+
                 </div>
                 <div style="width: 48%;">
-                    <h4>Additional Notes</h4>
-                    <p>It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here'.</p>
+                    <h4>Account Details</h4>
+                    <p>BANK OF BARODA, VALLEY BAZAR, MEERUT <br>A/C: 14740400000223 , IFSC: BARB0VALLEY</p>
                 </div>
             </div>
         </section>
         
         <footer class="footer">
              <div>
-                For any enquiries, email us on <strong>info@foobarlabs.com</strong> or <br> call us on <strong>+91 98765-43210</strong>
+                For any enquiries, email us on <strong>sales@anmaksolar.com</strong> or <br> call us on <strong>+91 9412211346</strong>
             </div>
             <div class="signature-area">
                 <img src="https://i.ibb.co/b3b64k7/stamp.png" alt="Authorized Signature Stamp">

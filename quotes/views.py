@@ -54,6 +54,8 @@ from .mixins import LeadAccessMixin
 from profiles.models import DepartmentMembership
 
 from django.db.models import Prefetch
+from django.shortcuts import render
+
 
 
 
@@ -440,3 +442,25 @@ def download_department_draft_pdf(request, quote_pk):
             as_attachment=True,
             filename=f"{raw['Quote_Number']}.pdf"
         )
+    
+def quotation_view(request, pk):
+    quote = get_object_or_404(Quote, pk=pk)
+    context = {
+        "quotation": quote,
+        "company": {
+            "place_of_supply": request.user.profile.department.place_of_supply,
+            "country": request.user.profile.department.country,
+        },
+        "customer": quote.lead.customer,
+        # any other bits your template references…
+    }
+    return render(request, "quotes/quotation_pdf_base.html", context)
+
+def quotation_preview(request):
+    # you can pass whatever dummy context you like here
+    context = {
+      "some_value": "foo",
+      "another": 123,
+      # …
+    }
+    return render(request, "quotes/quotation_pdf_base.html", context)

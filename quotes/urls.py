@@ -2,6 +2,9 @@ from django.urls import path
 from .views import create_quote_json
 from .views import soft_delete_quote
 from . import views
+from .views import quotation_view
+from .views import quotation_preview
+
 
 app_name = "quotes"
 
@@ -24,5 +27,7 @@ urlpatterns = [
       views.download_department_draft_pdf,
       name='download_department_draft_pdf'
     ),    
+    path("quotation/<int:pk>/", quotation_view, name="quotation_view"),
+    path("preview-quote/", quotation_preview, name="quotation_preview"),
 ]
 
