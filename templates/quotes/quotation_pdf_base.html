@@ -362,12 +362,38 @@
             padding: 6px 12px;
             font-size: 14px;
         }
+
+        /* Watermark styles */
+        .invoice-box {
+        position: relative;
+        }
+
+        .invoice-box .watermark {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-30deg);
+        font-size: 6rem;
+        font-weight: bold;
+        color: rgba(255, 0, 0, 0.15);
+        pointer-events: none;
+        z-index: 1000;
+        white-space: nowrap;
+        }
+
+
     </style>
 </head>
 
 <body>
 
-    <div class="invoice-box">
+  <div class="invoice-box">
+    {# assume STATUS_PENDING is 1, adjust if different #}
+    {% if quote.status == quote.STATUS_PENDING %}
+      <div class="watermark">APPROVAL PENDING</div>
+    {% endif %}
+
+    
         <header class="header">
             <div class="logo-container">
                 <div class="logo">
@@ -516,7 +542,7 @@
         </footer>
 
     </div>
-
+</div>
 </body>
 
 </html>
