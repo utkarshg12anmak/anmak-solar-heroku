@@ -424,8 +424,13 @@
                         <td>
                             {{ forloop.counter }}. {{ line.price_rule.item.product_name }}
                         </td>
+                        
                         <td class="align-centre">
-                            {{ line.quantity }}
+                            {% if line.price_rule.get_unit_type_display == "Per kW" %}
+                            1
+                            {% else %}
+                            {{ line.quantity|floatformat:0 }}
+                            {% endif %}
                         </td>
                         <td class="align-centre">
   {% if line.price_rule.item.brand.name != "Unbranded" %}
@@ -502,12 +507,11 @@
 
         <footer class="footer">
             <div>
-                For any enquiries, email us on <strong>sales@anmaksolar.com</strong> or <br> call us on <strong>+91
+                For any enquiries, email us on <strong>sales@anmaksolar.com</strong> or call us on <strong>+91
                     94122-11346</strong>
             </div>
             <div class="signature-area">
-                <img src="https://i.ibb.co/b3b64k7/stamp.png" alt="Authorized Signature Stamp">
-                <p>Authorized Signature</p>
+
             </div>
         </footer>
 
