@@ -551,18 +551,27 @@ def html_to_pdf(html: str) -> bytes:
         raise ValueError("PDF generation failed")
     return buff.getvalue()
 
+
+
 # quotes/views.py (snippet)
 from django.template.loader import render_to_string
 from django.http import FileResponse
-from .utils import html_to_png, png_to_pdf
 from .utils import html_to_pdf_with_chrome
 
+from django.templatetags.static import static
 
 
 @login_required
 def download_full_quote(request, quote_pk):
     quote = get_object_or_404(Quote, pk=quote_pk, status=Quote.STATUS_APPROVED)
-    html  = render_to_string("quotes/quotation_pdf_base.html", {"quote": quote}, request=request)
+
+    logo_url = request.build_absolute_uri(static('logo_dark.svg'))
+
+    html = render_to_string(
+        "quotes/quotation_pdf_base.html",
+        {"quote": quote, "logo_url": logo_url},
+        request=request
+    )    
 
     # 1) Pre + body + post merging
     from PyPDF2 import PdfReader, PdfWriter
