@@ -3,6 +3,11 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from leads.models import Lead
+from django.core.validators import FileExtensionValidator
+from profiles.models import validate_file_size
+from oms_project.storage_backends import MediaStorage  # import custom S3 storage
+
+
 
 class Quote(models.Model):
     STATUS_PENDING = 'approval_pending'
@@ -83,3 +88,14 @@ class QuoteItem(models.Model):
 
     def __str__(self):
         return f"{self.price_rule.item.product_name} × {self.quantity}"
+    
+class QuoteTemplate(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    pre_pdf = models.FileField(upload_to='quote_templates/pre/',storage=MediaStorage(), blank=True, null=True)
+    post_pdf = models.FileField(upload_to='quote_templates/post/',storage=MediaStorage(), blank=True, null=True)
+    # Optionally, a field for HTML template, e.g.:
+    # html_template = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+                

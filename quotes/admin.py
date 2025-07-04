@@ -2,6 +2,8 @@
 from django.contrib import admin
 from decimal import Decimal
 from .models import Quote, QuoteItem
+from .models import QuoteTemplate
+from oms_project.storage_backends import MediaStorage  # import custom S3 storage
 
 class QuoteItemInline(admin.TabularInline):
     model = QuoteItem
@@ -35,3 +37,25 @@ class QuoteAdmin(admin.ModelAdmin):
 
         # 3) persist it
         Quote.objects.filter(pk=obj.pk).update(minimum_price=total)
+
+@admin.register(QuoteTemplate)
+class QuoteTemplateAdmin(admin.ModelAdmin):
+    list_display = ("id", "name", "pre_pdf", "post_pdf")
+    search_fields = ("name", )
+    # Optionally:
+    # list_filter = ("...")
+
+    # If you want to show links to the files:
+    def pre_pdf_link(self, obj):
+        if obj.pre_pdf:
+            return f'<a href="{obj.pre_pdf.url}" target="_blank">View</a>'
+        return "-"
+    pre_pdf_link.allow_tags = True
+    pre_pdf_link.short_description = "Pre PDF"
+
+    def post_pdf_link(self, obj):
+        if obj.post_pdf:
+            return f'<a href="{obj.post_pdf.url}" target="_blank">View</a>'
+        return "-"
+    post_pdf_link.allow_tags = True
+    post_pdf_link.short_description = "Post PDF"

@@ -96,7 +96,7 @@ class DepartmentMembershipInline(admin.TabularInline):
 
 @admin.register(Department)
 class DepartmentAdmin(admin.ModelAdmin):
-    list_display = ('name', 'parent', 'dept_type', 'region', 'category', 'draft_quotation_link')
+    list_display = ('name', 'parent', 'dept_type', 'region', 'category', "quote_template")
     list_filter  = ('dept_type', 'region', 'category')
     search_fields = ('name',)
     inlines      = (DepartmentMembershipInline,)

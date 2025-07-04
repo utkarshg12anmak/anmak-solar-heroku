@@ -4,8 +4,6 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
 
-
-
 def validate_file_size(value):
     limit = 100 * 1024 * 1024  # 100 MB
     if value.size > limit:
@@ -67,6 +65,14 @@ class OnDutyChangeLog(models.Model):
 
 class Department(models.Model):
     name      = models.CharField(max_length=200)
+    quote_template = models.ForeignKey(
+        'quotes.QuoteTemplate',           # <--- use string, not model class
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='departments',
+        help_text='Select the quotation template to use for this department'
+    )
     parent    = models.ForeignKey(
         'self',
         null=True, blank=True,
