@@ -389,9 +389,10 @@
 
   <div class="invoice-box">
     {# assume STATUS_PENDING is 1, adjust if different #}
-    {% if quote.status == quote.STATUS_PENDING %}
-      <div class="watermark">APPROVAL PENDING</div>
-    {% endif %}
+        {% if quote.status != quote.STATUS_APPROVED %}
+        <div class="watermark">{{ quote.get_status_display|upper }}</div>
+        {% endif %}
+
 
     
         <header class="header">
