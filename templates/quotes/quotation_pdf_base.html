@@ -1,0 +1,310 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+{% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quotation for A4 Print</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+            color: #333;
+            line-height: 1.6;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 0;
+        }
+
+        .invoice-box {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 30px;
+            border: 1px solid #eee;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* --- Address Section (Card Style) --- */
+        .address-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            gap: 20px;
+        }
+
+        .address-block {
+            width: 48%;
+            background-color: #f9f9f9;
+            border: 1px solid #eeeeee;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .address-block h3 {
+            font-size: 12px;
+            color: #888;
+            margin-top: 0;
+            margin-bottom: 5px;
+            font-weight: normal;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+
+        /* --- Items Table (Rounded Corners & Alternate Rows) --- */
+        .table-container {
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 30px;
+            border: 1px solid #003347;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .items-table thead th {
+            background-color: #003347;
+            color: #fff;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        .items-table tbody tr {
+            border-bottom: 1px solid #eee;
+        }
+
+        .items-table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .items-table tbody tr:last-child {
+            border-bottom: none;
+        }
+        
+        .items-table td {
+            padding: 12px;
+            vertical-align: top;
+        }
+        
+        .items-table .align-right { text-align: right; }
+
+        /* --- Totals Section (Green Discount) --- */
+        .summary-section {
+            display: flex;
+            justify-content: flex-end;
+        }
+        
+        .summary-table { width: 40%; border-collapse: collapse; }
+        .summary-table td { padding: 8px 12px; font-size: 14px; }
+        .summary-table .label { text-align: right; }
+        .summary-table .value { text-align: right; }
+        .summary-table .discount { color: #28a745; }
+        .summary-table .total-row td {
+            font-size: 20px;
+            font-weight: bold;
+            border-top: 2px solid #003347;
+            padding-top: 10px;
+        }
+
+        /* --- Other Sections --- */
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
+        .logo-container { display: flex; align-items: center; }
+        .logo-box { width: 50px; height: 50px; background-color: #000; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; margin-right: 10px; }
+        .logo-text { font-size: 20px; font-weight: bold; color: #000; }
+        .quote-details { text-align: right; }
+        .quote-details h1 { margin: 0; font-size: 36px; color: #003347; font-weight: 300; }
+        .quote-details p { margin: 2px 0; font-size: 14px; }
+        .address-block p { margin: 0; font-size: 14px; font-weight: bold; }
+        .address-block .details { font-weight: normal; }
+        .invoice-total-words { margin-top: 10px; text-align: right; font-size: 14px; font-weight: bold; text-transform: uppercase; }
+        .additional-info { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; }
+        .additional-info h4 { margin-top: 0; margin-bottom: 10px; font-size: 14px; }
+        .additional-info p { font-size: 12px; color: #555; margin: 0 0 15px 0; }
+        .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #555; display: flex; justify-content: space-between; align-items: flex-end; }
+        .signature-area { text-align: center; }
+        .signature-area img { height: 40px; }
+        .signature-area p { margin-top: 0; }
+        
+        /* ################################### */
+        /* ####### PRINT STYLES ADDED ######## */
+        /* ################################### */
+        @media print {
+            body {
+                background-color: #fff;
+                font-size: 10pt; /* Use points for print consistency */
+            }
+
+            .invoice-box {
+                width: 100%;
+                max-width: 100%;
+                margin: 0;
+                padding: 0;
+                border: none;
+                box-shadow: none; /* Remove shadow for print */
+            }
+            
+            .table-container {
+                border-radius: 0; /* Remove rounding for simpler print */
+                border: 1px solid #ccc;
+            }
+
+            /* Force browser to print background colors */
+            .logo-box,
+            .address-block,
+            .items-table thead th,
+            .items-table tbody tr:nth-child(even) {
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+            }
+            
+            .items-table thead th {
+                border-bottom: 2px solid #333; /* Ensure header is distinct */
+            }
+            
+            .address-block {
+                border: 1px solid #ddd;
+            }
+
+            /* Prevent elements from being split across pages */
+            .header,
+            .address-section,
+            .table-container,
+            .summary-section,
+            .footer {
+                page-break-inside: avoid;
+            }
+
+            .footer {
+                page-break-before: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="invoice-box">
+        <header class="header">
+            <div class="logo-container">
+                <img src="{% static 'logo_dark.svg' %}" alt="Anmak Solar Logo"/>                
+            </div>
+            <div class="quote-details">
+                <h1>QUOTATION</h1>
+                <p><strong>Quotation # :</strong> 004</p>
+                <p><strong>Quotation Date :</strong> JUN 19, 2019</p>
+            </div>
+        </header>
+
+        <section class="address-section">
+            <div class="address-block">
+                <h3>Quotation by</h3>
+                <p>Foobar Labs</p>
+                <span class="details">
+                    52-59, HSR Layout, 3rd Floor Orion mall,<br>
+                    Bengaluru, Karnataka, India - 560055
+                </span>
+                <p style="margin-top:10px;">PAN: <span class="details">ABCED1234F</span></p>
+            </div>
+            <div class="address-block">
+                <h3>Quotation to</h3>
+                <p>Studio Den</p>
+                <span class="details">
+                    305, 3rd Floor Orion mall, Bengaluru,<br>
+                    Karnataka, India - 560055
+                </span>
+                <p style="margin-top:10px;">PAN: <span class="details">ABCED1234F</span></p>
+            </div>
+        </section>
+
+        <div class="table-container">
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Items </th>
+                        <th class="align-right">Qty</th>
+                        <th class="align-right">Brand/Make</th>                        
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>1. Basic Web Development</strong></td>
+                        <td class="align-right">1</td>
+                        <td class="align-right">Havells</td>
+                        
+                    </tr>
+                    <tr>
+                        <td><strong>2. Logo Design</strong></td>
+                        <td class="align-right">1</td>
+                        <td class="align-right">Adani</td>
+                        
+                    </tr>
+                    <tr>
+                        <td><strong>3. Web Design</strong></td>
+                        <td class="align-right">1</td>
+                        <td class="align-right">Statcon</td>                        
+                    </tr>
+                    <tr>
+                        <td><strong>4. Full Stack Web development</strong></td>
+                        <td class="align-right">1</td>
+                        <td class="align-right"></td>                        
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <section class="summary-section">
+            <table class="summary-table">
+                <tbody>
+                    <tr>
+                        <td class="label">Sub Total</td>
+                        <td class="value">₹101,000</td>
+                    </tr>
+                    <tr>
+                        <td class="label discount">Discount(5%)</td>
+                        <td class="value discount">- ₹5,050</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td class="label">Total</td>
+                        <td class="value">₹95,950</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <div class="invoice-total-words">
+            INVOICE TOTAL (IN WORDS)<br>
+            NINETY THOUSAND NINE HUNDRED FIFTY RUPEES ONLY
+        </div>
+
+
+        <section class="additional-info">
+            <div style="display: flex; justify-content: space-between; gap: 20px;">
+                <div style="width: 48%;">
+                    <h4>Terms and Conditions</h4>
+                    <p>1. Please pay within 15 days from the date of invoice, overdue interest @ 14% will be charged on delayed payments.</p>
+                    <p>2. Please quote invoice number when remitting funds.</p>
+                </div>
+                <div style="width: 48%;">
+                    <h4>Additional Notes</h4>
+                    <p>It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here'.</p>
+                </div>
+            </div>
+        </section>
+        
+        <footer class="footer">
+             <div>
+                For any enquiries, email us on <strong>info@foobarlabs.com</strong> or <br> call us on <strong>+91 98765-43210</strong>
+            </div>
+            <div class="signature-area">
+                <img src="https://i.ibb.co/b3b64k7/stamp.png" alt="Authorized Signature Stamp">
+                <p>Authorized Signature</p>
+            </div>
+        </footer>
+
+    </div>
+
+</body>
+</html>
+
