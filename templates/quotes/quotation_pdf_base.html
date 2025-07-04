@@ -397,9 +397,15 @@
     
         <header class="header">
             <div class="logo-container">
+                
+                    <!--- <img src="{{ logo_url }}" alt="Anmak Solar Logo" /> -->                
                 <div class="logo">
+                {% if logo_url %}
                     <img src="{{ logo_url }}" alt="Anmak Solar Logo" />
-                </div>
+                {% else %}
+                    <img src="{% static 'logo_dark.svg' %}" alt="Anmak Solar Logo" />
+                {% endif %}
+            </div>      
             </div>
             <div class="quote-details">
                 <h1>QUOTATION</h1>
