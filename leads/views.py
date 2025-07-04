@@ -125,7 +125,31 @@ class LeadListView(LoginRequiredMixin, SalesDepartmentAccessMixin, ListView):
     ordering            = ["-updated_at"]
 
     def get_base_qs(self):
-        # start with all Leads in your Sales dept:
+        # Collect all department-level permission queries
+        membership_q = Q()
+
+        # memberships is a list of dicts (from your session/user context)
+        for membership in self.request.session.get('memberships', []):
+            dept_id = membership['department_id']
+            user_level = membership['level']
+            lvl_map = self.department_user_map.get(str(dept_id), {})
+
+            if user_level == 1:
+                # see all leads in this department
+                membership_q |= Q(department_id=dept_id)
+            elif user_level == 2:
+                # see leads managed by level 2 or 3 users in this department
+                mgr_ids = lvl_map.get("2", []) + lvl_map.get("3", [])
+                membership_q |= Q(department_id=dept_id, lead_manager_id__in=mgr_ids)
+            elif user_level == 3:
+                # see only your own leads in this department
+                membership_q |= Q(department_id=dept_id, lead_manager=self.request.user)
+
+        if not membership_q:
+            # User has no memberships, return empty queryset
+            return Lead.objects.none()
+
+        # Use select_related to optimize DB hits
         qs = (
             Lead.objects
                 .select_related(
@@ -135,30 +159,14 @@ class LeadListView(LoginRequiredMixin, SalesDepartmentAccessMixin, ListView):
                     "lead_manager",
                     "department",
                 )
-                .filter(department_id=self.department_id)
+                .filter(membership_q)
         )
-
-        lvl_map = self.department_user_map.get(str(self.department_id), {})
-
-        if self.user_level == 1:
-            # see _all_ leads in this department
-            return qs
-
-        if self.user_level == 2:
-            # see only those whose lead_manager is level 2 or 3
-            mgr_ids = lvl_map.get("2", []) + lvl_map.get("3", [])
-            return qs.filter(lead_manager_id__in=mgr_ids)
-
-        if self.user_level == 3:
-            # see only your own
-            return qs.filter(lead_manager=self.request.user)
-
-        raise PermissionDenied()
+        return qs
 
     def get_queryset(self):
         qs = self.get_base_qs().order_by(*self.ordering)
 
-        # quick search:
+        # quick search
         q = self.request.GET.get("q", "").strip()
         if q:
             sq = Q(pk=q) if q.isdigit() else Q()
@@ -167,7 +175,7 @@ class LeadListView(LoginRequiredMixin, SalesDepartmentAccessMixin, ListView):
             sq |= Q(customer__last_name__icontains=q)
             qs = qs.filter(sq)
 
-        # dropdown filters:
+        # dropdown filters
         mapping = {
             "city":         "customer__city_id",
             "system_type":  "system_type",
@@ -181,20 +189,15 @@ class LeadListView(LoginRequiredMixin, SalesDepartmentAccessMixin, ListView):
             if val:
                 qs = qs.filter(**{field: val})
 
-        # --- now apply the “last‐stage gets only this month” rule ---
+        # last stage only this month rule
         last_stage = LeadStage.objects.order_by('order').last()
         if last_stage:
-            today         = timezone.localdate()
+            today = timezone.localdate()
             first_of_month = today.replace(day=1)
-
-            # keep:
-            #  • all leads *not* in last_stage, and
-            #  • only those in last_stage with created_at ≥ first_of_month
             qs = qs.filter(
                 Q(stage=last_stage, created_at__date__gte=first_of_month)
                 | ~Q(stage=last_stage)
             )
-
 
         return qs.order_by(*self.ordering)
 
