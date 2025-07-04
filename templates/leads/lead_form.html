@@ -1493,13 +1493,10 @@
 
                 {% if quote.status == quote.STATUS_APPROVED %}
 {% if quote.status == quote.STATUS_APPROVED %}
-  <a
-    href="{% url 'quotes:download_full_quote' quote.pk %}"
-    class="btn btn-primary"
-    target="_blank"
-  >
-    Download PDF
-  </a>
+<a href="{% url 'quotes:download_full_quote' quote.pk %}" target="_blank">
+  Download PDF
+</a>
+
 {% endif %}
 
 <script>

@@ -239,3 +239,9 @@ DEBUG_TOOLBAR_CONFIG = {
   'SHOW_TEMPLATE_CONTEXT': True,       # surface full template context in the TemplatesPanel
 }
 
+
+import os
+
+# Heroku puts chrome at this path:
+if os.environ.get('GOOGLE_CHROME_BIN'):
+    PYPPETEER_CHROME_PATH = os.environ['GOOGLE_CHROME_BIN']

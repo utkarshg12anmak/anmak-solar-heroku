@@ -1,14 +1,31 @@
 # quotes/utils.py
-from io import BytesIO
-from xhtml2pdf import pisa
 
-def html_to_pdf(html: str) -> bytes:
+import asyncio
+from pyppeteer import launch
+import img2pdf
+
+async def _capture_png(html: str) -> bytes:
     """
-    Convert an HTML string to a PDF.
-    Returns raw PDF bytes or raises ValueError on error.
+    Headless‐Chrome screenshot of full page.
     """
-    buffer = BytesIO()
-    status = pisa.CreatePDF(src=html, dest=buffer)
-    if status.err:
-        raise ValueError("xhtml2pdf failed")
-    return buffer.getvalue()
+    browser = await launch(
+        args=["--no-sandbox", "--disable-setuid-sandbox"]
+    )
+    page = await browser.newPage()
+    await page.setContent(html, waitUntil="networkidle0")
+    png = await page.screenshot({"fullPage": True, "type": "png"})
+    await browser.close()
+    return png
+
+def html_to_png(html: str) -> bytes:
+    """
+    Render HTML to PNG bytes.
+    """
+    return asyncio.run(_capture_png(html))
+
+def png_to_pdf(png_bytes: bytes) -> bytes:
+    """
+    Convert PNG bytes to a single‐page PDF.
+    """
+    # img2pdf.convert accepts raw PNG bytes
+    return img2pdf.convert(png_bytes)

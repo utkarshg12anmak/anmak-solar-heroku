@@ -86,7 +86,10 @@ from django.contrib.auth.decorators import login_required
 from PyPDF2               import PdfReader, PdfWriter
 
 from .models import Quote
-from .utils  import html_to_pdf
+
+from django.template.loader import render_to_string
+from django.http import FileResponse
+from .utils import html_to_png, png_to_pdf
 
 
 @login_required
@@ -548,37 +551,61 @@ def html_to_pdf(html: str) -> bytes:
         raise ValueError("PDF generation failed")
     return buff.getvalue()
 
+import os
+from io import BytesIO
+
+from django.shortcuts      import get_object_or_404
+from django.template.loader import render_to_string
+from django.http           import FileResponse, Http404
+from django.contrib.auth.decorators import login_required
+
+from PyPDF2                import PdfReader, PdfWriter
+
+from .models               import Quote
+from .utils                import html_to_png, png_to_pdf
+
+
 @login_required
 def download_full_quote(request, quote_pk):
     # 1) Load & validate
     quote = get_object_or_404(Quote, pk=quote_pk, status=Quote.STATUS_APPROVED)
 
     # 2) Render your HTML template to a string
-    html = render_to_string(
+    html_content = render_to_string(
         "quotes/quotation_pdf_base.html",
         {"quote": quote},
-        request=request
+        request=request  # ensures {% static %} and absolute URLs work
     )
-    # 3) Turn that HTML into PDF bytes
-    body_pdf = html_to_pdf(html)
 
-    # 4) Grab the pre/post PDFs from the template config
+    # 3) Screenshot via headless Chrome → PNG bytes
+    png_bytes = html_to_png(html_content)
+
+    # 4) Convert that PNG to a single-page PDF
+    body_pdf_bytes = png_to_pdf(png_bytes)
+
+    # 5) Grab the pre/post PDFs from the template linked on the department
     qt = quote.lead.department.quote_template
     if not qt or not qt.pre_pdf or not qt.post_pdf:
-        raise Http404("Pre/Post PDFs not set up for this department.")
+        raise Http404("Pre/Post PDFs not configured for this department.")
     pre_bytes  = qt.pre_pdf.read()
     post_bytes = qt.post_pdf.read()
 
-    # 5) Merge them all
+    # 6) Merge pre + body + post
     writer = PdfWriter()
-    for blob in (pre_bytes, body_pdf, post_bytes):
+    for blob in (pre_bytes, body_pdf_bytes, post_bytes):
         reader = PdfReader(BytesIO(blob))
         for page in reader.pages:
             writer.add_page(page)
 
-    # 6) Stream it back
+    # 7) Stream it back
     output = BytesIO()
     writer.write(output)
     output.seek(0)
+
     filename = f"AMKSLR-{quote.pk:03d}.pdf"
-    return FileResponse(output, as_attachment=True, filename=filename)
+    return FileResponse(
+        output,
+        as_attachment=True,
+        filename=filename,
+        content_type="application/pdf"
+    )
