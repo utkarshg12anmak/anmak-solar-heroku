@@ -1492,14 +1492,31 @@
 
 
                 {% if quote.status == quote.STATUS_APPROVED %}
-                  <button
-                    class="btn btn-primary"
-                    id="download-approved-quote-{{ quote.pk }}"
-                    data-quote-id="{{ quote.pk }}"
-                  >
-                    Download Department Draft (PDF)
-                  </button>
+{% if quote.status == quote.STATUS_APPROVED %}
+  <a
+    href="{% url 'quotes:download_full_quote' quote.pk %}"
+    class="btn btn-primary"
+    target="_blank"
+  >
+    Download PDF
+  </a>
+{% endif %}
+
+<script>
+document.querySelectorAll('.download-quote').forEach(el => {
+  el.addEventListener('click', () => {
+    // show your spinner here, then window.open will download
+    document.getElementById('global-loader').style.display = 'block';
+  });
+});
+window.addEventListener('load', () => {
+  document.getElementById('global-loader').style.display = 'none';
+});
+</script>
+
                 {% endif %}
+
+                
 
 
             <h4>Items ({{ quote.items.count }})</h4>

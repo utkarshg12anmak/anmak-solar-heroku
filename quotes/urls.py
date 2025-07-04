@@ -33,5 +33,10 @@ urlpatterns = [
         views.quotation_view,
         name="quotation_preview"
     ),
+    path(
+        "download-full-quote/<int:quote_pk>/",
+        views.download_full_quote,
+        name="download_full_quote",
+    )
 ]
 

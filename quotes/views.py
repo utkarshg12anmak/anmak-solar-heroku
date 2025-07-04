@@ -56,7 +56,37 @@ from profiles.models import DepartmentMembership
 from django.db.models import Prefetch
 from django.shortcuts import render
 
+import io
+from django.template.loader import render_to_string
+from django.http          import FileResponse, Http404
 
+from django.shortcuts     import get_object_or_404
+from django.contrib.auth.decorators import login_required
+
+from .models import Quote
+
+import io
+from django.template.loader import render_to_string
+from django.http          import FileResponse, Http404
+from django.shortcuts     import get_object_or_404
+
+from PyPDF2               import PdfMerger
+
+from .models import Quote
+
+from io import BytesIO
+from xhtml2pdf import pisa
+from django.http import HttpResponse
+
+import os
+from io import BytesIO
+from django.shortcuts       import get_object_or_404
+from django.http            import FileResponse, Http404
+from django.contrib.auth.decorators import login_required
+from PyPDF2               import PdfReader, PdfWriter
+
+from .models import Quote
+from .utils  import html_to_pdf
 
 
 @login_required
@@ -482,3 +512,73 @@ def quotation_preview(request):
       # …
     }
     return render(request, "quotes/quotation_pdf_base.html", context)
+
+@login_required
+def preview_quote_pdf(request, quote_pk):
+    # 1) Load & validate
+    quote = get_object_or_404(Quote, pk=quote_pk)
+    # (you can enforce only-approved if you like)
+
+    # 2) Render HTML template to a string
+    html_string = render_to_string(
+        "quotes/quotation_pdf_base.html",
+        {"quote": quote},
+        request=request  # so static() tags resolve correctly
+    )
+
+    # 3) Use WeasyPrint to write a PDF into a BytesIO buffer
+    pdf_io = io.BytesIO()
+    HTML(string=html_string, base_url=request.build_absolute_uri("/")) \
+        .write_pdf(target=pdf_io)
+    pdf_io.seek(0)
+
+    # 4) Stream it back
+    filename = f"AMKSLR-{quote.pk:03d}.pdf"
+    return FileResponse(
+        pdf_io,
+        as_attachment=True,
+        filename=filename,
+        content_type="application/pdf"
+    )
+
+def html_to_pdf(html: str) -> bytes:
+    buff = BytesIO()
+    pisa_status = pisa.CreatePDF(src=html, dest=buff)
+    if pisa_status.err:
+        raise ValueError("PDF generation failed")
+    return buff.getvalue()
+
+@login_required
+def download_full_quote(request, quote_pk):
+    # 1) Load & validate
+    quote = get_object_or_404(Quote, pk=quote_pk, status=Quote.STATUS_APPROVED)
+
+    # 2) Render your HTML template to a string
+    html = render_to_string(
+        "quotes/quotation_pdf_base.html",
+        {"quote": quote},
+        request=request
+    )
+    # 3) Turn that HTML into PDF bytes
+    body_pdf = html_to_pdf(html)
+
+    # 4) Grab the pre/post PDFs from the template config
+    qt = quote.lead.department.quote_template
+    if not qt or not qt.pre_pdf or not qt.post_pdf:
+        raise Http404("Pre/Post PDFs not set up for this department.")
+    pre_bytes  = qt.pre_pdf.read()
+    post_bytes = qt.post_pdf.read()
+
+    # 5) Merge them all
+    writer = PdfWriter()
+    for blob in (pre_bytes, body_pdf, post_bytes):
+        reader = PdfReader(BytesIO(blob))
+        for page in reader.pages:
+            writer.add_page(page)
+
+    # 6) Stream it back
+    output = BytesIO()
+    writer.write(output)
+    output.seek(0)
+    filename = f"AMKSLR-{quote.pk:03d}.pdf"
+    return FileResponse(output, as_attachment=True, filename=filename)

@@ -106,9 +106,8 @@ class DepartmentAdmin(admin.ModelAdmin):
         'parent',
         'dept_type',
         'region',
-        'category',
-        'draft_quotation',
-        'draft_quotation_link',
+        'category',                
+        "quote_template",
     )
 
     def draft_quotation_link(self, obj):
