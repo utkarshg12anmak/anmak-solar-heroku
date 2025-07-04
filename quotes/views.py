@@ -65,8 +65,10 @@ def create_quote_json(request, lead_id):
     """
     AJAX endpoint to create a Quote for a Lead.
     Expects either:
-      - JSON body:   {"items":[{"price_rule":1,"quantity":2},…], "selling_price":12345}
-      - OR form data: items_json='[{"price_rule":…}]', selling_price=…
+      - JSON body:   {"items":[{"price_rule":1,"quantity":2},…],
+                     "selling_price":12345,
+                     "discount":500}
+      - OR form data: items_json='…', selling_price=…, discount=…
     Returns JSON {success:True, quote_id:…} or HTTP 400 on client errors.
     """
     lead = get_object_or_404(Lead, pk=lead_id)
@@ -75,43 +77,51 @@ def create_quote_json(request, lead_id):
     # 1) Try parsing a JSON body
     items = None
     selling_price = None
+    discount = 0
     try:
         payload = json.loads(request.body)
-        items        = payload.get("items")
+        items         = payload.get("items")
         selling_price = payload.get("selling_price")
+        discount      = payload.get("discount", 0)
     except json.JSONDecodeError:
-        # not JSON, we'll fall back
         pass
 
     # 2) Fallback to form-encoded
     if items is None or selling_price is None:
-        items_json = request.POST.get("items_json", "[]")
-        selling_price = request.POST.get("selling_price", "")
+        items_json     = request.POST.get("items_json", "[]")
+        selling_price  = request.POST.get("selling_price", "")
+        discount       = request.POST.get("discount", "0")
         try:
             items = json.loads(items_json)
         except json.JSONDecodeError:
             return HttpResponseBadRequest("Invalid items_json")
 
-    # 3) Validate
+    # 3) Validate presence
     if not isinstance(items, list) or selling_price in (None, ""):
         return HttpResponseBadRequest("Missing items or selling_price")
 
+    # 4) Parse decimals
     try:
         selling_dec = Decimal(str(selling_price))
     except InvalidOperation:
         return HttpResponseBadRequest("Invalid selling_price")
+    try:
+        discount_dec = Decimal(str(discount))
+    except InvalidOperation:
+        discount_dec = Decimal("0")
 
-    # 4) Create the Quote header
+    # 5) Create the Quote header (now with discount)
     quote = Quote.objects.create(
-        lead=lead,
-        created_by=request.user,
-        updated_by=request.user,
-        selling_price=selling_dec,
-        minimum_price=Decimal("0"),              # will recalc below
-        status=Quote.STATUS_PENDING,
+        lead           = lead,
+        created_by     = request.user,
+        updated_by     = request.user,
+        selling_price  = selling_dec,
+        discount       = discount_dec,
+        minimum_price  = Decimal("0"),  # will recalc below
+        status         = Quote.STATUS_PENDING,
     )
 
-    # 5) Build line items & accumulate minimum_price
+    # 6) Build line items & accumulate minimum_price
     total_min = Decimal("0")
     for entry in items:
         pr_id = entry.get("price_rule")
@@ -119,7 +129,6 @@ def create_quote_json(request, lead_id):
         if not pr_id or qty in (None, ""):
             continue
 
-        # only allow PriceRules available in this lead’s city
         pr = get_object_or_404(
             PriceRule.objects.filter(
                 pk=pr_id,
@@ -133,26 +142,28 @@ def create_quote_json(request, lead_id):
         except InvalidOperation:
             continue
 
-        # compute tiered unit price
-        tiers = pr.tiers.filter(min_quantity__lte=qty_dec).order_by("-min_quantity")
+        tiers     = pr.tiers.filter(min_quantity__lte=qty_dec).order_by("-min_quantity")
         unit_price = tiers[0].price if tiers else pr.base_price
-        line_min = unit_price * qty_dec
-        total_min += line_min        
+        line_min   = unit_price * qty_dec
+        total_min += line_min
 
         QuoteItem.objects.create(
-            quote=quote,
-            price_rule=pr,
-            quantity=qty_dec,
+            quote       = quote,
+            price_rule  = pr,
+            quantity    = qty_dec,
         )
 
-    # 6) Persist computed minimum_price
+    # 7) Persist computed minimum_price
     quote.minimum_price = total_min
     quote.save(update_fields=["minimum_price"])
 
-    logger.info("Created Quote #%s (lead=%s) with min=%s sell=%s",
-                quote.pk, lead_id, total_min, selling_dec)
+    logger.info(
+        "Created Quote #%s (lead=%s) with min=%s, sell=%s, discount=%s",
+        quote.pk, lead_id, total_min, selling_dec, discount_dec
+    )
 
     return JsonResponse({"success": True, "quote_id": quote.pk})
+
 
 @login_required
 @require_POST

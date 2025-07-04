@@ -6,6 +6,8 @@ from leads.models import Lead
 from django.core.validators import FileExtensionValidator
 from profiles.models import validate_file_size
 from oms_project.storage_backends import MediaStorage  # import custom S3 storage
+from decimal import Decimal
+
 
 
 
@@ -24,6 +26,12 @@ class Quote(models.Model):
     lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='quotes')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
     selling_price = models.DecimalField(max_digits=12, decimal_places=2)
+    discount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        help_text="Optional discount in ₹ (positive value)."
+    )
 
     approved_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,

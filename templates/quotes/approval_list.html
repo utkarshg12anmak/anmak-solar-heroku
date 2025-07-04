@@ -259,6 +259,8 @@
               <p><strong>Status:</strong> {{ q.get_status_display }}</p>              
               <p><strong>Minimum Price:</strong> ₹{{ q.minimum_price|floatformat:2|intcomma }}</p>
               <p><strong>Selling Price:</strong> ₹{{ q.selling_price|floatformat:2|intcomma }}</p>
+              <p><strong>Discount:</strong> ₹{{ q.discount|floatformat:2|intcomma }}</p>
+
               <h4>Items Included</h4>
               <table class="modal-table">
                 <thead>

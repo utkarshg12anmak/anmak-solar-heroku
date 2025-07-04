@@ -1,6 +1,5 @@
 {# quotations/templates/quotations/partials/quotation_modal.html #}
 
-
 <style>
   /* ——— Quotation Modal Styles ——— */
   .quotation-overlay {
@@ -62,7 +61,13 @@
   }
   .item-row {
     display: grid;
-    grid-template-columns: 2fr 5rem 5rem auto;
+    grid-template-columns:
+      2fr    /* select */
+      6rem   /* unit-price */
+      5rem   /* unit-type */
+      5rem   /* qty */
+      6rem   /* line-total */
+      auto;  /* remove button */
     gap: 0.75rem;
     align-items: center;
     background: #f9fafb;
@@ -80,7 +85,15 @@
     width: 100%;
     min-width: 0;
   }
-  .item-row .unit-type {
+  .unit-price,
+  .line-total {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    color: var(--text-dark);
+  }
+  .unit-type {
     text-align: center;
     color: var(--text-medium);
     white-space: nowrap;
@@ -145,6 +158,19 @@
     border-radius: 0.375rem;
   }
 
+  /* ——— NEW: Discount styling matches Selling Price ——— */
+  #quotationForm label[for="id_discount"] {
+    margin-right: 0.5rem;
+    font-weight: 500;
+    color: var(--text-medium);
+  }
+  #id_discount {
+    width: 6rem;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+  }
+
   .submit-quote {
     padding: 0.6rem 1.2rem;
     background: var(--primary-color);
@@ -157,29 +183,6 @@
   .submit-quote:hover {
     background: var(--primary-hover-color);
   }
-
-  .item-row {
-  display: grid;
-  grid-template-columns: 
-    2fr    /* select */
-    6rem   /* unit-price */
-    5rem   /* unit-type */
-    5rem   /* qty */
-    6rem   /* line-total */
-    auto;  /* remove button */
-  gap: 0.75rem;
-  /* … rest of your styling … */
-}
-
-.unit-price,
-.line-total {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 500;
-  color: var(--text-dark);
-}
-
 </style>
 
 <div id="quotation-modal" class="quotation-overlay">
@@ -213,9 +216,7 @@
               {% endfor %}
           </select>
 
-            <!-- NEW: shows “Per-unit” based on selection & tiers -->
           <div class="unit-price">₹0.00</div>
-
           <span class="unit-type">—</span>
 
           <input type="number"
@@ -226,9 +227,7 @@
                  pattern="\d*"
                  required />
 
-          <!-- NEW: line total = unit-price × qty -->
           <div class="line-total">₹0.00</div>
-
           <button type="button" class="remove-item">&times;</button>
         </div>
       </div>
@@ -240,14 +239,29 @@
         <span class="msp-display">MSP: ₹<span id="mspValue">0.00</span></span>
       </div>
 
+      <!-- ——— NEW DISCOUNT FIELD ——— -->
+      <div style="margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
+        <label for="id_discount">Discount (₹)</label>
+        <input
+          type="number"
+          name="discount"
+          id="id_discount"
+          min="0"
+          step="0.01"
+          placeholder="0.00"
+        />
+      </div>
+
       <div style="margin-bottom:2rem; display:flex; align-items:center;">
         <label for="id_selling_price">Selling Price (₹)</label>
-        <input type="number"
-               name="selling_price"
-               id="id_selling_price"
-               min="0"
-               step="0.01"
-               required />
+        <input
+          type="number"
+          name="selling_price"
+          id="id_selling_price"
+          min="0"
+          step="0.01"
+          required
+        />
       </div>
 
       <button type="submit" class="submit-quote">Submit Quotation</button>
@@ -315,7 +329,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // wire existing rows
   container.querySelectorAll('.item-row').forEach(attachRow);
 
   // ───── Modal open/close ─────
@@ -358,19 +371,25 @@ document.addEventListener('DOMContentLoaded', () => {
       price_rule: r.querySelector('.price-rule').value,
       quantity:   r.querySelector('.quantity').value
     }));
+    if (!items.length) return alert('Add at least one item.');
 
-    if (!items.length) {
-      return alert('Add at least one item.');
+    // validate selling price
+    const sellInput       = document.getElementById('id_selling_price');
+    const sellingValue    = parseFloat(sellInput.value);
+    if (!sellingValue || sellingValue <= 0) {
+      return alert('Please enter a valid Selling Price.');
     }
 
-    // grab the *user-entered* selling price
-   const sellInput = document.getElementById('id_selling_price');
-   const sellingValue = parseFloat(sellInput.value);
-   if (!sellingValue || sellingValue <= 0) {
-     return alert('Please enter a valid Selling Price.');
-   }
+    // ① grab the *user-entered* discount
+    const discountInput = document.getElementById('id_discount');
+    const discountValue = parseFloat(discountInput.value) || 0;
 
-    itemsJsonFld.value = JSON.stringify(items);
+    // prepare payload
+    const payload = {
+      items,
+      selling_price: sellingValue,
+      discount: discountValue
+    };
 
     try {
       const resp = await fetch(form.action, {
@@ -380,10 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
           'X-CSRFToken':      '{{ csrf_token }}',
           'X-Requested-With': 'XMLHttpRequest'
         },
-       body: JSON.stringify({
-         items,
-         selling_price: sellingValue
-       })
+        body: JSON.stringify(payload)
       });
       const json = await resp.json();
       if (json.success) {
