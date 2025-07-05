@@ -325,14 +325,7 @@ class QuoteApprovalListView(LeadAccessMixin, ListView):
         ctx  = super().get_context_data(**kwargs)
         user = self.request.user
         tab  = self.request.GET.get("tab", "pending")
-
         ctx["tab"] = tab
-
-        # grab them out of the session
-        mem     = self.request.session["active_membership"]
-        dept_id = str(mem["department_id"])
-        lvl     = str(mem["level"])
-        limits  = self.request.session["approval_limit_map"]
 
         for quote in ctx["quotes"]:
             # recompute per-item on the fly
@@ -342,35 +335,33 @@ class QuoteApprovalListView(LeadAccessMixin, ListView):
                 item.price_per_item = (cp / qty) if qty else Decimal("0")
 
             # decide if this user may approve/decline
-        allowed = False
-        memberships = [
-            m for m in self.request.session.get("memberships", [])
-            if m["dept_type"] in ["Sales", "Finance"]
-        ]
-        approval_limit_map = self.request.session.get("approval_limit_map", {})
-
-        for mem in memberships:
-            dept_id = str(mem["department_id"])
-            level = str(mem["level"])
+            allowed = False
+            memberships = [
+                m for m in self.request.session.get("memberships", [])
+                if m["dept_type"] in ["Sales", "Finance"]
+            ]
+            approval_limit_map = self.request.session.get("approval_limit_map", {})
             quote_dept_id = str(quote.lead.department_id)
-            # Only L1 can approve below minimum
-            if quote.selling_price < quote.minimum_price:
-                if dept_id == quote_dept_id and level == "1":
-                    allowed = True
-                    break
-            else:
-                if dept_id == quote_dept_id and dept_id in approval_limit_map and level in approval_limit_map[dept_id]:
-                    max_amt = int(approval_limit_map[dept_id][level])
-                    if quote.selling_price <= max_amt:
+
+            for mem in memberships:
+                dept_id = str(mem["department_id"])
+                level = str(mem["level"])
+                # Only L1 can approve below minimum
+                if quote.selling_price < quote.minimum_price:
+                    if dept_id == quote_dept_id and level == "1":
                         allowed = True
                         break
+                else:
+                    if dept_id == quote_dept_id and dept_id in approval_limit_map and level in approval_limit_map[dept_id]:
+                        max_amt = int(approval_limit_map[dept_id][level])
+                        if quote.selling_price <= max_amt:
+                            allowed = True
+                            break
 
-        quote.can_approve = allowed
-        quote.can_decline = allowed
-
+            quote.can_approve = allowed
+            quote.can_decline = allowed
 
         return ctx 
-
 
 @login_required
 @require_POST
