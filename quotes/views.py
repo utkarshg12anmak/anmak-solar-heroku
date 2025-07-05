@@ -319,7 +319,7 @@ class QuoteApprovalListView(LeadAccessMixin, ListView):
                             print("  APPROVE!")
                             q.can_approve = True
                             break  # No need to check more memberships
-            return quotes
+        return quotes
 
     def get_context_data(self, **kwargs):
         ctx  = super().get_context_data(**kwargs)
