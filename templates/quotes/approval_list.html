@@ -223,6 +223,7 @@
                 <button class="btn btn-edit view-btn" data-id="{{ q.pk }}">View Details</button>
 
                 {% if q.status  ==   q.STATUS_PENDING %}
+
                 {% if q.can_approve %}
 
                 <form method="post" action="{% url 'quotes:approve_quote' q.pk %}">

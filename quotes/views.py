@@ -255,46 +255,71 @@ class QuoteApprovalListView(LeadAccessMixin, ListView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
-        # 1) which tab?
+        # 1) Which tab?
         tab = self.request.GET.get("tab", "pending")
 
-        # 2) build your “base” Quote qs with all the joins
-        #    – select_related for every FK you touch in template
-        #    – prefetch_related for the items → price_rule → item chain
+        # 2) Build base queryset with all related objects needed for the template
         base_qs = (
             Quote.objects
-                 .select_related(
-                     "lead__lead_manager",
-                     "lead__customer__city",
-                     "created_by",
-                     "approved_by",
-                     "updated_by",
-                 )
-                 .prefetch_related(
-                     Prefetch(
-                         "items",  # `related_name` on QuoteItem
-                         queryset=(
-                             QuoteItem.objects
-                                      .select_related("price_rule__item")
-                         )
-                     )
-                 )
-                 .order_by("-updated_at")
+                .select_related(
+                    "lead__lead_manager",
+                    "lead__customer__city",
+                    "created_by",
+                    "approved_by",
+                    "updated_by",
+                    
+                )
+                .prefetch_related(
+                    Prefetch(
+                        "items",
+                        queryset=QuoteItem.objects.select_related("price_rule__item")
+                    )
+                )
+                .order_by("-updated_at")
         )
 
-        # 3) filter to only the leads this user may access
+        # 3) Filter to only leads this user may access
         allowed_lead_ids = list(self.get_allowed_leads().values_list("pk", flat=True))
         qs = base_qs.filter(lead_id__in=allowed_lead_ids)
 
-        # 4) finally, status‐branch by “pending” vs “completed”
+        # 4) Status filtering by tab
         if tab == "completed":
-            return qs.filter(status__in=[
+            qs = qs.filter(status__in=[
                 Quote.STATUS_APPROVED,
                 Quote.STATUS_DECLINED,
                 Quote.STATUS_DELETED,
             ])
-        return qs.filter(status=Quote.STATUS_PENDING)
+        else:
+            qs = qs.filter(status=Quote.STATUS_PENDING)
 
+        # 5) Prepare memberships and approval limits from session
+        memberships = [
+            m for m in self.request.session.get("memberships", [])
+            if m["dept_type"] in ["Sales", "Finance"]
+        ]
+        approval_limit_map = self.request.session.get("approval_limit_map", {})
+
+        # 6) Attach can_approve per quote (this is what your template will check)
+        quotes = list(qs)  # Evaluate queryset so we can loop over it
+
+        for q in quotes:
+            q.can_approve = False
+            quote_dept_id = str(q.lead.department_id)
+            print(f"Quote {q.pk} department: {quote_dept_id}, amount: {q.selling_price}")
+            for mem in memberships:
+                dept_id = str(mem["department_id"])
+                level = str(mem["level"])
+                print(f"Checking membership: {dept_id=} {level=}")
+                if dept_id == quote_dept_id:
+                    print("  Dept matches")
+                    if dept_id in approval_limit_map and level in approval_limit_map[dept_id]:
+                        max_amt = int(approval_limit_map[dept_id][level])
+                        print(f"  Found limit: {max_amt}")
+                        if q.selling_price <= max_amt:
+                            print("  APPROVE!")
+                            q.can_approve = True
+                            break  # No need to check more memberships
+            return quotes
 
     def get_context_data(self, **kwargs):
         ctx  = super().get_context_data(**kwargs)
@@ -317,22 +342,34 @@ class QuoteApprovalListView(LeadAccessMixin, ListView):
                 item.price_per_item = (cp / qty) if qty else Decimal("0")
 
             # decide if this user may approve/decline
-            allowed = False
+        allowed = False
+        memberships = [
+            m for m in self.request.session.get("memberships", [])
+            if m["dept_type"] in ["Sales", "Finance"]
+        ]
+        approval_limit_map = self.request.session.get("approval_limit_map", {})
 
-            # 1) under-minimum → only L1 may
+        for mem in memberships:
+            dept_id = str(mem["department_id"])
+            level = str(mem["level"])
+            quote_dept_id = str(quote.lead.department_id)
+            # Only L1 can approve below minimum
             if quote.selling_price < quote.minimum_price:
-                allowed = (lvl == "1")
+                if dept_id == quote_dept_id and level == "1":
+                    allowed = True
+                    break
             else:
-                # 2) otherwise check your session-cached limit
-                max_amt = limits.get(dept_id, {}).get(lvl)
-                if max_amt is not None:
-                    allowed = (quote.selling_price <= Decimal(max_amt))
+                if dept_id == quote_dept_id and dept_id in approval_limit_map and level in approval_limit_map[dept_id]:
+                    max_amt = int(approval_limit_map[dept_id][level])
+                    if quote.selling_price <= max_amt:
+                        allowed = True
+                        break
 
-            quote.can_approve = allowed
-            quote.can_decline = allowed
+        quote.can_approve = allowed
+        quote.can_decline = allowed
 
-        return ctx
 
+        return ctx 
 
 
 @login_required
