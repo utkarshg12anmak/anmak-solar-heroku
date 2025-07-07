@@ -80,6 +80,7 @@ INSTALLED_APPS = [
     'widget_tweaks',
     'storages',
     'django_crontab',
+    "simple_history",
 ]
 
 # Only add debug_toolbar in DEBUG mode
@@ -117,6 +118,7 @@ MIDDLEWARE = [
     'core.middleware.LoginRequiredMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',    
+    "simple_history.middleware.HistoryRequestMiddleware",
 ]
 
 if DEBUG:

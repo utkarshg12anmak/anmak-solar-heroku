@@ -4,6 +4,8 @@ from django.db import models
 from customers.models import Customer 
 from interests.models import Interest   # new import
 from profiles.models import Department
+from simple_history.models import HistoricalRecords
+
 
 SYSTEM_TYPE_CHOICES = [
     ("residential", "Residential"),
@@ -116,15 +118,33 @@ class Lead(models.Model):
         help_text="Assign this lead to a Sales department"
     )
 
-    def save(self, *args, **kwargs):
-        # if it’s a brand-new instance and no stage was set,
-        # pick the one with order=1
-        if not self.pk and not self.stage_id:
-            default_stage = LeadStage.objects.filter(order=1).first()
-            if default_stage:
-                self.stage = default_stage
-        super().save(*args, **kwargs)
+    history = HistoricalRecords()
 
+    def save(self, *args, **kwargs):
+        is_new = self._state.adding
+        user = kwargs.pop("user", None)  # We'll pass this in from the view
+        
+        if not is_new:
+            old = Lead.objects.get(pk=self.pk)
+            monitored_fields = [
+                "lead_manager", "stage", "department", "total_amount",
+                "lead_quality", "remarks"
+            ]
+            for field in monitored_fields:
+                old_val = getattr(old, field)
+                new_val = getattr(self, field)
+                if old_val != new_val:
+                    from leads.models import LeadChangeLog
+                    LeadChangeLog.objects.create(
+                        lead=self,
+                        changed_by=user,
+                        field_name=field,
+                        old_value=str(old_val),
+                        new_value=str(new_val)
+                    )
+
+        super().save(*args, **kwargs)
+        
     def __str__(self):
         return f"{self.system_size} kW — {self.get_system_type_display()}"
 
@@ -167,3 +187,23 @@ class LeadAssignmentLog(models.Model):
     def __str__(self):
         user = self.assigned_to.get_full_name() if self.assigned_to else "—"
         return f"[{self.timestamp:%Y-%m-%d %H:%M}] Lead #{self.lead_id} → {user}"
+    
+
+# leads/models.py
+
+class LeadChangeLog(models.Model):
+    lead         = models.ForeignKey("Lead", on_delete=models.CASCADE, related_name="change_logs")
+    changed_by   = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    field_name   = models.CharField(max_length=100)
+    old_value    = models.TextField(null=True, blank=True)
+    new_value    = models.TextField(null=True, blank=True)
+    timestamp    = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-timestamp"]
+        verbose_name = "Lead Change Log"
+        verbose_name_plural = "Lead Change Logs"
+
+    def __str__(self):
+        return f"{self.field_name} changed on Lead #{self.lead_id} at {self.timestamp:%Y-%m-%d %H:%M}"
+    

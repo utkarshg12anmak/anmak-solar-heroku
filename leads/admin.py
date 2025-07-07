@@ -1,6 +1,11 @@
 from django.contrib import admin
 from .models import Lead, LeadStage
 
+from django.contrib import admin
+from simple_history.admin import SimpleHistoryAdmin
+from .models import Lead  # adjust the import path if needed
+
+
 @admin.register(LeadStage)
 class LeadStageAdmin(admin.ModelAdmin):
     list_display = ('name','order')
@@ -52,3 +57,9 @@ class LeadAdmin(admin.ModelAdmin):
         obj.updated_by = request.user
         super().save_model(request, obj, form, change)
 
+class LeadAdmin(SimpleHistoryAdmin):
+    # Optional: customize which columns show in the changelist
+    list_display = ("id", "customer", "stage", "lead_manager", "updated_at")
+    # Optional: add search/filter capabilities
+    search_fields = ("customer__name", "lead_manager__username")
+    list_filter = ("stage", "lead_quality")
