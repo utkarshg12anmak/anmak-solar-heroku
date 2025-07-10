@@ -25,6 +25,8 @@ from django.db.models import Q, Sum, Prefetch
 from .models import Customer, City
 
 from django.core.exceptions import PermissionDenied
+from leads.models import LeadStage
+
 
 User = get_user_model()
 
@@ -173,6 +175,9 @@ class CustomerLeadCreateView(LoginRequiredMixin, TemplateView):
             if interest_pk:
                 lead.interest = get_object_or_404(Interest, pk=interest_pk)
 
+            initial_stage = LeadStage.objects.order_by('order').first()
+            lead.stage = initial_stage    
+
             lead.save()
 
             # ←←← CALL YOUR ALLOCATOR & LOGGING HERE
@@ -205,6 +210,9 @@ class CustomerLeadCreateView(LoginRequiredMixin, TemplateView):
 
         if interest_pk:
             lead.interest = get_object_or_404(Interest, pk=interest_pk)
+
+        initial_stage = LeadStage.objects.order_by('order').first()
+        lead.stage = initial_stage          
 
         lead.save()
 

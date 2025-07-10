@@ -31,7 +31,7 @@ from visit_details.models import VisitDetail
 from reminders.models import Reminder
 
 from collections import defaultdict
-
+from leads.models import LeadStage
 
 
 
@@ -82,6 +82,8 @@ class LeadCreateWithCustomer(View):
         if lead.is_valid():
             new_lead = lead.save(commit=False)
             new_lead.customer = customer
+            initial_stage = LeadStage.objects.order_by('order').first()
+            new_lead.stage = initial_stage
             new_lead.save()
             # ─── auto‐allocate to a sales rep ──────────────────
             from .utils import allocate_lead_to_user
